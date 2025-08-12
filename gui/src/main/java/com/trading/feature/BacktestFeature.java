@@ -170,7 +170,6 @@ public class BacktestFeature extends AbstractFeature {
 		List<Candel> nextCandels = candelRepository.findByMarketAndTimeRangeAndDateAfterOrderByDateAsc(data.getMarket().getCode(), timeRange, period.getDateEnd(), page);
 		if (!nextCandels.isEmpty()) {
 			saveDateEnd(Iterables.getLast(nextCandels).getDate());
-			backtestFeature.addCandels(nextCandels);
 		}
 	}
 

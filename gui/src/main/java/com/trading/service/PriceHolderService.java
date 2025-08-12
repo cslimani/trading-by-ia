@@ -1,7 +1,6 @@
 package com.trading.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,7 +26,6 @@ import com.trading.entity.Candel;
 import com.trading.entity.Market;
 import com.trading.entity.TickPrice;
 import com.trading.enums.EnumTimeRange;
-import com.trading.feature.PriceUpdateListener;
 import com.trading.gui.LeftPanel;
 import com.trading.gui.TopPanel;
 import com.trading.repository.CandelRepository;
@@ -62,13 +60,9 @@ public class PriceHolderService {
 
 	ConcurrentLinkedQueue<TickPrice> waitingTicksToBeProcessed = new ConcurrentLinkedQueue<>();
 	volatile boolean ready = false;
-	List<PriceUpdateListener> listeners = new ArrayList<>();
 
 	Map<String,Map<EnumTimeRange, Map<LocalDateTime,Candel>>> mapMarkets = new ConcurrentHashMap<>();
 
-	public void addListener(PriceUpdateListener listener) {
-		listeners.add(listener);
-	}
 
 	public void init() {
 		activeMarkets = marketRepository.findByEnabled(true)
@@ -148,8 +142,6 @@ public class PriceHolderService {
 					} else {
 						priceService.updateCandel(candel, tick);
 					}
-					final Candel candelFinal = candel;
-					listeners.forEach(l -> l.onUpdatePrice(candelFinal, tr));
 				}
 			});
 		}

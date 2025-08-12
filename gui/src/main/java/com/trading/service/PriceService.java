@@ -22,11 +22,6 @@ import com.trading.enums.EnumMode;
 import com.trading.enums.EnumTimeRange;
 import com.trading.feature.AccumulationFeature;
 import com.trading.feature.BacktestFeature;
-import com.trading.feature.LiveTradingFeature;
-import com.trading.feature.PriceAnalysisFeature;
-import com.trading.feature.old.BOSFeature;
-import com.trading.feature.old.TradeVisualizationFeature;
-import com.trading.feature.old.TrainingTradeFeature;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
 import com.trading.repository.CandelRepository;
@@ -58,21 +53,11 @@ public class PriceService {
 	@Autowired
 	DataDTO data;
 	@Autowired
-	BOSFeature bosFeature;
-	@Autowired
 	TopPanel topPanel;
-	@Autowired
-	TrainingTradeFeature trainingTradeFeature;
-	@Autowired
-	TradeVisualizationFeature tradeVisualizationFeature;
-	@Autowired
-	PriceAnalysisFeature priceAnalysisFeature;
 	@Autowired
 	BacktestFeature backtestFeature;
 	@Autowired
 	AccumulationFeature accumulationFeature;
-	@Autowired
-	LiveTradingFeature liveTradingFeature;
 	@Autowired
 	TickPriceRepository tickPriceRepository;
 	@Autowired
@@ -85,7 +70,6 @@ public class PriceService {
 	public void init(int panelWidth) {
 		horizontalLineComponent.setEnabled(true);
 		if (data.getMode() == EnumMode.LIVE) {
-			liveTradingFeature.init();
 		} else if (data.getMode() == EnumMode.ACCUMULATION) {
 			accumulationFeature.init();
 		} else if (data.getMode() == EnumMode.BACKTEST) {
@@ -100,7 +84,6 @@ public class PriceService {
 		} else if (data.getMode() == EnumMode.BACKTEST) {
 			backtestFeature.loadData();
 		} else if (data.getMode() == EnumMode.LIVE) {
-			liveTradingFeature.loadData();
 		}
 		data.setDateStart(data.getCandels().get(0).getDate());
 		List<Candel> candels = data.getCandels();

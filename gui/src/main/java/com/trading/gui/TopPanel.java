@@ -18,10 +18,12 @@ import com.trading.GuiFrame;
 import com.trading.enums.EnumTimeRange;
 
 import jakarta.annotation.PostConstruct;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Component
-@Data
+@Getter
+@Setter
 public class TopPanel  extends AbstractPanel{
 
 	private static final long serialVersionUID = -8381828449155374906L;
@@ -181,16 +183,6 @@ public class TopPanel  extends AbstractPanel{
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 //		distanceTextArea.setText("	Reward : " + data.getTrade().getReward() + "	");
-	}
-
-	public void newBOSSaved(int sentiment) {
-		nbBosTextArea.setText("BOS : " + bosFeature.getNbBos());
-		Color color = Color.GREEN;
-		if (sentiment == 0) {
-			color = Color.RED;
-		}
-		info("=> " + String.valueOf(nbBOS++), color);
-		repaint();
 	}
 
 	public void showDiff(Double rr, Double bestRR) {

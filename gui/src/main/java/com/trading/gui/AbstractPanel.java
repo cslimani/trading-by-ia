@@ -16,15 +16,8 @@ import com.trading.dto.DataDTO;
 import com.trading.dto.GraphDateDTO;
 import com.trading.entity.Candel;
 import com.trading.feature.AccumulationFeature;
-import com.trading.feature.LiveTradingFeature;
-import com.trading.feature.PriceAnalysisFeature;
 import com.trading.feature.RiskRatioFeature;
 import com.trading.feature.TrainablePatternComponent;
-import com.trading.feature.old.BOSFeature;
-import com.trading.feature.old.BacktestFeatureOld;
-import com.trading.feature.old.TradeVisualizationFeature;
-import com.trading.feature.old.TradingZoneFeature;
-import com.trading.feature.old.TrainingTradeFeature;
 import com.trading.repository.MarketRepository;
 import com.trading.service.PriceService;
 
@@ -39,19 +32,7 @@ public class AbstractPanel extends JPanel{
 	@Autowired
 	protected MarketRepository marketDAO;
 	@Autowired
-	TradingZoneFeature tradingZoneFeature;
-	@Autowired
-	BOSFeature bosFeature;
-	@Autowired
-	TradeVisualizationFeature tradeVisualizationFeature;
-	@Autowired
-	TrainingTradeFeature trainingTradeFeature;
-	@Autowired
-	PriceAnalysisFeature priceAnalysisFeature;
-	@Autowired
 	RiskRatioFeature riskRatioFeature;
-	@Autowired
-	LiveTradingFeature liveTradingFeature;
 	@Autowired
 	ZoneSelectorComponent zoneSelectorComponent;
 	@Autowired
@@ -60,8 +41,6 @@ public class AbstractPanel extends JPanel{
 	HorizontalLineComponent horizontalLineComponent;
 	@Autowired
 	VerticalLineComponent verticalLineComponent;
-	@Autowired
-	BacktestFeatureOld backtestFeature;
 	@Autowired
 	RiskRatioComponent counterComponent;
 	@Autowired

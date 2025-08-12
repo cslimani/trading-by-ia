@@ -35,9 +35,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.trading.dto.GraphDateDTO;
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.PricePointDTO;
-import com.trading.dto.VerticalLine;
 import com.trading.entity.Candel;
-import com.trading.enums.EnumMarket;
 import com.trading.enums.EnumTimeRange;
 
 @Component("MainPanel")
@@ -283,8 +281,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 			service.zoomOut();
 			int width = service.getViewTotalWidth();
 			if (width < scrollPane.getWidth()) {
-				//				accumulationFeature.stretchZone(30);
-				//				service.loadData(scrollPane.getWidth());
 				repaint();
 				perfectMatch = true;
 				service.zoomIn();
@@ -316,7 +312,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		LocalDateTime date = getDateFromPixel(event.getPoint().x);
 		Double price = pixelToPrice(event.getPoint().y);
 		topPanel.setDateAndPrice(date, price);
-		backtestFeature.mouseMoved(date, price);
 		accumulationFeature.mouseMoved(date, price);
 		counterComponent.mouseMoved(date, price);
 	}
@@ -335,17 +330,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		this.requestFocusInWindow();
 		LocalDateTime date = getDateFromPixel(event.getPoint().x);
 		Double price = pixelToPrice(event.getPoint().y);
-		//		if (data.isBOSMode()) {
-		//			bosFeature.onClick(date, price, event.getButton());
-		//		} else if (data.isTradeVisualisation()) {
-		//			tradeVisualizationFeature.onClick(date, price, event.getButton());
-		//		} else if (data.isTrainingTradeMode()) {
-		//			trainingTradeFeature.onClick(date, price, event.getButton());
-		//		}
-		//		zoneSelectorComponent.onClick(date, price, event.getButton());
-		//		riskRatioFeature.onClick(date, price, event.getButton());
-		//		bosTrainingComponent.onClick(date, price, event.getButton());
-		//		trainablePatternComponent.onClick(date, price, event.getButton());
 		if (horizontalLineComponent.isEnabled()) {
 			horizontalLineComponent.onClick(date, price);
 		}
@@ -355,12 +339,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		if (alertComponent.isEnabled()) {
 			alertComponent.onClick(date, price);
 		}
-		//		backtestFeature.onClick(date, price);
 		if (accumulationFeature.isEnabled()) {
 			accumulationFeature.onClick(date, price);
-		}
-		if (liveTradingFeature.isEnabled()) {
-			liveTradingFeature.onClick(date, price);
 		}
 		if (counterComponent.isEnabled()) {
 			counterComponent.onClick(date, price, event.getButton());
@@ -496,7 +476,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		data.setNbCandelsAdded(nbCandels);
 		service.loadData(scrollPane.getWidth());
 		service.moveBacktestDateForward();
-		tradingZoneFeature.dirty();
 		moveViewToEnd();
 		repaint();
 	}

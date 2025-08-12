@@ -23,7 +23,6 @@ import com.trading.component.BacktestComponent;
 import com.trading.component.HorizontalLineComponent;
 import com.trading.component.ZoneSelectorComponent;
 import com.trading.dto.DataDTO;
-import com.trading.feature.old.BacktestFeatureOld;
 import com.trading.gui.LeftPanel;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
@@ -87,8 +86,6 @@ public class AbstractFeature {
 	public LevelService levelService;
 	@Autowired
 	public TrainingTradeRepository trainingTradeRepository;
-	@Autowired
-	public BacktestFeatureOld backtestFeature;
 	@Autowired
 	public TickPriceRepository tickPriceRepository;
 	@Autowired

@@ -396,10 +396,6 @@ public class AccumulationFeature extends AbstractFeature {
 		mainPanel.unzoomMaximum();
 	}
 
-	private void captureZone() {
-		savePeriod(data.getDateStart(), data.getDateEnd());
-	}
-
 	private void shiftBackwardBy(int nbShift) {
 		EnumTimeRange timeRange = data.getTimeRange();
 		PeriodOfTime period = getPeriodOfTime();
@@ -409,15 +405,12 @@ public class AccumulationFeature extends AbstractFeature {
 	}
 
 
-
-
 	private void shiftForwardBy(int nbShift) {
 		EnumTimeRange timeRange = data.getTimeRange();
 		PeriodOfTime period = getPeriodOfTime();
 		Pageable page = PageRequest.of(0, nbShift);
 		List<Candel> nextCandels = candelRepository.findByMarketAndTimeRangeAndDateAfterOrderByDateAsc(data.getMarket().getCode(), timeRange, period.getDateEnd(), page);
 		saveDateEnd(Iterables.getLast(nextCandels).getDate());
-		backtestFeature.addCandels(nextCandels);
 	}
 
 	public List<Candel> getCandels() {
