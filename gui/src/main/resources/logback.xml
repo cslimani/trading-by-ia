@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+		<encoder>
+			<pattern>%d{dd-MM-yyyy HH:mm:ss.SSS} - %msg%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="DEBUG"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>/home/cyril/logs/gui/debug.log</file>
+		<rollingPolicy	class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/home/cyril/logs/gui/rolling/debug.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>1000</maxHistory>
+		</rollingPolicy>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>%d{dd-MM-yyyy HH:mm:ss.SSS} - %msg%n</Pattern>
+		</encoder>
+	</appender>
+
+	<logger name="com.trading" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="DEBUG" />
+	</logger>
+
+	<root level="WARN">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="DEBUG" />
+	</root>
+</configuration>

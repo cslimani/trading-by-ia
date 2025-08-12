@@ -1,0 +1,7 @@
+
+
+
+spring.datasource.url: jdbc:postgresql://trd:5432/meta_trading
+spring.datasource.username: meta_trading_usr
+spring.datasource.password: r2oi5_qzouif9-nqozi
+

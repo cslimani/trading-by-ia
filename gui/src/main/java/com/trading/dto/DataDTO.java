@@ -1,0 +1,94 @@
+package com.trading.dto;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.springframework.stereotype.Component;
+
+import com.trading.entity.Accumulation;
+import com.trading.entity.Alert;
+import com.trading.entity.Candel;
+import com.trading.entity.Market;
+import com.trading.entity.Trade;
+import com.trading.entity.TrainablePattern;
+import com.trading.entity.TrainingTrade;
+import com.trading.enums.EnumMode;
+import com.trading.enums.EnumTimeRange;
+
+import lombok.Data;
+
+@Component
+@Data
+public class DataDTO {
+
+	private Double priceMax;
+	private Double priceMin;
+	private Double gapPrice;
+	private long gapSeconds;
+	private List<Candel> candels;
+	private Map<LocalDateTime, Candel> mapCandels = new HashMap<>();
+	private List<GraphDateDTO> graphDates;
+	private Market market;
+	private int candelWidth;
+	private int spaceBetweenCandels;
+	private int position;
+	private List<GuiLineDTO> lines = new ArrayList<GuiLineDTO>();
+	private EnumTimeRange timeRange;
+	private int shift = 0;
+	private int finalShift = 0;
+	private GraphDateDTO lastGraphDate;
+	private GraphDateDTO firstGraphDate;
+	private int viewPosition=0;
+	private int viewWidth=0;
+	private int viewTotalWidth=0;
+	private int viewHeight=0;
+	private int nbCandelsAdded=0;
+	private List<Trade> trades;
+	private List<HorizontalLine> pricesToDraw = new CopyOnWriteArrayList<>();
+	int indexTrade = 0;
+	int index = 0;
+	Trade trade;
+	LocalDateTime dateEnd;
+	LocalDateTime dateStart;
+	boolean autoZoomDone = false;
+	TrainablePattern bos;
+	private EnumMode mode;
+	String tradeType = "WICKOFF";
+	String source;
+	String direction;
+	List<TrainingTrade> trainingTrades;
+	Map<String, Market> mapMarkets = new ConcurrentHashMap<String, Market>();
+	List<Accumulation> accumulations = new ArrayList<Accumulation>();
+	List<VerticalLine> verticalLines = new ArrayList<VerticalLine>();
+	List<Alert> alerts = List.of();
+	
+	public void init(Market market, int candelWidth, int spaceBetweenCandels, EnumTimeRange timeRange, EnumMode mode) {
+		this.market = market;
+		this.candelWidth = candelWidth;
+		this.position = 0;
+		this.timeRange = timeRange;
+		this.spaceBetweenCandels = spaceBetweenCandels;
+		this.mode = mode;
+	}
+
+//	public boolean isBOSMode() {
+//		return mode == EnumMode.BREAK_OF_STRUCTURE;
+//	}
+//
+//	public boolean isTrainingTradeMode() {
+//		return mode == EnumMode.TRAINING_TRADE;
+//	}
+//
+//	public boolean isTradeVisualisation() {
+//		return mode == EnumMode.TRADE_VISUALIZATION;
+//	}
+	
+	public String getMarketCode() {
+		return market.getCode();
+	}
+}
