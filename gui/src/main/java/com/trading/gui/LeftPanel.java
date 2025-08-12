@@ -55,7 +55,7 @@ public class LeftPanel extends AbstractPanel{
 			add(button);
 			add(Box.createVerticalStrut(60));
 			button.setFont(new Font("Arial", Font.BOLD, 12));
-			button.addActionListener(e -> {
+			button.addActionListener(_ -> {
 				mainPanel.onChangeMarket(market.getCode());
 				updateButtons();
 				guiFrame.updateTile(market.getCode());

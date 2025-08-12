@@ -6,7 +6,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +15,6 @@ import com.google.common.collect.Iterables;
 import com.trading.dto.PeriodOfTime;
 import com.trading.entity.Candel;
 import com.trading.entity.Market;
-import com.trading.entity.TrainingTrade;
 import com.trading.enums.EnumDirection;
 import com.trading.enums.EnumTimeRange;
 
@@ -34,8 +32,6 @@ public class BacktestFeature extends AbstractFeature {
 
 	public void init() {
 		setEnabled(true);
-		backtestComponent.setEnabled(true);
-		alertComponent.setEnabled(true);
 		leftPanel.loadAllMarketsFromDatabase();
 		dateStart = dateEnd.plusHours(-100);
 		Market market = data.getMarket();
@@ -49,13 +45,6 @@ public class BacktestFeature extends AbstractFeature {
 			}
 		}
 
-		Optional<TrainingTrade> lastTrade = trainingTradeRepository.findFirstByMarketOrderByDateCloseDesc(data.getMarketCode());
-		LocalDateTime date;
-		if (lastTrade.isPresent()) {
-			date = lastTrade.get().getDateClose();
-		} else {
-			date = dateEnd;
-		}
 		addButton("Expand", () -> stretchZone(30), true);
 		addButton("Unzoom Expand", () -> unzoomExpand(), true);
 		addButton("-50", () -> shiftBackwardBy(50), true);
@@ -64,7 +53,6 @@ public class BacktestFeature extends AbstractFeature {
 		addButton("+1", () -> shiftForwardBy(1), true);
 		addButton("+10", () -> shiftForwardBy(10), true);
 		addButton("+50", () -> shiftForwardBy(50), true);
-		addButton("Clear alerts", () -> alertComponent.clear(data.getMarketCode()), true);
 	}
 
 
@@ -138,7 +126,6 @@ public class BacktestFeature extends AbstractFeature {
 			currentMarket = data.getMarketCode();
 			leftPanel.updateButtons();
 		}
-		backtestComponent.updateTradeInfo();
 	}
 
 	public void stretchZone(int value) {

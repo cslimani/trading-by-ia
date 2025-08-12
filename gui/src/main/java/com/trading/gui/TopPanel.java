@@ -52,8 +52,7 @@ public class TopPanel  extends AbstractPanel{
 
 		colorPanel = new JTextArea();
 		colorPanel.setSize(100, 100);
-		colorPanel.setText(IntStream.range(1, 30).boxed().map(i -> " ").reduce(" ", (s1,s2) -> s1+ s2));
-//		add(colorPanel);
+		colorPanel.setText(IntStream.range(1, 30).boxed().map(_ -> " ").reduce(" ", (s1,s2) -> s1+ s2));
 		
 		nbCandelsArea = new JTextArea();
 		nbCandelsArea.setLocation(20, 0);
@@ -69,41 +68,20 @@ public class TopPanel  extends AbstractPanel{
 		
 		JComboBox<String> tradeTypeComboBox = new JComboBox<String>(new String[]
 				{"SMALL_FALSE_BREAK","FALSE_BREAK", "DOUBLE_FALSE_BREAK", "SUPPLY_MULTI_TF","BOS_SUPPLY"});
-//		add(tradeTypeComboBox);
-		tradeTypeComboBox.addActionListener(e -> {
-			JComboBox<String> cb = (JComboBox<String>) e.getSource();
-			data.setTradeType((String) cb.getSelectedItem());
+		tradeTypeComboBox.addActionListener(_ -> {
+			data.setTradeType(tradeTypeComboBox.getItemAt(tradeTypeComboBox.getSelectedIndex()));
 		});
 		
 		timeRangeComboBox = new JComboBox<EnumTimeRange>(EnumTimeRange.values());
 		timeRangeComboBox.setSelectedItem(GuiFrame.TIME_RANGE);
 		timeRangeComboBox.setLocation(20, 20);
 		add(timeRangeComboBox);
-		timeRangeComboBox.addActionListener(e -> {
+		timeRangeComboBox.addActionListener(_ -> {
 			if (!disableListener) {
-				JComboBox<EnumTimeRange> cb = (JComboBox<EnumTimeRange>) e.getSource();
-				mainPanel.onChangeTimeRange((EnumTimeRange) cb.getSelectedItem());
+				mainPanel.onChangeTimeRange(timeRangeComboBox.getItemAt(timeRangeComboBox.getSelectedIndex()));
 			}
 		});
 
-//		List<String> markets = marketDAO.findByEnabled(true).stream().map(m -> m.getCode()).sorted().toList();
-//		marketComboBox = new JComboBox<String>(markets.toArray(new String[0]));
-//		marketComboBox.setSelectedItem(GuiFrame.MARKET_CODE);
-//		marketComboBox.setLocation(20, 20);
-//		add(marketComboBox);
-//		marketComboBox.addActionListener(e -> {
-//			JComboBox<String> cb = (JComboBox<String>) e.getSource();
-//			mainPanel.onChangeMarket((String) cb.getSelectedItem());
-//		});
-		
-		
-//		marketComboBox = new JComboBox<String>();
-//		marketComboBox.setLocation(20, 20);
-//		add(marketComboBox);
-//		marketComboBox.addActionListener(e -> {
-//			JComboBox<String> cb = (JComboBox<String>) e.getSource();
-//			mainPanel.onChangeMarket((String) cb.getSelectedItem());
-//		});
 		addTimerangeButton(EnumTimeRange.S15);
 		addTimerangeButton(EnumTimeRange.M5);
 		
@@ -140,9 +118,8 @@ public class TopPanel  extends AbstractPanel{
 		JButton b = new JButton(tr.name());
 		b.setLocation(20, 20);
 		add(b);
-		b.addActionListener(e -> {
+		b.addActionListener(_ -> {
 			timeRangeComboBox.setSelectedItem(tr);
-//			mainPanel.onChangeTimeRange(tr);
 		});
 		
 	}
@@ -151,7 +128,7 @@ public class TopPanel  extends AbstractPanel{
 		JButton button = new JButton(name);
 		add(button);
 		button.setLocation(20, 20);
-		button.addActionListener(e -> {
+		button.addActionListener(_ -> {
 			runnable.run();
 			mainPanel.repaint();
 			repaint();

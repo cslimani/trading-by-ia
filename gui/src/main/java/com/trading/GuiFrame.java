@@ -18,7 +18,6 @@ import com.trading.dto.DataDTO;
 import com.trading.entity.Market;
 import com.trading.enums.EnumMode;
 import com.trading.enums.EnumTimeRange;
-import com.trading.gui.LeftPanel;
 import com.trading.gui.MainPanel;
 import com.trading.gui.PricePanel;
 import com.trading.gui.TopPanel;
@@ -40,8 +39,8 @@ public class GuiFrame extends JFrame {
 	private TopPanel topPanel;
 	@Autowired
 	private PricePanel pricePanel;
-	@Autowired
-	private LeftPanel leftPanel;
+//	@Autowired
+//	private LeftPanel leftPanel;
 	@Autowired
 	private Environment env;
 	@Autowired
@@ -76,16 +75,16 @@ public class GuiFrame extends JFrame {
 		centerAndRightPane.setLeftComponent(scrollPanel);                  // at the top we want our "topPanel"
 		centerAndRightPane.setRightComponent(pricePanel); 
 		
-		JSplitPane centerAllTogetherPane = new JSplitPane();
-		centerAllTogetherPane.setLayout(new BoxLayout(centerAllTogetherPane, BoxLayout.X_AXIS));
-		centerAllTogetherPane.setLeftComponent(leftPanel);                  // at the top we want our "topPanel"
-		centerAllTogetherPane.setRightComponent(centerAndRightPane); 
+//		JSplitPane centerAllTogetherPane = new JSplitPane();
+//		centerAllTogetherPane.setLayout(new BoxLayout(centerAllTogetherPane, BoxLayout.X_AXIS));
+//		centerAllTogetherPane.setLeftComponent(leftPanel);                  // at the top we want our "topPanel"
+//		centerAllTogetherPane.setRightComponent(centerAndRightPane); 
 		
 		
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setLayout(new BoxLayout(splitPane, BoxLayout.Y_AXIS));
 		splitPane.setTopComponent(topPanel);                  // at the top we want our "topPanel"
-		splitPane.setBottomComponent(centerAllTogetherPane); 
+		splitPane.setBottomComponent(centerAndRightPane); 
 		getContentPane().add(splitPane);
 		pack();
 		setLocationRelativeTo(null);

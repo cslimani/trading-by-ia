@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CandelId implements Serializable {
 
-    String market;
+    private static final long serialVersionUID = 1L;
+	String market;
     LocalDateTime date;
     EnumTimeRange timeRange;
 }

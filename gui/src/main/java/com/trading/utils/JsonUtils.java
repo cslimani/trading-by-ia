@@ -1,8 +1,5 @@
 package com.trading.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -13,7 +10,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 public class JsonUtils {
 
 	private static ObjectMapper objectMapper = new ObjectMapper();
-	private static Logger logger = LoggerFactory.getLogger(JsonUtils.class);
 
 	static {
 		objectMapper.registerModule(new JavaTimeModule());

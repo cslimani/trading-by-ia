@@ -1,12 +1,10 @@
 package com.trading.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ComponentScans;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -23,8 +21,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @EnableAsync
 public class AppConfig {
 
-	@Autowired
-	private Environment env;
 	
 	@Bean
 	public static ObjectMapper objectMapper() {

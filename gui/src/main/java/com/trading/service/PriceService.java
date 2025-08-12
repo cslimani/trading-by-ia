@@ -16,23 +16,14 @@ import com.trading.component.HorizontalLineComponent;
 import com.trading.dto.DataDTO;
 import com.trading.dto.GraphDateDTO;
 import com.trading.entity.Candel;
-import com.trading.entity.Market;
-import com.trading.entity.TickPrice;
 import com.trading.enums.EnumMode;
-import com.trading.enums.EnumTimeRange;
-import com.trading.feature.AccumulationFeature;
 import com.trading.feature.BacktestFeature;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
 import com.trading.repository.CandelRepository;
 import com.trading.repository.MarketRepository;
-import com.trading.repository.PointOfInterestRespository;
-import com.trading.repository.TickPriceRepository;
-import com.trading.repository.TrainablePatternRepository;
-import com.trading.utils.DateHelper;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
 
 @Component
 public class PriceService {
@@ -40,12 +31,6 @@ public class PriceService {
 	private static final int EXTRA_WIDTH = 50;
 	public static Logger logger = LoggerFactory.getLogger(PriceService.class);
 
-	@Autowired
-	PointOfInterestRespository poiRespository;
-	@Autowired
-	TrainablePatternRepository trainablePatternRepository;
-	@Autowired
-	JdbcService jdbcService;
 	@Autowired
 	MarketRepository marketRepository;
 	@Autowired
@@ -57,10 +42,6 @@ public class PriceService {
 	@Autowired
 	BacktestFeature backtestFeature;
 	@Autowired
-	AccumulationFeature accumulationFeature;
-	@Autowired
-	TickPriceRepository tickPriceRepository;
-	@Autowired
 	HorizontalLineComponent horizontalLineComponent;
 
 	@PostConstruct
@@ -71,7 +52,6 @@ public class PriceService {
 		horizontalLineComponent.setEnabled(true);
 		if (data.getMode() == EnumMode.LIVE) {
 		} else if (data.getMode() == EnumMode.ACCUMULATION) {
-			accumulationFeature.init();
 		} else if (data.getMode() == EnumMode.BACKTEST) {
 			backtestFeature.init();
 		}
@@ -80,7 +60,6 @@ public class PriceService {
 
 	public void loadData(int panelWidth) {
 		if (data.getMode() == EnumMode.ACCUMULATION) {
-			accumulationFeature.loadData();
 		} else if (data.getMode() == EnumMode.BACKTEST) {
 			backtestFeature.loadData();
 		} else if (data.getMode() == EnumMode.LIVE) {
@@ -158,16 +137,12 @@ public class PriceService {
 	public int getViewTotalWidth(){
 		int viewTotalWidth = 0;
 		int graphDateWidth = data.getCandelWidth() + data.getSpaceBetweenCandels();
-		for (Candel candel : data.getCandels()) {
+		for (Candel _ : data.getCandels()) {
 			viewTotalWidth = viewTotalWidth + graphDateWidth;
 		}	
 		return viewTotalWidth+ EXTRA_WIDTH;
 	}
 
-	@Transactional
-	public void moveBacktestDateForward() {
-		Market m = marketRepository.getByCode(data.getMarket().getCode());
-	}
 
 //	@Transactional
 //	public void synchroPricesWithRemote(String market) {
@@ -215,68 +190,6 @@ public class PriceService {
 //	}
 
 
-	public List<Candel> convertTicksToCandels(List<TickPrice> ticks, EnumTimeRange timeRange, String market) {
-		List<Candel> candels = new ArrayList<>();
-		Candel currentCandel = null;
-		for (TickPrice tickPrice : ticks) {
-			LocalDateTime date = tickPrice.getDate();
-			if (tickPrice.getAsk() == null && tickPrice.getBid() == null) {
-				continue;
-			}
-			LocalDateTime truncatedDate = DateHelper.getTruncatedDate(date, timeRange);
-
-			if (currentCandel == null || !currentCandel.getDate().isEqual(truncatedDate)) {
-				currentCandel = new Candel();
-				candels.add(currentCandel);
-				currentCandel.setMarket(market);
-				currentCandel.setTimeRange(timeRange);
-				currentCandel.setDate(truncatedDate);
-				//Bid
-				currentCandel.setLowBid(tickPrice.getBid());
-				currentCandel.setHighBid(tickPrice.getBid());
-				currentCandel.setOpenBid(tickPrice.getBid());
-				currentCandel.setCloseBid(tickPrice.getBid());
-				//Ask
-				currentCandel.setLowAsk(tickPrice.getAsk());
-				currentCandel.setHighAsk(tickPrice.getAsk());
-				currentCandel.setOpenAsk(tickPrice.getAsk());
-				currentCandel.setCloseAsk(tickPrice.getAsk());
-			} else {
-				updateCandel(currentCandel, tickPrice);
-			}
-		}
-		return candels;
-	}
-
-	public void updateCandel(Candel candel, TickPrice tickPrice) {
-		if (tickPrice.getBid() != null) {
-			if (candel.getOpenBid() == null) {
-				candel.setOpenBid(tickPrice.getBid());
-			}
-			candel.setCloseBid(tickPrice.getBid());
-			if (candel.getHighBid() != null) {
-				candel.setHighBid(Math.max(candel.getHighBid(), tickPrice.getBid()));
-				candel.setLowBid(Math.min(candel.getLowBid(), tickPrice.getBid()));
-			} else {
-				candel.setHighBid(tickPrice.getBid());
-				candel.setLowBid(tickPrice.getBid());
-			}
-		}
-
-		if (tickPrice.getAsk() != null) {
-			if (candel.getOpenAsk() == null) {
-				candel.setOpenAsk(tickPrice.getAsk());
-			}
-			candel.setCloseAsk(tickPrice.getAsk());
-			if (candel.getHighAsk() != null) {
-				candel.setHighAsk(Math.max(candel.getHighAsk(), tickPrice.getAsk()));
-				candel.setLowAsk(Math.min(candel.getLowAsk(), tickPrice.getAsk()));
-			} else {
-				candel.setHighAsk(tickPrice.getAsk());
-				candel.setLowAsk(tickPrice.getAsk());
-			}
-		}
-	}
 
 	
 }

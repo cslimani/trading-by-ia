@@ -4,17 +4,12 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import com.trading.dto.MarketDataDTO;
-import com.trading.entity.Market;
 import com.trading.enums.EnumTimeRange;
 
 public class DateHelper {
@@ -22,7 +17,6 @@ public class DateHelper {
 	public static DateTimeFormatter dtf_DDMMYYYY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 	public static DateTimeFormatter DTF_HOUR = DateTimeFormatter.ofPattern("HH:mm:ss:SSS");
 	private static Set<LocalDate> bankHolidays = new  HashSet<LocalDate>();
-	private static final int NB_MINUTES_PER_DAY = 24*60;
 	
 	static {
 		//2019

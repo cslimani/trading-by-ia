@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.trading.entity.Alert;
 import com.trading.feature.AbstractFeature;
 
 @Component

@@ -10,13 +10,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.stereotype.Component;
 
-import com.trading.entity.Accumulation;
-import com.trading.entity.Alert;
 import com.trading.entity.Candel;
 import com.trading.entity.Market;
-import com.trading.entity.Trade;
-import com.trading.entity.TrainablePattern;
-import com.trading.entity.TrainingTrade;
 import com.trading.enums.EnumMode;
 import com.trading.enums.EnumTimeRange;
 
@@ -48,24 +43,18 @@ public class DataDTO {
 	private int viewTotalWidth=0;
 	private int viewHeight=0;
 	private int nbCandelsAdded=0;
-	private List<Trade> trades;
 	private List<HorizontalLine> pricesToDraw = new CopyOnWriteArrayList<>();
 	int indexTrade = 0;
 	int index = 0;
-	Trade trade;
 	LocalDateTime dateEnd;
 	LocalDateTime dateStart;
 	boolean autoZoomDone = false;
-	TrainablePattern bos;
 	private EnumMode mode;
 	String tradeType = "WICKOFF";
 	String source;
 	String direction;
-	List<TrainingTrade> trainingTrades;
 	Map<String, Market> mapMarkets = new ConcurrentHashMap<String, Market>();
-	List<Accumulation> accumulations = new ArrayList<Accumulation>();
 	List<VerticalLine> verticalLines = new ArrayList<VerticalLine>();
-	List<Alert> alerts = List.of();
 	
 	public void init(Market market, int candelWidth, int spaceBetweenCandels, EnumTimeRange timeRange, EnumMode mode) {
 		this.market = market;

@@ -18,11 +18,6 @@ public class AppUtils {
 
 	private static Map<String, LocalTime> mapActionTime = new ConcurrentHashMap<String, LocalTime>();
 
-	public static Double round(double d, int decimalPlace) {
-		BigDecimal bd = new BigDecimal(d);
-		bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
-		return bd.doubleValue();
-	}
 
 	public static Double getRoundedNumber(Double value) {
 		BigDecimal bd = new BigDecimal(value);

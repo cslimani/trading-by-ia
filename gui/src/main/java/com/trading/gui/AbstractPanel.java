@@ -6,18 +6,12 @@ import javax.swing.JPanel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.trading.component.AlertComponent;
-import com.trading.component.BacktestComponent;
 import com.trading.component.HorizontalLineComponent;
-import com.trading.component.RiskRatioComponent;
 import com.trading.component.VerticalLineComponent;
 import com.trading.component.ZoneSelectorComponent;
 import com.trading.dto.DataDTO;
 import com.trading.dto.GraphDateDTO;
 import com.trading.entity.Candel;
-import com.trading.feature.AccumulationFeature;
-import com.trading.feature.RiskRatioFeature;
-import com.trading.feature.TrainablePatternComponent;
 import com.trading.repository.MarketRepository;
 import com.trading.service.PriceService;
 
@@ -32,24 +26,12 @@ public class AbstractPanel extends JPanel{
 	@Autowired
 	protected MarketRepository marketDAO;
 	@Autowired
-	RiskRatioFeature riskRatioFeature;
-	@Autowired
 	ZoneSelectorComponent zoneSelectorComponent;
-	@Autowired
-	TrainablePatternComponent trainablePatternComponent;
 	@Autowired
 	HorizontalLineComponent horizontalLineComponent;
 	@Autowired
 	VerticalLineComponent verticalLineComponent;
-	@Autowired
-	RiskRatioComponent counterComponent;
-	@Autowired
-	AlertComponent alertComponent;
-	@Autowired
-	AccumulationFeature accumulationFeature;
-	@Autowired
-	BacktestComponent backtestComponent;
-	
+
 	protected Double pixelToPrice(int pixel) {
 		return data.getPriceMax() - pixel*data.getGapPrice()/getHeight()*1f;
 	}

@@ -1,12 +1,6 @@
 package com.trading.utils;
 
 import java.awt.Point;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-
-import com.trading.dto.GuiLineDTO;
-import com.trading.dto.MarketDataDTO;
 
 public class GeometryHelper {
 

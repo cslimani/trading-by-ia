@@ -87,7 +87,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		drawHorizontalLines();
 		drawVerticalLines();
 		horizontalLineComponent.draw(g2d);
-		alertComponent.draw(g2d);
 		if (!data.isAutoZoomDone()) {
 			data.setAutoZoomDone(true);
 			int size = data.getViewTotalWidth();
@@ -312,8 +311,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		LocalDateTime date = getDateFromPixel(event.getPoint().x);
 		Double price = pixelToPrice(event.getPoint().y);
 		topPanel.setDateAndPrice(date, price);
-		accumulationFeature.mouseMoved(date, price);
-		counterComponent.mouseMoved(date, price);
 	}
 
 	@Override
@@ -335,18 +332,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		}
 		if (verticalLineComponent.isEnabled()) {
 			verticalLineComponent.onClick(date, price);
-		}
-		if (alertComponent.isEnabled()) {
-			alertComponent.onClick(date, price);
-		}
-		if (accumulationFeature.isEnabled()) {
-			accumulationFeature.onClick(date, price);
-		}
-		if (counterComponent.isEnabled()) {
-			counterComponent.onClick(date, price, event.getButton());
-		}
-		if (backtestComponent.isEnabled()) {
-			backtestComponent.onClick(date, price);
 		}
 		repaint();
 	}
@@ -378,11 +363,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		//		trainablePatternComponent.keyPressed(e.getKeyCode());
 		horizontalLineComponent.keyPressed(e.getKeyCode());
 		verticalLineComponent.keyPressed(e.getKeyCode());
-		alertComponent.keyPressed(e.getKeyCode());
-		//		backtestFeature.keyPressed(e.getKeyCode());
-		accumulationFeature.keyPressed(e.getKeyCode());
-		counterComponent.keyPressed(e.getKeyCode());
-		backtestComponent.keyPressed(e.getKeyCode());
 		//touche - du pav num
 		if (e.getKeyCode() == 109) {
 			unzoomMaximum();
@@ -392,18 +372,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		//		System.out.println("reealse");
-		//		zoneSelectorComponent.keyReleased(e.getKeyCode());
-		//		//		bosTrainingComponent.keyReleased(e.getKeyCode());
-		//		trainablePatternComponent.keyReleased(e.getKeyCode());
 		horizontalLineComponent.keyReleased(e.getKeyCode());
-		alertComponent.keyReleased(e.getKeyCode());
 		verticalLineComponent.keyReleased(e.getKeyCode());
-		//		priceAnalysisFeature.keyReleased(e.getKeyCode());
-		//		backtestFeature.keyReleased(e.getKeyCode());
-		counterComponent.keyReleased(e.getKeyCode());
-		accumulationFeature.keyReleased(e.getKeyCode());
-		backtestComponent.keyReleased(e.getKeyCode());
 		repaint();
 	}
 
@@ -475,7 +445,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 	public void onAddCandels(int nbCandels) {
 		data.setNbCandelsAdded(nbCandels);
 		service.loadData(scrollPane.getWidth());
-		service.moveBacktestDateForward();
 		moveViewToEnd();
 		repaint();
 	}
