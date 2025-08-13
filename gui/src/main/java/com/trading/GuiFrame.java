@@ -31,8 +31,8 @@ public class GuiFrame extends JFrame {
 
 	private static final long serialVersionUID = 3358629944258036149L;
 
-	private static final int CANDEL_WIDTH = 10;
-	public static final int SPACE_BETWEEN_CANDELS = 2;
+	private static final int candle_WIDTH = 10;
+	public static final int SPACE_BETWEEN_candleS = 2;
 	@Autowired
 	private MainPanel mainPanel;
 	@Autowired
@@ -59,7 +59,7 @@ public class GuiFrame extends JFrame {
 		Market market = marketDAO.getByCode(MARKET_CODE);
 		
 		String activeProfile = env.getActiveProfiles()[0].toUpperCase();
-		data.init(market, CANDEL_WIDTH, SPACE_BETWEEN_CANDELS, TIME_RANGE, EnumMode.valueOf(activeProfile));
+		data.init(market, candle_WIDTH, SPACE_BETWEEN_candleS, TIME_RANGE, EnumMode.valueOf(activeProfile));
 		priceService.init(this.getWidth());
 		
 		topPanel.init();

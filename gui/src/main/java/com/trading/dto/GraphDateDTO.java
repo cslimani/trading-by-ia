@@ -2,7 +2,7 @@ package com.trading.dto;
 
 import java.time.LocalDateTime;
 
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,7 +11,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class GraphDateDTO {
 
-	Candel candel;
+	Candle candle;
 	LocalDateTime date;
 	LocalDateTime endDate;
 	int startPosition;

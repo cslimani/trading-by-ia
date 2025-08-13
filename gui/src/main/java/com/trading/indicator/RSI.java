@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,35 +16,35 @@ public class RSI implements Indicator {
 	Map<LocalDateTime, Double> mapDate = new HashMap<>();
 	Map<Integer, Double> mapAverageUpwardMove = new HashMap<>();
 	Map<Integer, Double> mapAverageDownwardMove = new HashMap<>();
-	List<Candel> candels;
+	List<Candle> candles;
 	private int nbPeriods;
 
-	public RSI(List<Candel> candels, int nbPeriods) {
-		this.candels = candels;
+	public RSI(List<Candle> candles, int nbPeriods) {
+		this.candles = candles;
 		this.nbPeriods = nbPeriods;
 		init();
 	}
 
 	private void init() {
-		Double sumFirstCandelsHigh = 0d;
-		Double sumFirstCandelsLow = 0d;
+		Double sumFirstCandlesHigh = 0d;
+		Double sumFirstCandlesLow = 0d;
 		for (int i = 1; i <= nbPeriods; i++) {
-			Candel candel = candels.get(i);
-			Double diff = candel.getClose() - candels.get(i - 1).getClose();
+			Candle candle = candles.get(i);
+			Double diff = candle.getClose() - candles.get(i - 1).getClose();
 			if (diff > 0) {
-				sumFirstCandelsHigh += diff;
+				sumFirstCandlesHigh += diff;
 			} else {
-				sumFirstCandelsLow += -diff;
+				sumFirstCandlesLow += -diff;
 			}
 		}
-		Double averageUpwardMove = sumFirstCandelsHigh / nbPeriods;
-		Double averageDownwardMove = sumFirstCandelsLow / nbPeriods;
+		Double averageUpwardMove = sumFirstCandlesHigh / nbPeriods;
+		Double averageDownwardMove = sumFirstCandlesLow / nbPeriods;
 		Double RS = averageUpwardMove / averageDownwardMove;
 		mapAverageUpwardMove.put(nbPeriods, averageUpwardMove);
 		mapAverageDownwardMove.put(nbPeriods, averageDownwardMove);
 		Double firstRSI = getRSI(RS);
 		map.put(nbPeriods, firstRSI);
-		for (int i = nbPeriods + 1; i < candels.size(); i++) {
+		for (int i = nbPeriods + 1; i < candles.size(); i++) {
 			computeData(i);
 		}
 	}
@@ -60,7 +60,7 @@ public class RSI implements Indicator {
 			Double smoothedRS = averageUpwardMove / averageDownwardMove;
 			Double rsi = getRSI(smoothedRS);
 			map.put(index, rsi);
-			mapDate.put(candels.get(index).getDate(), rsi);
+			mapDate.put(candles.get(index).getDate(), rsi);
 		} catch (Exception e) {
 			log.error("Error computing RSI", e);
 			throw e;
@@ -68,12 +68,12 @@ public class RSI implements Indicator {
 	}
 
 	private Double getUpwardMove(int i) {
-		Double move = candels.get(i).getClose() - candels.get(i - 1).getClose();
+		Double move = candles.get(i).getClose() - candles.get(i - 1).getClose();
 		return move > 0 ? move : 0;
 	}
 
 	private Double getDownwardMove(int i) {
-		Double move = candels.get(i).getClose() - candels.get(i - 1).getClose();
+		Double move = candles.get(i).getClose() - candles.get(i - 1).getClose();
 		return move < 0 ? -move : 0;
 	}
 

@@ -18,7 +18,7 @@ import com.trading.dto.DataDTO;
 import com.trading.gui.LeftPanel;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
-import com.trading.repository.CandelRepository;
+import com.trading.repository.CandleRepository;
 import com.trading.repository.MarketRepository;
 
 import lombok.Getter;
@@ -39,7 +39,7 @@ public class AbstractFeature {
 	@Autowired
 	public GuiFrame guiFrame;
 	@Autowired
-	public CandelRepository candelRepository;
+	public CandleRepository candleRepository;
 	@Autowired
 	public ZoneSelectorComponent zoneSelectorComponent;
 	@Autowired

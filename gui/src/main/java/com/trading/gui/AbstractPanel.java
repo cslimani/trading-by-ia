@@ -11,7 +11,7 @@ import com.trading.component.VerticalLineComponent;
 import com.trading.component.ZoneSelectorComponent;
 import com.trading.dto.DataDTO;
 import com.trading.dto.GraphDateDTO;
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 import com.trading.repository.MarketRepository;
 import com.trading.service.PriceService;
 
@@ -52,18 +52,18 @@ public class AbstractPanel extends JPanel{
 			if (dateStart == null) {
 				dateStart = data.getGraphDates().get(0).getDate();
 			}
-			for (Candel candel : data.getCandels()) {
-				candel.setDraw(false);
-				if ((candel.getDate().isAfter(dateStart) || candel.getDate().equals(dateStart)) && 
-						(candel.getDate().isBefore(dateEnd) || candel.getDate().equals(dateEnd)) ) {
-					if (data.getPriceMax() == null || candel.getHigh() > data.getPriceMax()) {
-						data.setPriceMax(candel.getHigh());
+			for (Candle candle : data.getCandles()) {
+				candle.setDraw(false);
+				if ((candle.getDate().isAfter(dateStart) || candle.getDate().equals(dateStart)) && 
+						(candle.getDate().isBefore(dateEnd) || candle.getDate().equals(dateEnd)) ) {
+					if (data.getPriceMax() == null || candle.getHigh() > data.getPriceMax()) {
+						data.setPriceMax(candle.getHigh());
 					}
-					if (data.getPriceMin() == null || candel.getLow() < data.getPriceMin()) {
-						data.setPriceMin(candel.getLow());
+					if (data.getPriceMin() == null || candle.getLow() < data.getPriceMin()) {
+						data.setPriceMin(candle.getLow());
 					}
 
-					candel.setDraw(true);
+					candle.setDraw(true);
 				}
 			}
 			if (data.getPriceMax() != null && data.getPriceMin() != null) {

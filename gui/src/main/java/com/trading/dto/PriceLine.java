@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,9 +22,9 @@ public class PriceLine {
 	@JsonIgnore
 	String prices;
 	@NonNull
-	List<Candel> rlPreviousPriceList;
+	List<Candle> rlPreviousPriceList;
 	@NonNull
-	List<Candel> rlFuturPriceList;
+	List<Candle> rlFuturPriceList;
 	@NonNull
 	Double spread;
 	@NonNull

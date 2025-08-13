@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.trading.dto.GraphDateDTO;
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.PricePointDTO;
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 
 @Component("MainPanel")
@@ -44,7 +44,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 	public static final int WINDOW_WIDTH = 1900;
 	public static final int WINDOW_HEIGHT = 900;
-	public static final int EXTRA_GHOST_CANDELS = 10;
+	public static final int EXTRA_GHOST_candleS = 10;
 	static final String LOCK = "LOCK";
 
 	static final long serialVersionUID = -2520656747519200912L;
@@ -83,7 +83,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 		prepareData();
 		drawGrid();
-		drawCandels();
+		drawCandles();
 		drawHorizontalLines();
 		drawVerticalLines();
 		horizontalLineComponent.draw(g2d);
@@ -190,39 +190,39 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		return StringUtils.leftPad(String.valueOf(value), 2, "0");
 	}
 
-	private void drawCandels() {
+	private void drawCandles() {
 		synchronized (MainPanel.LOCK) {
-			List<Candel> candels = data.getCandels();
-			int candelWidth = data.getCandelWidth();
-			for (Candel candel : candels) {
-				GraphDateDTO graphDateDTO = getGraphDateFromDate(candel.getDate());
+			List<Candle> candles = data.getCandles();
+			int candleWidth = data.getCandleWidth();
+			for (Candle candle : candles) {
+				GraphDateDTO graphDateDTO = getGraphDateFromDate(candle.getDate());
 				if (graphDateDTO == null) {
 					continue;
 				}
-				if (!candel.isDraw()) {
+				if (!candle.isDraw()) {
 					continue;
 				}
-				int y = getHeight() - priceToPixel(candel.getMax()-data.getPriceMin());
-				int height = priceToPixel(candel.getMax()-candel.getMin());
-				if (candel.getColor() != null) {
-					g2d.setPaint(candel.getColor());
-				} else if (candel.isSelected()) {
+				int y = getHeight() - priceToPixel(candle.getMax()-data.getPriceMin());
+				int height = priceToPixel(candle.getMax()-candle.getMin());
+				if (candle.getColor() != null) {
+					g2d.setPaint(candle.getColor());
+				} else if (candle.isSelected()) {
 					g2d.setPaint(Color.WHITE);
-				}else if (candel.isEndTrade()) {
+				}else if (candle.isEndTrade()) {
 					g2d.setPaint(Color.ORANGE);
-				} else if (candel.isGoingUp()) {
+				} else if (candle.isGoingUp()) {
 					g2d.setPaint(new Color(36, 160, 107));
 				} else {
 					g2d.setPaint(new Color(204, 46, 60));
 				}
-				g2d.fillRect(graphDateDTO.getStartPosition(), y, candelWidth, height);
-				int xLine = graphDateDTO.getStartPosition() + candelWidth/2;
+				g2d.fillRect(graphDateDTO.getStartPosition(), y, candleWidth, height);
+				int xLine = graphDateDTO.getStartPosition() + candleWidth/2;
 				int yLineStart = y ;
-				int yLineEnd = y - priceToPixel(candel.getHigh()-candel.getMax());
+				int yLineEnd = y - priceToPixel(candle.getHigh()-candle.getMax());
 				g2d.drawLine(xLine, yLineStart, xLine, yLineEnd);
 
 				yLineStart = y  + height;
-				yLineEnd = y + height + priceToPixel(candel.getMin() - candel.getLow());
+				yLineEnd = y + height + priceToPixel(candle.getMin() - candle.getLow());
 				g2d.drawLine(xLine, yLineStart, xLine, yLineEnd);
 			}
 		}
@@ -442,8 +442,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		}
 	}
 
-	public void onAddCandels(int nbCandels) {
-		data.setNbCandelsAdded(nbCandels);
+	public void onAddCandles(int nbCandles) {
+		data.setNbCandlesAdded(nbCandles);
 		service.loadData(scrollPane.getWidth());
 		moveViewToEnd();
 		repaint();

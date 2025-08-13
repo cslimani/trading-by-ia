@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Iterables;
 import com.trading.dto.PeriodOfTime;
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 import com.trading.entity.Market;
 import com.trading.enums.EnumDirection;
 import com.trading.enums.EnumTimeRange;
@@ -22,12 +22,12 @@ import com.trading.enums.EnumTimeRange;
 public class BacktestFeature extends AbstractFeature {
 
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-	private static final int MAX_CANDELS = 1000;
-	private List<Candel> candels;
+	private static final int MAX_candleS = 1000;
+	private List<Candle> candles;
 	private LocalDateTime dateStart;
 	private LocalDateTime dateEnd = LocalDateTime.of(2025, 8, 1, 0, 0);
 	private boolean enabledZoom;
-	private List<Candel> points = new ArrayList<Candel>();
+	private List<Candle> points = new ArrayList<Candle>();
 	private String currentMarket;
 
 	public void init() {
@@ -35,13 +35,13 @@ public class BacktestFeature extends AbstractFeature {
 		leftPanel.loadAllMarketsFromDatabase();
 		dateStart = dateEnd.plusHours(-100);
 		Market market = data.getMarket();
-		List<Candel> candelsTmp = candelRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateAsc(market.getCode(),EnumTimeRange.H1, dateStart, dateEnd);
+		List<Candle> candlesTmp = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateAsc(market.getCode(),EnumTimeRange.H1, dateStart, dateEnd);
 		int nbTry = 0;
-		while (candelsTmp.size() < 100) {
+		while (candlesTmp.size() < 100) {
 			dateStart = dateStart.plusHours(-20);
-			candelsTmp = candelRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateAsc(market.getCode(), EnumTimeRange.H1, dateStart, dateEnd);
+			candlesTmp = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateAsc(market.getCode(), EnumTimeRange.H1, dateStart, dateEnd);
 			if (nbTry++ > 10) {
-				throw new IllegalArgumentException("No candel found after 10 tries between " + dateStart+ " and " + dateEnd + " for market " + market.getCode());
+				throw new IllegalArgumentException("No candle found after 10 tries between " + dateStart+ " and " + dateEnd + " for market " + market.getCode());
 			}
 		}
 
@@ -97,30 +97,30 @@ public class BacktestFeature extends AbstractFeature {
 			data.setDirection(EnumDirection.BUY.name());
 		}
 
-		candels = candelRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateDesc(
+		candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateDesc(
 				data.getMarket().getCode(),
 				timeRange, 
 				period.getDateStart(),
 				period.getDateEnd(),
-				PageRequest.of(0, MAX_CANDELS));
-		for (int i = 0; i < 10 && candels.size() < 100; i++) {
+				PageRequest.of(0, MAX_candleS));
+		for (int i = 0; i < 10 && candles.size() < 100; i++) {
 			stretchZone(10);
 			period = getPeriodOfTime();
-			candels = candelRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateDesc(
+			candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateDesc(
 					data.getMarket().getCode(),
 					timeRange, 
 					period.getDateStart(),
 					period.getDateEnd(),
-					PageRequest.of(0, MAX_CANDELS));
+					PageRequest.of(0, MAX_candleS));
 			System.out.println("Auto expand zone");
 		}
-		Collections.reverse(candels);
+		Collections.reverse(candles);
 
-		candels.stream().forEach(c -> c.setColor(null));
-		points.forEach(candel -> {
-			candels.stream().filter(c -> c.getDate().equals(candel.getDate())).forEach(c -> c.setColor(Color.WHITE));
+		candles.stream().forEach(c -> c.setColor(null));
+		points.forEach(candle -> {
+			candles.stream().filter(c -> c.getDate().equals(candle.getDate())).forEach(c -> c.setColor(Color.WHITE));
 		});
-		data.setCandels(candels);
+		data.setCandles(candles);
 		
 		if (currentMarket == null || !currentMarket.equals(data.getMarketCode())) {
 			currentMarket = data.getMarketCode();
@@ -132,10 +132,10 @@ public class BacktestFeature extends AbstractFeature {
 		EnumTimeRange timeRange = data.getTimeRange();
 		PeriodOfTime period = getPeriodOfTime();
 		Pageable page = PageRequest.of(0, value);
-		List<Candel> candels = candelRepository.findByMarketAndTimeRangeAndDateBeforeOrderByDateDesc(
+		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBeforeOrderByDateDesc(
 				data.getMarket().getCode() ,timeRange, period.getDateStart(), page);
-		if (candels != null && !candels.isEmpty()) {
-			savePeriod(Iterables.getLast(candels).getDate(), period.getDateEnd());
+		if (candles != null && !candles.isEmpty()) {
+			savePeriod(Iterables.getLast(candles).getDate(), period.getDateEnd());
 		}
 		mainPanel.unzoomMaximum();
 	}
@@ -144,9 +144,9 @@ public class BacktestFeature extends AbstractFeature {
 		EnumTimeRange timeRange = data.getTimeRange();
 		PeriodOfTime period = getPeriodOfTime();
 		Pageable page = PageRequest.of(0, nbShift);
-		List<Candel> nextCandels = candelRepository.findByMarketAndTimeRangeAndDateBeforeOrderByDateDesc(data.getMarket().getCode() ,timeRange, period.getDateEnd(), page);
-		if (!nextCandels.isEmpty()) {
-			saveDateEnd(Iterables.getLast(nextCandels).getDate());
+		List<Candle> nextCandles = candleRepository.findByMarketAndTimeRangeAndDateBeforeOrderByDateDesc(data.getMarket().getCode() ,timeRange, period.getDateEnd(), page);
+		if (!nextCandles.isEmpty()) {
+			saveDateEnd(Iterables.getLast(nextCandles).getDate());
 		}
 	}
 
@@ -154,14 +154,14 @@ public class BacktestFeature extends AbstractFeature {
 		EnumTimeRange timeRange = data.getTimeRange();
 		PeriodOfTime period = getPeriodOfTime();
 		Pageable page = PageRequest.of(0, nbShift);
-		List<Candel> nextCandels = candelRepository.findByMarketAndTimeRangeAndDateAfterOrderByDateAsc(data.getMarket().getCode(), timeRange, period.getDateEnd(), page);
-		if (!nextCandels.isEmpty()) {
-			saveDateEnd(Iterables.getLast(nextCandels).getDate());
+		List<Candle> nextCandles = candleRepository.findByMarketAndTimeRangeAndDateAfterOrderByDateAsc(data.getMarket().getCode(), timeRange, period.getDateEnd(), page);
+		if (!nextCandles.isEmpty()) {
+			saveDateEnd(Iterables.getLast(nextCandles).getDate());
 		}
 	}
 
-	public List<Candel> getCandels() {
-		return candels;
+	public List<Candle> getCandles() {
+		return candles;
 	}
 
 	public void keyReleased(int keyCode) {
@@ -172,7 +172,7 @@ public class BacktestFeature extends AbstractFeature {
 		//ctrl
 		if (keyCode == 16) {
 			enabledZoom = true;
-			topPanel.getTimeRangeComboBox().setSelectedItem(candels);
+			topPanel.getTimeRangeComboBox().setSelectedItem(candles);
 		}
 	}
 

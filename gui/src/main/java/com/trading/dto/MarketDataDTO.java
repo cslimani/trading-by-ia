@@ -4,7 +4,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 import com.trading.entity.Market;
 
 import lombok.Data;
@@ -16,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 public class MarketDataDTO {
 
 
-	private List<Candel> candels = new ArrayList<Candel>();
-	private List<Candel> forwardingCandels = new ArrayList<Candel>();
+	private List<Candle> candles = new ArrayList<Candle>();
+	private List<Candle> forwardingCandles = new ArrayList<Candle>();
 	@NonNull
 	private Market market;
-	private Candel lastCandel;
+	private Candle lastCandle;
 	private ArrayList<LocalTime> tradingHoursList;
 
 }

@@ -41,7 +41,7 @@ public class TopPanel  extends AbstractPanel{
 	private JTextArea nbBosTextArea;
 	private JTextArea deltaPriceTextArea;
 	private JTextArea tradeInfoTextArea;
-	private JTextArea nbCandelsArea;
+	private JTextArea nbCandlesArea;
 	private JTextArea colorPanel;
 	private boolean disableListener;
 	private JTextArea indicatorTextArea;
@@ -54,9 +54,9 @@ public class TopPanel  extends AbstractPanel{
 		colorPanel.setSize(100, 100);
 		colorPanel.setText(IntStream.range(1, 30).boxed().map(_ -> " ").reduce(" ", (s1,s2) -> s1+ s2));
 		
-		nbCandelsArea = new JTextArea();
-		nbCandelsArea.setLocation(20, 0);
-		add(nbCandelsArea);
+		nbCandlesArea = new JTextArea();
+		nbCandlesArea.setLocation(20, 0);
+		add(nbCandlesArea);
 		
 		nbBosTextArea = new JTextArea();
 		nbBosTextArea.setLocation(20, 0);
@@ -188,8 +188,8 @@ public class TopPanel  extends AbstractPanel{
 		}).start();
 	}
 
-	public void setNbCandels(int size) {
-		nbCandelsArea.setText("Size = " + size);
+	public void setNbCandles(int size) {
+		nbCandlesArea.setText("Size = " + size);
 	}
 
 	public void setTradeInfo(String info, Color color) {
@@ -211,8 +211,8 @@ public class TopPanel  extends AbstractPanel{
 		}
 	}
 
-	public void setCandelCounter(String text) {
-		nbCandelsArea.setText(text);
+	public void setCandleCounter(String text) {
+		nbCandlesArea.setText(text);
 	}
 
 	public void updateIndicator(Double rsi) {

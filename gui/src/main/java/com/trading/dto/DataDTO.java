@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.stereotype.Component;
 
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 import com.trading.entity.Market;
 import com.trading.enums.EnumMode;
 import com.trading.enums.EnumTimeRange;
@@ -25,12 +25,12 @@ public class DataDTO {
 	private Double priceMin;
 	private Double gapPrice;
 	private long gapSeconds;
-	private List<Candel> candels;
-	private Map<LocalDateTime, Candel> mapCandels = new HashMap<>();
+	private List<Candle> candles;
+	private Map<LocalDateTime, Candle> mapCandles = new HashMap<>();
 	private List<GraphDateDTO> graphDates;
 	private Market market;
-	private int candelWidth;
-	private int spaceBetweenCandels;
+	private int candleWidth;
+	private int spaceBetweenCandles;
 	private int position;
 	private List<GuiLineDTO> lines = new ArrayList<GuiLineDTO>();
 	private EnumTimeRange timeRange;
@@ -42,7 +42,7 @@ public class DataDTO {
 	private int viewWidth=0;
 	private int viewTotalWidth=0;
 	private int viewHeight=0;
-	private int nbCandelsAdded=0;
+	private int nbCandlesAdded=0;
 	private List<HorizontalLine> pricesToDraw = new CopyOnWriteArrayList<>();
 	int indexTrade = 0;
 	int index = 0;
@@ -56,12 +56,12 @@ public class DataDTO {
 	Map<String, Market> mapMarkets = new ConcurrentHashMap<String, Market>();
 	List<VerticalLine> verticalLines = new ArrayList<VerticalLine>();
 	
-	public void init(Market market, int candelWidth, int spaceBetweenCandels, EnumTimeRange timeRange, EnumMode mode) {
+	public void init(Market market, int candleWidth, int spaceBetweenCandles, EnumTimeRange timeRange, EnumMode mode) {
 		this.market = market;
-		this.candelWidth = candelWidth;
+		this.candleWidth = candleWidth;
 		this.position = 0;
 		this.timeRange = timeRange;
-		this.spaceBetweenCandels = spaceBetweenCandels;
+		this.spaceBetweenCandles = spaceBetweenCandles;
 		this.mode = mode;
 	}
 

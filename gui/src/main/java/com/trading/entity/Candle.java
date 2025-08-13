@@ -24,7 +24,7 @@ import lombok.Data;
 @JsonInclude(Include.NON_NULL)
 @Entity
 @Table
-public class Candel {
+public class Candle {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,12 +72,12 @@ public class Candel {
 		return getClose() <= getOpen();
 	}
 
-	public boolean isBefore(Candel candel) {
-		return date.isBefore(candel.getDate());
+	public boolean isBefore(Candle candle) {
+		return date.isBefore(candle.getDate());
 	}
 	
-	public boolean isAfter(Candel candel) {
-		return date.isAfter(candel.getDate());
+	public boolean isAfter(Candle candle) {
+		return date.isAfter(candle.getDate());
 	}
 	
 	public Double getMax() {
@@ -108,14 +108,10 @@ public class Candel {
 		return   closeBid == null ? closeAsk : closeBid;
 	}
 	
-	public CandelId buildId() {
-		return new CandelId(market, date, timeRange); 
-	}
-	
-	public boolean equalsPrices(Candel otherCandel) {
-		return openBid != null && openBid.equals(otherCandel.getOpenBid()) && 
-				closeBid != null && closeBid.equals(otherCandel.getCloseBid()) && 
-				lowBid != null && lowBid.equals(otherCandel.getLowBid()) && 
-				highBid != null && highBid.equals(otherCandel.getHighBid());
+	public boolean equalsPrices(Candle otherCandle) {
+		return openBid != null && openBid.equals(otherCandle.getOpenBid()) && 
+				closeBid != null && closeBid.equals(otherCandle.getCloseBid()) && 
+				lowBid != null && lowBid.equals(otherCandle.getLowBid()) && 
+				highBid != null && highBid.equals(otherCandle.getHighBid());
 	}
 }

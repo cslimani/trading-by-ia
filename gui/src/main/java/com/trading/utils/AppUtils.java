@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.trading.entity.Candel;
+import com.trading.entity.Candle;
 import com.trading.entity.Market;
 
 public class AppUtils {
@@ -65,10 +65,10 @@ public class AppUtils {
 
 	}
 
-	public static Candel getMin(int startIndex, int endIndex, List<Candel> candels) {
-		Candel min = null;
+	public static Candle getMin(int startIndex, int endIndex, List<Candle> candles) {
+		Candle min = null;
 		for (int i = Math.max(startIndex, 0); i <= endIndex; i++) {
-			Candel c = candels.get(i);
+			Candle c = candles.get(i);
 			if (min == null || c.getLow() < min.getLow()) {
 				min = c;
 			}
@@ -76,10 +76,10 @@ public class AppUtils {
 		return min;
 	}
 
-	public static Candel getMax(int startIndex, int endIndex, List<Candel> candels) {
-		Candel max = null;
+	public static Candle getMax(int startIndex, int endIndex, List<Candle> candles) {
+		Candle max = null;
 		for (int i = Math.max(startIndex, 0); i <= endIndex; i++) {
-			Candel c = candels.get(i);
+			Candle c = candles.get(i);
 			if (max == null || c.getHigh() > max.getHigh()) {
 				max = c;
 			}
