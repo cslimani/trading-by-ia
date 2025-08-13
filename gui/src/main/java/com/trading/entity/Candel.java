@@ -3,8 +3,6 @@ package com.trading.entity;
 import java.awt.Color;
 import java.time.LocalDateTime;
 
-import org.apache.commons.lang3.BooleanUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -14,8 +12,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
@@ -24,35 +23,34 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_NULL)
 @Entity
-@Table(name = "CANDEL")
-@IdClass(CandelId.class)
+@Table
 public class Candel {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
 	private LocalDateTime date;
-	@Id
+	@Column(name = "market_code")
 	private String market;
-	@Id
 	@Enumerated(EnumType.STRING)
 	private EnumTimeRange timeRange;
-	@Column
+	@Column(name = "low")
 	private Double lowAsk;
-	@Column
+	@Column(name = "high")
 	private Double highAsk;
-	@Column
+	@Column(name = "open")
 	private Double openAsk;
-	@Column
+	@Column(name = "close")
 	private Double closeAsk;
-	@Column
+	@Column(name = "low", insertable=false, updatable=false)
 	private Double lowBid;
-	@Column
+	@Column(name = "high", insertable=false, updatable=false)
 	private Double highBid;
-	@Column
+	@Column(name = "open", insertable=false, updatable=false)
 	private Double openBid;
-	@Column
+	@Column(name = "close", insertable=false, updatable=false)
 	private Double closeBid;
-	@Column
-	private Boolean verified;
 	@Transient
 	Color color;
 	@Transient
@@ -61,8 +59,6 @@ public class Candel {
 	private boolean draw;
 	@Transient
 	private LocalDateTime endDate;
-//	@Transient
-//	boolean startTrade;
 	@Transient
 	boolean endTrade;
 	@Transient
@@ -114,10 +110,6 @@ public class Candel {
 	
 	public CandelId buildId() {
 		return new CandelId(market, date, timeRange); 
-	}
-	
-	public boolean isVerified() {
-		return BooleanUtils.isTrue(verified); 
 	}
 	
 	public boolean equalsPrices(Candel otherCandel) {

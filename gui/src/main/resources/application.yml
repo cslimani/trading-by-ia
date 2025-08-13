@@ -16,12 +16,12 @@
 spring:
    datasource:
       hikari.maximum-pool-size: 20
-      schema: backtest
+      schema: trading
    jpa:
       hibernate:
          ddl-auto: update
       properties:
-         hibernate.default_schema: backtest
+         hibernate.default_schema: trading
    main.allow-circular-references: true
    task.scheduling.pool.size: 10
 #spring.jpa.properties.hibernate.show_sql=true

@@ -16,8 +16,6 @@ public class Market {
 	@Column(name = "CODE", nullable = false)
 	String code;
 	Integer scale;
-	@Column(name = "enabled_price")
-	Boolean enabled;
 
 	@Transient
 	boolean openTrade;

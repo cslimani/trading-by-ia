@@ -39,7 +39,7 @@ public class LeftPanel extends AbstractPanel{
 	}
 
 	public void loadAllMarketsFromDatabase() {
-		marketDAO.findByEnabled(true).forEach(m -> data.getMapMarkets().put(m.getCode(), m));
+		marketDAO.findAll().forEach(m -> data.getMapMarkets().put(m.getCode(), m));
 		reloadMarkets();
 	}
 
