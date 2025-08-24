@@ -1,0 +1,255 @@
+Excellente question sur l'équilibrage des données ! C'est critique car en trading réel, les bonnes accumulations sont **très rares** par rapport aux fausses.
+
+## Répartition réaliste vs optimale
+
+### Réalité du marché :
+- **95-98%** : Fausses accumulations / consolidations qui échouent
+- **2-5%** : Vraies accumulations qui mènent à un breakout
+
+### Répartition pour l'entraînement :
+
+```python
+class DatasetBalancer:
+    def __init__(self, 
+                 positive_ratio=0.3,      # 30% de signaux positifs
+                 progressive_zones=True):
+        """
+        Ratio recommandé pour l'entraînement:
+        - 30% échantillons positifs (accumulations réussies)
+        - 70% échantillons négatifs
+        
+        Mais avec nuances dans chaque catégorie
+        """
+        self.positive_ratio = positive_ratio
+        self.progressive_zones = progressive_zones
+    
+    def create_balanced_dataset(self, data, accumulation_events):
+        samples = []
+        
+        # 1. POSITIFS (30% du dataset final)
+        positive_samples = self.extract_positive_samples(
+            data, accumulation_events
+        )
+        
+        # 2. NÉGATIFS (70% du dataset final)
+        negative_samples = self.extract_negative_samples(
+            data, len(positive_samples)
+        )
+        
+        return self.combine_and_shuffle(positive_samples, negative_samples)
+```
+
+## Stratégie de répartition détaillée :
+
+### 1. **Échantillons POSITIFS (30% total)** avec gradation :
+
+```python
+def extract_positive_samples(self, data, accumulation_events):
+    positive_samples = []
+    
+    for event in accumulation_events:
+        breakout_idx = event['breakout_index']
+        
+        # Zone 1: Ultra-proche (0-10 jours) → Label 0.9-1.0 (10% du dataset)
+        for i in range(breakout_idx - 10, breakout_idx):
+            sample = {
+                'data': data[i-300:i],
+                'label': 0.9 + (10 - (breakout_idx - i)) / 100,
+                'weight': 3.0,  # Très important
+                'zone': 'critical'
+            }
+            positive_samples.append(sample)
+        
+        # Zone 2: Proche (10-30 jours) → Label 0.7-0.9 (10% du dataset)
+        for i in range(breakout_idx - 30, breakout_idx - 10):
+            if np.random.random() < 0.7:  # Sous-échantillonner
+                sample = {
+                    'data': data[i-300:i],
+                    'label': 0.7 + (30 - (breakout_idx - i)) / 100,
+                    'weight': 2.0,
+                    'zone': 'late_accumulation'
+                }
+                positive_samples.append(sample)
+        
+        # Zone 3: Moyenne (30-100 jours) → Label 0.4-0.7 (10% du dataset)
+        for i in range(breakout_idx - 100, breakout_idx - 30):
+            if np.random.random() < 0.3:  # Fort sous-échantillonnage
+                sample = {
+                    'data': data[i-300:i],
+                    'label': 0.4 + (100 - (breakout_idx - i)) / 200,
+                    'weight': 1.0,
+                    'zone': 'mid_accumulation'
+                }
+                positive_samples.append(sample)
+    
+    return positive_samples
+```
+
+### 2. **Échantillons NÉGATIFS (70% total)** avec diversité :
+
+```python
+def extract_negative_samples(self, data, target_count):
+    negative_samples = []
+    
+    # Type 1: Fausses accumulations (40% du dataset)
+    # Patterns qui ressemblent à des accumulations mais échouent
+    false_accumulations = self.find_failed_consolidations(data)
+    for pattern in false_accumulations:
+        sample = {
+            'data': pattern['data'],
+            'label': 0.1 + np.random.random() * 0.2,  # 0.1-0.3
+            'weight': 1.5,  # Important pour apprendre la différence
+            'zone': 'false_positive'
+        }
+        negative_samples.append(sample)
+    
+    # Type 2: Trends baissiers (15% du dataset)
+    downtrends = self.find_downtrends(data)
+    for trend in downtrends:
+        sample = {
+            'data': trend['data'],
+            'label': 0.0 + np.random.random() * 0.1,  # 0.0-0.1
+            'weight': 0.8,
+            'zone': 'downtrend'
+        }
+        negative_samples.append(sample)
+    
+    # Type 3: Random/Noise (15% du dataset)
+    random_periods = self.extract_random_periods(data)
+    for period in random_periods:
+        sample = {
+            'data': period,
+            'label': 0.05 + np.random.random() * 0.15,  # 0.05-0.2
+            'weight': 0.5,
+            'zone': 'noise'
+        }
+        negative_samples.append(sample)
+    
+    return negative_samples[:target_count * 2]  # 2x plus de négatifs
+```
+
+## Configuration optimale recommandée :
+
+```python
+class TrainingConfig:
+    """Configuration équilibrée pour l'entraînement"""
+    
+    # Répartition globale
+    DATASET_COMPOSITION = {
+        # Positifs (30%)
+        'critical_zone': 0.10,        # 0-10 jours avant breakout
+        'late_accumulation': 0.10,    # 10-30 jours
+        'mid_accumulation': 0.10,     # 30-100 jours
+        
+        # Négatifs (70%)
+        'false_accumulation': 0.40,   # Consolidations ratées
+        'downtrend': 0.15,           # Tendances baissières
+        'random_noise': 0.15         # Périodes aléatoires
+    }
+    
+    # Poids pour la loss function
+    SAMPLE_WEIGHTS = {
+        'critical_zone': 3.0,
+        'late_accumulation': 2.0,
+        'mid_accumulation': 1.0,
+        'false_accumulation': 1.5,
+        'downtrend': 0.8,
+        'random_noise': 0.5
+    }
+    
+    # Labels progressifs
+    LABEL_RANGES = {
+        'critical_zone': (0.9, 1.0),
+        'late_accumulation': (0.7, 0.9),
+        'mid_accumulation': (0.4, 0.7),
+        'false_accumulation': (0.1, 0.3),
+        'downtrend': (0.0, 0.1),
+        'random_noise': (0.05, 0.2)
+    }
+```
+
+## Stratégies d'entraînement :
+
+### 1. **Curriculum Learning** (Recommandé)
+Commencez simple puis complexifiez :
+
+```python
+def curriculum_training(model, data):
+    # Phase 1: Cas évidents (2 epochs)
+    easy_data = filter_obvious_cases(data)  # 50/50 très clairs
+    model.fit(easy_data, epochs=2)
+    
+    # Phase 2: Cas moyens (3 epochs)
+    medium_data = add_medium_difficulty(data)  # 35/65
+    model.fit(medium_data, epochs=3)
+    
+    # Phase 3: Cas réalistes (5 epochs)
+    realistic_data = create_realistic_distribution(data)  # 30/70
+    model.fit(realistic_data, epochs=5, 
+              sample_weight=calculate_weights(realistic_data))
+```
+
+### 2. **Focal Loss** pour gérer le déséquilibre :
+
+```python
+def focal_loss(y_true, y_pred, gamma=2.0, alpha=0.25):
+    """
+    Pénalise plus les erreurs sur les échantillons difficiles
+    """
+    epsilon = tf.keras.backend.epsilon()
+    y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
+    
+    # Focal loss
+    p_t = tf.where(tf.equal(y_true, 1), y_pred, 1 - y_pred)
+    alpha_t = tf.where(tf.equal(y_true, 1), alpha, 1 - alpha)
+    
+    loss = - alpha_t * tf.pow(1. - p_t, gamma) * tf.log(p_t)
+    return tf.reduce_mean(loss)
+```
+
+### 3. **Métriques adaptées** :
+
+```python
+def custom_metrics(y_true, y_pred, threshold=0.7):
+    """
+    Métriques focalisées sur la zone critique (labels > 0.7)
+    """
+    critical_mask = y_true > threshold
+    
+    # Précision sur les signaux forts uniquement
+    critical_precision = precision_score(
+        y_true[critical_mask] > threshold,
+        y_pred[critical_mask] > threshold
+    )
+    
+    # Rappel pondéré par l'importance
+    weighted_recall = np.sum(
+        (y_pred > threshold) & (y_true > threshold) * y_true
+    ) / np.sum(y_true[y_true > threshold])
+    
+    return {
+        'critical_precision': critical_precision,
+        'weighted_recall': weighted_recall
+    }
+```
+
+## Recommandations finales :
+
+1. **Commencez avec 30/70** (positifs/négatifs) pour l'entraînement
+2. **Testez sur distribution réelle** (5/95) pour validation
+3. **Utilisez des poids** pour compenser le déséquilibre
+4. **Augmentez les données positives** avec du noise/shifts
+5. **Monitoring spécial** : Suivez surtout la précision sur labels > 0.8
+
+```python
+# Pipeline complet
+pipeline = DataPipeline(
+    train_ratio={'positive': 0.3, 'negative': 0.7},
+    validation_ratio={'positive': 0.05, 'negative': 0.95},  # Réaliste!
+    use_sample_weights=True,
+    use_focal_loss=True,
+    progressive_labels=True
+)
+```
+
+Le plus important : votre modèle doit être **très sélectif** en production. Mieux vaut rater des opportunités que générer des faux positifs coûteux !

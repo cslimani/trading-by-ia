@@ -11,13 +11,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import com.trading.dto.DataDTO;
-import com.trading.entity.Market;
-import com.trading.enums.EnumMode;
-import com.trading.enums.EnumTimeRange;
 import com.trading.gui.MainPanel;
 import com.trading.gui.PricePanel;
 import com.trading.gui.TopPanel;
@@ -32,7 +28,7 @@ public class GuiFrame extends JFrame {
 	private static final long serialVersionUID = 3358629944258036149L;
 
 	private static final int candle_WIDTH = 10;
-	public static final int SPACE_BETWEEN_candleS = 2;
+	public static final int SPACE_BETWEEN_CANDLES = 2;
 	@Autowired
 	private MainPanel mainPanel;
 	@Autowired
@@ -42,8 +38,6 @@ public class GuiFrame extends JFrame {
 //	@Autowired
 //	private LeftPanel leftPanel;
 	@Autowired
-	private Environment env;
-	@Autowired
 	private PriceService priceService;
 	@Autowired
 	private DataDTO data;
@@ -51,15 +45,12 @@ public class GuiFrame extends JFrame {
 	private MarketRepository marketDAO;
 	
 	
-	public static EnumTimeRange TIME_RANGE = EnumTimeRange.M1;
-	public static String MARKET_CODE = "US100";
+//	public static EnumTimeRange TIME_RANGE = EnumTimeRange.M1;
+//	public static String MARKET_CODE = "US100";
 	
 	@PostConstruct
 	public void init() throws IOException {
-		Market market = marketDAO.getByCode(MARKET_CODE);
-		
-		String activeProfile = env.getActiveProfiles()[0].toUpperCase();
-		data.init(market, candle_WIDTH, SPACE_BETWEEN_candleS, TIME_RANGE, EnumMode.valueOf(activeProfile));
+		data.init(candle_WIDTH, SPACE_BETWEEN_CANDLES);
 		priceService.init(this.getWidth());
 		
 		topPanel.init();
@@ -91,6 +82,8 @@ public class GuiFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainPanel.moveViewToEnd();
 		mainPanel.requestFocusInWindow();
+		
+		priceService.postInit(this.getWidth());
 	}
 
 	public void updateTile(String title) {

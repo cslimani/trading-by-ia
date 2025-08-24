@@ -14,7 +14,6 @@ import javax.swing.JTextArea;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.trading.GuiFrame;
 import com.trading.enums.EnumTimeRange;
 
 import jakarta.annotation.PostConstruct;
@@ -73,7 +72,7 @@ public class TopPanel  extends AbstractPanel{
 		});
 		
 		timeRangeComboBox = new JComboBox<EnumTimeRange>(EnumTimeRange.values());
-		timeRangeComboBox.setSelectedItem(GuiFrame.TIME_RANGE);
+		timeRangeComboBox.setSelectedItem(data.getTimeRange());
 		timeRangeComboBox.setLocation(20, 20);
 		add(timeRangeComboBox);
 		timeRangeComboBox.addActionListener(_ -> {
@@ -82,7 +81,8 @@ public class TopPanel  extends AbstractPanel{
 			}
 		});
 
-		addTimerangeButton(EnumTimeRange.S15);
+		addTimerangeButton(EnumTimeRange.S30);
+		addTimerangeButton(EnumTimeRange.M1);
 		addTimerangeButton(EnumTimeRange.M5);
 		
 		backTestInfoArea = new JTextArea();
@@ -215,8 +215,8 @@ public class TopPanel  extends AbstractPanel{
 		nbCandlesArea.setText(text);
 	}
 
-	public void updateIndicator(Double rsi) {
-		indicatorTextArea.setText("RSI = " +rsi.intValue());
+	public void updateIndicator(String value) {
+		indicatorTextArea.setText(value);
 	}
 
 	public void addMarketReady(String market) {

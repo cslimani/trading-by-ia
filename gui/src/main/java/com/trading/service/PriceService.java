@@ -12,16 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.trading.GuiFrame;
-import com.trading.component.HorizontalLineComponent;
+import com.trading.component.HorizontalLineFeature;
+import com.trading.component.IndicatorFeature;
 import com.trading.dto.DataDTO;
 import com.trading.dto.GraphDateDTO;
 import com.trading.entity.Candle;
-import com.trading.enums.EnumMode;
-import com.trading.feature.BacktestFeature;
+import com.trading.entity.Market;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
 import com.trading.repository.CandleRepository;
 import com.trading.repository.MarketRepository;
+import com.trading.runner.Runner;
 
 import jakarta.annotation.PostConstruct;
 
@@ -40,9 +41,11 @@ public class PriceService {
 	@Autowired
 	TopPanel topPanel;
 	@Autowired
-	BacktestFeature backtestFeature;
+	Runner runner;
 	@Autowired
-	HorizontalLineComponent horizontalLineComponent;
+	HorizontalLineFeature horizontalLineComponent;
+	@Autowired
+	IndicatorFeature indicatorFeature;
 
 	@PostConstruct
 	public void init() {
@@ -50,20 +53,15 @@ public class PriceService {
 
 	public void init(int panelWidth) {
 		horizontalLineComponent.setEnabled(true);
-		if (data.getMode() == EnumMode.LIVE) {
-		} else if (data.getMode() == EnumMode.ACCUMULATION) {
-		} else if (data.getMode() == EnumMode.BACKTEST) {
-			backtestFeature.init();
-		}
+		runner.init();
+		Market market = marketRepository.getByCode(data.getMarketCode());
+		data.setMarket(market);
 		loadData(panelWidth);
 	}
 
 	public void loadData(int panelWidth) {
-		if (data.getMode() == EnumMode.ACCUMULATION) {
-		} else if (data.getMode() == EnumMode.BACKTEST) {
-			backtestFeature.loadData();
-		} else if (data.getMode() == EnumMode.LIVE) {
-		}
+		runner.loadData();
+		indicatorFeature.afterCandlesLoaded();
 		data.setDateStart(data.getCandles().get(0).getDate());
 		List<Candle> candles = data.getCandles();
 		data.getMapCandles().clear();
@@ -82,7 +80,7 @@ public class PriceService {
 	}
 
 	public synchronized void zoomIn() {
-		if (data.getSpaceBetweenCandles() < GuiFrame.SPACE_BETWEEN_candleS) {
+		if (data.getSpaceBetweenCandles() < GuiFrame.SPACE_BETWEEN_CANDLES) {
 			data.setSpaceBetweenCandles(data.getSpaceBetweenCandles() + 1);
 		} else {
 			data.setCandleWidth(data.getCandleWidth() + 1);
@@ -143,53 +141,11 @@ public class PriceService {
 		return viewTotalWidth+ EXTRA_WIDTH;
 	}
 
-
-//	@Transactional
-//	public void synchroPricesWithRemote(String market) {
-//		if (market == null) {
-//			System.out.println("Market is null");
-//			return;
-//		}
-//		TickPrice lastTick = tickPriceRepository.findFirstByMarketOrderByDateDesc(market);
-//		LocalDateTime date = null;
-//		if (lastTick != null) {
-//			date = lastTick.getDate();
-//		} else {
-//			date = LocalDateTime.of(2023, 6, 1, 0, 0);
-//		}
-//		long time = System.currentTimeMillis();
-//		List<TickPrice> pricesAfterLast = jdbcService.getTickPricesAfter(market, date)
-//				.stream()
-//				.filter(t -> t.getAsk() != null || t.getBid() != null)
-//				.toList();
-//		//		System.out.println(market + " - Prices found " + pricesAfterLast.size() + " - time " + (System.currentTimeMillis() - time)/1000);
-//		if (!pricesAfterLast.isEmpty()) {
-//			tickPriceRepository.saveAll(pricesAfterLast);
-//			Arrays.stream(EnumTimeRange.values()).parallel().forEach(tr -> {
-//				long timee = System.currentTimeMillis();
-//				List<Candle> newCandles = convertTicksToCandles(pricesAfterLast, tr, market);
-//				//									System.out.println(market + " - Time to convert " + (System.currentTimeMillis() - timee)/1000 + " " + tr);
-//				timee = System.currentTimeMillis();
-//				List<Candle> candlesAlreadyExist = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDateAsc(
-//						market, 
-//						tr, 
-//						newCandles.get(0).getDate(),
-//						newCandles.get(newCandles.size()-1).getDate());
-//				candlesAlreadyExist.forEach(candleRepository::delete);
-//				candleRepository.saveAll(newCandles);
-//				//				System.out.println(market + " - Time to save " + (System.currentTimeMillis() - timee)/1000 + " " + tr);
-//			});
-//			System.out.println("Synchro finished for " + pricesAfterLast.size() + " prices for market " + market );
-//		}
-//		//		List<TickPrice> allTicks = tickPriceRepository.findByMarketAndDateBetweenOrderByDate(market, LocalDateTime.of(2023, 1, 1, 0, 0), LocalDateTime.of(2024, 1, 1, 0, 0));
-//		//		Arrays.stream(EnumTimeRange.values()).forEach(tr -> {
-//		//			List<Candle> newCandles = convertTicksToCandles(allTicks, tr, market);
-//		//			candleRepository.saveAll(newCandles);
-//		//		});
-//		//		System.out.println("Synchro candles finished for market " + market);
-//	}
-
-
+	public void postInit(int panelWidth) {
+		runner.postInit();
+		loadData(panelWidth);		
+	}
 
 	
+
 }

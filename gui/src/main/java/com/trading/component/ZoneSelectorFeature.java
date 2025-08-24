@@ -6,10 +6,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.trading.feature.AbstractFeature;
-
 @Component
-public class ZoneSelectorComponent extends AbstractFeature{
+public class ZoneSelectorFeature extends AbstractFeature{
 
 	private boolean zoneOnGoing;
 	private boolean pointOnGoing;

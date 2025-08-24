@@ -31,7 +31,6 @@ public class Candle {
 	private Long id;
 	
 	private LocalDateTime date;
-	@Column(name = "market_code")
 	private String market;
 	@Enumerated(EnumType.STRING)
 	private EnumTimeRange timeRange;
@@ -51,6 +50,7 @@ public class Candle {
 	private Double openBid;
 	@Column(name = "close", insertable=false, updatable=false)
 	private Double closeBid;
+	private Double volume;
 	@Transient
 	Color color;
 	@Transient

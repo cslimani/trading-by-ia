@@ -10,7 +10,7 @@ import com.trading.entity.Candle;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class RSI implements Indicator {
+public class RsiCalculator implements Indicator {
 
 	Map<Integer, Double> map = new HashMap<>();
 	Map<LocalDateTime, Double> mapDate = new HashMap<>();
@@ -19,7 +19,7 @@ public class RSI implements Indicator {
 	List<Candle> candles;
 	private int nbPeriods;
 
-	public RSI(List<Candle> candles, int nbPeriods) {
+	public RsiCalculator(List<Candle> candles, int nbPeriods) {
 		this.candles = candles;
 		this.nbPeriods = nbPeriods;
 		init();

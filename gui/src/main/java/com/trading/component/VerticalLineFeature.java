@@ -6,45 +6,40 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.trading.feature.AbstractFeature;
-
 @Component
-public class HorizontalLineComponent extends AbstractFeature{
+public class VerticalLineFeature extends AbstractFeature {
 
 	private boolean selection = false;
-	private Double price;
+	private LocalDateTime date;
 
 	public void draw(Graphics2D g2d) {
-		if (price != null) {
+		if (date != null && mainPanel.dateToPixel(date) != null) {
 			g2d.setColor(Color.WHITE);
-			int y = mainPanel.priceToYPixel(price);
-			g2d.drawLine(0, y, data.getViewTotalWidth(), y);
+			int x = mainPanel.dateToPixel(date);
+			g2d.drawLine(x, 0, x, data.getViewHeight());
 		}
 	}
-
+	
 	public void keyPressed(int keyCode) {
 		if (!enabled) {
 			return;
 		}
-		//<
-		if (keyCode == 153) {
+		//v
+		if (keyCode == 86) {
 			selection = true;
 		}
 	}
 
 	public void onClick(LocalDateTime date, Double price) {
 		if(selection) {
-			this.price = price;
+			this.date = date;
 		}
 	}
 
 	public void keyReleased(int keyCode) {
-		selection = false;	
-		// "c"
+		selection = false;		
 		if (keyCode == 67) {
-			price = null;
+			date = null;
 		}
 	}
-
-
 }

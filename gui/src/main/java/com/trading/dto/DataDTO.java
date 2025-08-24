@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
 import com.trading.entity.Market;
-import com.trading.enums.EnumMode;
 import com.trading.enums.EnumTimeRange;
 
 import lombok.Data;
@@ -29,6 +28,7 @@ public class DataDTO {
 	private Map<LocalDateTime, Candle> mapCandles = new HashMap<>();
 	private List<GraphDateDTO> graphDates;
 	private Market market;
+	private String marketCode;
 	private int candleWidth;
 	private int spaceBetweenCandles;
 	private int position;
@@ -49,20 +49,16 @@ public class DataDTO {
 	LocalDateTime dateEnd;
 	LocalDateTime dateStart;
 	boolean autoZoomDone = false;
-	private EnumMode mode;
 	String tradeType = "WICKOFF";
 	String source;
 	String direction;
 	Map<String, Market> mapMarkets = new ConcurrentHashMap<String, Market>();
 	List<VerticalLine> verticalLines = new ArrayList<VerticalLine>();
 	
-	public void init(Market market, int candleWidth, int spaceBetweenCandles, EnumTimeRange timeRange, EnumMode mode) {
-		this.market = market;
+	public void init(int candleWidth, int spaceBetweenCandles) {
 		this.candleWidth = candleWidth;
 		this.position = 0;
-		this.timeRange = timeRange;
 		this.spaceBetweenCandles = spaceBetweenCandles;
-		this.mode = mode;
 	}
 
 //	public boolean isBOSMode() {
@@ -77,7 +73,4 @@ public class DataDTO {
 //		return mode == EnumMode.TRADE_VISUALIZATION;
 //	}
 	
-	public String getMarketCode() {
-		return market.getCode();
-	}
 }

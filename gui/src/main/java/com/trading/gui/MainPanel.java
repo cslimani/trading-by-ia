@@ -207,7 +207,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 				if (candle.getColor() != null) {
 					g2d.setPaint(candle.getColor());
 				} else if (candle.isSelected()) {
-					g2d.setPaint(Color.WHITE);
+					g2d.setPaint(Color.decode("#4682B4"));
 				}else if (candle.isEndTrade()) {
 					g2d.setPaint(Color.ORANGE);
 				} else if (candle.isGoingUp()) {
@@ -311,6 +311,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		LocalDateTime date = getDateFromPixel(event.getPoint().x);
 		Double price = pixelToPrice(event.getPoint().y);
 		topPanel.setDateAndPrice(date, price);
+		indicatorFeature.mouseMoved(date, price);
 	}
 
 	@Override
@@ -333,6 +334,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		if (verticalLineComponent.isEnabled()) {
 			verticalLineComponent.onClick(date, price);
 		}
+		runner.mouseClicked(date, price);
 		repaint();
 	}
 
@@ -363,6 +365,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		//		trainablePatternComponent.keyPressed(e.getKeyCode());
 		horizontalLineComponent.keyPressed(e.getKeyCode());
 		verticalLineComponent.keyPressed(e.getKeyCode());
+		runner.keyPressed(e.getKeyCode());
 		//touche - du pav num
 		if (e.getKeyCode() == 109) {
 			unzoomMaximum();
@@ -374,6 +377,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 	public void keyReleased(KeyEvent e) {
 		horizontalLineComponent.keyReleased(e.getKeyCode());
 		verticalLineComponent.keyReleased(e.getKeyCode());
+		runner.keyReleased(e.getKeyCode());
 		repaint();
 	}
 
@@ -459,7 +463,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-
+		
 	}
 
 	public void reload() {
@@ -482,8 +486,6 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 			zoom(false);
 		}
 	}
-
-
 
 }
 

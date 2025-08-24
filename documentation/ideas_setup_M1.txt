@@ -1,0 +1,66 @@
+Tu as raison : **prendre uniquement “spring + retest”** peut te faire sortir souvent. La solution n’est pas d’entrer plus tôt, mais de **mieux filtrer** les springs et de **durcir l’exécution**. Voilà un cadre concret que tu peux appliquer tout de suite.
+
+# 1) Filtre le “vrai” spring (qualité du setup)
+
+Ne valide un spring que si **au moins 3 critères** sont vrais :
+
+* **Pool balayé significatif** : le spring prend **le bas du range + un niveau externe** (ex : low de séance / égalités de creux), pas juste un petit mèche interne.
+* **Rejet fort** : la bougie qui réintègre le range a un **corps ≥ 0,5 × ATR(14) M1/M5** et/ou laisse un **FVG** clair.
+* **Clôture inside** : le spring **clôture** dans le range en ≤ 3 bougies (évite les springs qui “traînent” sous le range).
+* **Contexte HTF** : tu es **dans** une zone de demande H1/H4 identifiée + en **discount** (≤ 50% du swing précédent).
+* **Temps passé en range** : au moins **15–30 min** d’accumulation (M1) avec **≥ 3 touches** de borne basse (évite les pseudo-ranges de 5 min).
+
+👉 Si tu n’as pas ce “A-setup”, **tu skips**. Ça réduit mécaniquement les stop-outs.
+
+# 2) Passe du “spring+retest” au “spring → CHOCH → retest”
+
+Au lieu d’acheter le test du spring “brut” :
+
+1. Spring qui balaye la liquidité.
+2. **CHOCH/shift haussier** (cassure du dernier LH) avec **déplacement** (bougie large, FVG).
+3. **Retest** sur : **50–66% du FVG** *ou* le **breaker/OB** créé par la bougie de cassure.
+
+➡️ Tu n’achètes pas “le creux”, tu achètes **la mitigation du déplacement**. C’est plus “cher”, mais **nettement plus robuste**.
+
+# 3) Règles d’exécution anti-wick (là où on se fait sortir)
+
+* **Stop “tolérant aux mèches”** : stop **sous l’extrême du spring − 0,1–0,2 × ATR(M1)** *ou* **stop à la clôture** (tu sors seulement si **une bougie clôture** sous l’extrême).
+* **Invalidation structurelle > prix** : si un **nouveau LL** se forme **après** ton CHOCH, tu sors — même si le stop n’a pas été touché.
+* **Time-stop** : si après l’entrée **10 bougies M1** il n’y a pas de HH net ou que le prix réintègre le range, je coupe (plein ou partiel).
+* **Retest “propre”** : le retest **ne doit pas** dépasser **79%** de l’impulsion post-CHOCH ; au-delà, c’est souvent un piège → **no trade**.
+
+# 4) Gestion pour lisser la variance
+
+* **Entrées fractionnées** : 2–3 limits (ex : 1) 50% FVG, 2) 62% OTE, 3) borne du breaker). Une seule peut être servie, mais tu évites de “chaser”.
+* **Deux stops** (mix) :
+
+  * ticket A (50–60% taille) : stop sous le spring (avec buffer ATR).
+  * ticket B (40–50%) : stop sous **l’OB HTF**.
+    → Moins d’éjections par mèche, au prix d’un RR moyen un peu plus bas.
+* **TP structurés** :
+
+  * **TP1** à **+1R** ou premier **pool interne** (hauts égaux LTF).
+  * **BE + trail** sous **HL LTF** ou sous **50% du FVG suivant**.
+  * **TP2** vers la **liquidité externe HTF** (PH du jour/semaine).
+
+# 5) Filtres contextuels qui font la différence
+
+* **Session & news** : exécute surtout **30–120 min** après l’ouverture principale du marché que tu trades. Évite **±10 min** autour d’une news high impact.
+* **M5 doit valider** : même si tu exécutes en M1, exige **une clôture haussière M5** post-CHOCH. Si M5 n’imprime pas de structure, **skip**.
+* **Prof. de sweep minimale** : le spring doit dépasser le bas du range d’au moins **0,3 × ATR(M5)** (pas de micro-sweeps).
+
+# 6) Check-list “Spring robuste”
+
+1. Zone **HTF** valide (demande H1/H4) + **discount**.
+2. Range **≥ 15–30 min** ; plusieurs touches.
+3. Spring balaye **un vrai pool** (low de séance / égalités).
+4. **Réintégration rapide** + **bougie de déplacement** (FVG).
+5. **CHOCH haussier** confirmé (clôture).
+6. **Retest** sur **FVG 50–66%**/**breaker**, pas plus profond que **79%**.
+7. **Stop** : sous spring (buffer ATR) **ou** à la **clôture** < spring.
+8. **TP1/TP2** + **time-stop** définis **avant** l’entrée.
+
+---
+
+Si tu appliques ces filtres + l’exécution “spring → CHOCH → retest”, ton **taux d’éjection** baisse nettement (tu rateras quelques décollages sans retest, c’est le prix). Si tu veux, je peux te générer un **pense-bête A4** avec ces règles et un **modèle de journal** (colonnes : type de spring, profondeur du sweep en ATR, présence FVG, session, news, MFE/MAE, RR final) pour que tu quantifies vite ce qui marche chez toi. *(Éducatif, pas un conseil en investissement ; garde ton risque ≤ 1%/trade.)*
+
