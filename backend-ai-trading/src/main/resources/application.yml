@@ -1,0 +1,28 @@
+spring:
+  main.log-startup-info: false
+  main.banner-mode: off  
+  jpa:
+    hibernate.ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc.time_zone: Europe/Paris
+        format_sql: true 
+  datasource:
+    url: ${JDBC_URL:jdbc:postgresql://127.0.0.1:5432/trading}
+    username: ${JDBC_USERNAME:trading}
+    password: ${JDBC_PASSWORD:trading}
+    schema: ${JDBC_SCHEMA:trading}
+  flyway:
+    enabled: false
+    schemas: ${JDBC_SCHEMA:trading}
+    locations: classpath:flyway
+    baselineOnMigrate: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+logging.level.root: WARN
+logging.level.com.trading: INFO
+
