@@ -32,7 +32,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
 	List<Integer> swingHighList = new ArrayList<Integer>();
-	
+
 	LocalDateTime startDate = LocalDateTime.of(2025, Month.JANUARY, 1, 0, 0);
 	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
 	String market = "US100.cash";
@@ -50,7 +50,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		setIndex(candles);
 		AtrCalculator.compute(candles, 10);
 		List<Extremum> extremums7 = analyzer.findExtrema(candles, 7, false);
-		
+
 		Range range = null;
 		for (int i = 100; i < candles.size() - 100; i++) {
 			Candle c = candles.get(i);
@@ -64,7 +64,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 				if (!isRangeValid(newRange, candles)) {
 					continue;
 				}
-				
+
 				Candle firstAccumulationCandle = candles.get(newRange.getIndexStart());
 				Candle swingHighBefore = getFirstExtremumBefore(firstAccumulationCandle, extremums7, Type.MAX);
 				newRange.setSwingHighBefore(swingHighBefore);
@@ -73,15 +73,15 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 					System.out.println("Swing high already met at " + swingHighBefore.getIndex());
 					continue;
 				}
-				
+
 				if (!isPreviousSwingHighValid(newRange)) {
 					continue;
 				}
-				
-				
+
+
 				range = newRange;
 				swingHighList.add(swingHighBefore.getIndex());
-				
+
 				int rangeWidth = range.indexEnd - range.indexStart;
 				increaseCount("RANGE_AUTO");
 				System.out.println();
@@ -121,7 +121,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 
 	private void extendRange(Range range) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 
@@ -133,14 +133,12 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		if (rangeWidth < 50) {
 			return false;
 		}
-		for(int i =0; i<candles.size(); i++) {
-			Candle cBefore= candles.get(range.indexStart - i);
-			if (cBefore.getHigh() > range.high) {
-				return true;
-			} else if (cBefore.getLow() < range.low) {
-				return false;
-			} 
-		}
+		Candle cBefore= candles.get(range.indexStart - 1);
+		if (cBefore.getHigh() > range.high) {
+			return true;
+		} else if (cBefore.getLow() < range.low) {
+			return false;
+		} 
 		return false;
 	}
 
@@ -154,20 +152,21 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 	private Range getLargestRange(List<Candle> candles, int endIndex, Double maxRangeHeight) {
 		Range range = null;
 		for (int i = 1; i < endIndex; i++) {
-			List<Candle> subList = new ArrayList<Candle>(candles.subList(endIndex-i, endIndex+1));
+			int startIndex = endIndex-i;
+			List<Candle> subList = new ArrayList<Candle>(candles.subList(startIndex, endIndex+1));
 			PercentileResult candleHigh = percentile(subList, 95d, true);
 			PercentileResult candleLow = percentile(subList, 5d, false);
 			double rangeHeight = Math.abs(candleHigh.value - candleLow.value);
 			if (rangeHeight > maxRangeHeight) {
 				return range;
 			}
-			
+
 			removeLeadingAboveMedian(subList);
 			if (subList.isEmpty()) {
-//				increaseCount("EMPTY_AFTER_REMOVE_LEADING");
+				//				increaseCount("EMPTY_AFTER_REMOVE_LEADING");
 				return null;
 			}
-			int startIndex = endIndex - subList.size() +1;
+//			int startIndex = endIndex - subList.size() +1;
 			Double maxRange = subList.stream().map(c -> c.getHigh()).max(Double::compareTo).get();
 			Double minRange = subList.stream().map(c -> c.getLow()).min(Double::compareTo).get();
 			range = new Range(startIndex, endIndex, candleHigh.value, candleLow.value, rangeHeight,maxRange, minRange);
@@ -175,17 +174,17 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		return range;
 	}
 
-	 public static void removeLeadingAboveMedian(List<Candle> candles) {
-	        double median = MedianCalculator.median(candles);
-	        int index = 0;
-	        while (index < candles.size() && candles.get(index).close > median) {
-	            index++;
-	        }
-	        if (index > 0) {
-	            candles.subList(0, index).clear();
-	        }
-	    }
-	 
+	public static void removeLeadingAboveMedian(List<Candle> candles) {
+		double median = MedianCalculator.median(candles);
+		int index = 0;
+		while (index < candles.size() && candles.get(index).close > median) {
+			index++;
+		}
+		if (index > 0) {
+			candles.subList(0, index).clear();
+		}
+	}
+
 	@Data
 	@RequiredArgsConstructor
 	public static class Range {
