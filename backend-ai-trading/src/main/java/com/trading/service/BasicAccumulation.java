@@ -154,6 +154,9 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 	private Range getLargestRange(List<Candle> candles, int endIndex, Double maxRangeHeight) {
 		Range range = null;
 		for (int i = 1; i < endIndex; i++) {
+//			if (candles.get(endIndex).isDate(3, 1) && candles.get(endIndex).isTime(0, 40, 0)) {
+//				System.out.println();
+//			}
 			List<Candle> subList = new ArrayList<Candle>(candles.subList(endIndex-i, endIndex+1));
 			PercentileResult candleHigh = percentile(subList, 95d, true);
 			PercentileResult candleLow = percentile(subList, 5d, false);
@@ -170,7 +173,16 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 			int startIndex = endIndex - subList.size() +1;
 			Double maxRange = subList.stream().map(c -> c.getHigh()).max(Double::compareTo).get();
 			Double minRange = subList.stream().map(c -> c.getLow()).min(Double::compareTo).get();
-			range = new Range(startIndex, endIndex, candleHigh.value, candleLow.value, rangeHeight,maxRange, minRange);
+			range = new Range(
+					candles.get(startIndex).getDate(),
+					candles.get(endIndex).getDate(),
+					startIndex,
+					endIndex, 
+					candleHigh.value, 
+					candleLow.value, 
+					rangeHeight,
+					maxRange, 
+					minRange);
 		}
 		return range;
 	}
@@ -193,6 +205,10 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		public boolean isSame(Range newRange) {
 			return newRange.getHeight() == height && newRange.getIndexStart() == indexStart;
 		}
+		@NonNull
+		public LocalDateTime dateStart;
+		@NonNull
+		public LocalDateTime dateEnd;
 		@NonNull
 		public Integer indexStart;
 		@NonNull
