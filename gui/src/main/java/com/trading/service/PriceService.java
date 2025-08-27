@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.trading.GuiFrame;
+import com.trading.component.DistanceFeature;
 import com.trading.component.HorizontalLineFeature;
 import com.trading.component.IndicatorFeature;
 import com.trading.dto.DataDTO;
@@ -46,6 +47,8 @@ public class PriceService {
 	HorizontalLineFeature horizontalLineComponent;
 	@Autowired
 	IndicatorFeature indicatorFeature;
+	@Autowired
+	DistanceFeature distanceFeature;
 
 	@PostConstruct
 	public void init() {
@@ -61,15 +64,16 @@ public class PriceService {
 
 	public void loadData(int panelWidth) {
 		runner.loadData();
-		indicatorFeature.afterCandlesLoaded();
-		data.setDateStart(data.getCandles().get(0).getDate());
 		List<Candle> candles = data.getCandles();
+		IntStream.range(0, candles.size()).forEach(p -> candles.get(p).setIndex(p));
+		indicatorFeature.afterCandlesLoaded();
+		distanceFeature.afterCandlesLoaded();
+		data.setDateStart(data.getCandles().get(0).getDate());
 		data.getMapCandles().clear();
 		candles.forEach(c -> {
 			data.getMapCandles().put(c.getDate(), c);
 			c.setEndDate(c.getDate().plusSeconds(c.getTimeRange().getNbSeconds()).minusNanos(1));
 		});
-		IntStream.range(0, candles.size()).forEach(p -> candles.get(p).setIndex(p));
 		this.rebuildGraphDates(panelWidth, false);
 	}
 

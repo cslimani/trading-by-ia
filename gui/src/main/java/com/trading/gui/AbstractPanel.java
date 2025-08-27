@@ -6,8 +6,10 @@ import javax.swing.JPanel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.trading.component.DistanceFeature;
 import com.trading.component.HorizontalLineFeature;
 import com.trading.component.IndicatorFeature;
+import com.trading.component.RiskRatioFeature;
 import com.trading.component.VerticalLineFeature;
 import com.trading.component.ZoneSelectorFeature;
 import com.trading.dto.DataDTO;
@@ -37,6 +39,10 @@ public class AbstractPanel extends JPanel{
 	protected Runner runner;
 	@Autowired
 	IndicatorFeature indicatorFeature;
+	@Autowired
+	RiskRatioFeature riskRatioFeature;
+	@Autowired
+	DistanceFeature distanceFeature;
 	
 	protected Double pixelToPrice(int pixel) {
 		return data.getPriceMax() - pixel*data.getGapPrice()/getHeight()*1f;

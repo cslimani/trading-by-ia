@@ -43,14 +43,14 @@ public class AccumulationRecorder extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("US100.cash", EnumTimeRange.M1);
-		dateEnd = LocalDateTime.of(2025, 1, 2, 9, 0);
+		dateEnd = LocalDateTime.of(2025, 1, 2, 1, 0);
 		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
 				.stream()
 				.map(hs -> hs.getKeyDates())
 				.flatMap(List::stream)
 				.toList());
 		if (!dates.isEmpty()) {
-			dateEnd =  Iterables.getLast(dates);
+//			dateEnd =  Iterables.getLast(dates);
 		}
 	}
 

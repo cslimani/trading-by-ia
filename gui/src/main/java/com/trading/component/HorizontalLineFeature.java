@@ -21,9 +21,9 @@ public class HorizontalLineFeature extends AbstractFeature {
 	}
 
 	public void keyPressed(int keyCode) {
-		if (!enabled) {
-			return;
-		}
+//		if (!enabled) {
+//			return;
+//		}
 		//<
 		if (keyCode == 153) {
 			selection = true;

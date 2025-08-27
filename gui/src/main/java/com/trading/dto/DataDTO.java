@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import com.trading.entity.Candle;
 import com.trading.entity.Market;
 import com.trading.enums.EnumTimeRange;
+import com.trading.indicator.AtrCalculator;
 
 import lombok.Data;
 
@@ -54,6 +55,7 @@ public class DataDTO {
 	String direction;
 	Map<String, Market> mapMarkets = new ConcurrentHashMap<String, Market>();
 	List<VerticalLine> verticalLines = new ArrayList<VerticalLine>();
+	AtrCalculator atrCalculator;
 	
 	public void init(int candleWidth, int spaceBetweenCandles) {
 		this.candleWidth = candleWidth;

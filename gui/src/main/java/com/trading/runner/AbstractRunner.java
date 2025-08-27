@@ -88,21 +88,28 @@ public abstract class AbstractRunner implements Runner {
 		topPanel.info(message, Color.red);
 	}
 
+	public void addButton(String name, Runnable runnable, Color color) {
+		addButton(name, runnable, true, null, color);
+	}
+	
 	public void addButton(String name, Runnable runnable, boolean reload) {
-		addButton(name, runnable, reload, null);
+		addButton(name, runnable, reload, null, null);
 	}
 
 	public void addButton(String name, Runnable runnable, boolean reload, boolean unzoom) {
-		addButton(name, runnable, reload, unzoom, null);
+		addButton(name, runnable, reload, unzoom, null, null);
 	}
 
-	public void addButton(String name, Runnable runnable, boolean reload, Runnable after) {
-		addButton(name, runnable, reload, false, after);
+	public void addButton(String name, Runnable runnable, boolean reload, Runnable after, Color color) {
+		addButton(name, runnable, reload, false, after, color);
 	}
-	public void addButton(String name, Runnable runnable, boolean reload, boolean unzoom, Runnable after) {
+	public void addButton(String name, Runnable runnable, boolean reload, boolean unzoom, Runnable after, Color color) {
 		JButton button = new JButton(name);
 		topPanel.add(button);
 		button.setLocation(20, 20);
+		if (color != null) {
+			button.setBackground(color);
+		}
 		button.addActionListener(_ -> {
 			runnable.run();
 			mainPanel.repaint();

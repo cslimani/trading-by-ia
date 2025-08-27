@@ -312,6 +312,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		Double price = pixelToPrice(event.getPoint().y);
 		topPanel.setDateAndPrice(date, price);
 		indicatorFeature.mouseMoved(date, price);
+		riskRatioFeature.mouseMoved(date, price);
+		distanceFeature.mouseMoved(date, price);
 	}
 
 	@Override
@@ -334,6 +336,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		if (verticalLineComponent.isEnabled()) {
 			verticalLineComponent.onClick(date, price);
 		}
+		riskRatioFeature.mouseClicked(date, price);
+		distanceFeature.mouseClicked(date, price);
 		runner.mouseClicked(date, price);
 		repaint();
 	}
@@ -366,6 +370,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		horizontalLineComponent.keyPressed(e.getKeyCode());
 		verticalLineComponent.keyPressed(e.getKeyCode());
 		runner.keyPressed(e.getKeyCode());
+		riskRatioFeature.keyPressed(e.getKeyCode());
+		distanceFeature.keyPressed(e.getKeyCode());
 		//touche - du pav num
 		if (e.getKeyCode() == 109) {
 			unzoomMaximum();
@@ -378,6 +384,8 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		horizontalLineComponent.keyReleased(e.getKeyCode());
 		verticalLineComponent.keyReleased(e.getKeyCode());
 		runner.keyReleased(e.getKeyCode());
+		riskRatioFeature.keyReleased(e.getKeyCode());
+		distanceFeature.keyReleased(e.getKeyCode());
 		repaint();
 	}
 

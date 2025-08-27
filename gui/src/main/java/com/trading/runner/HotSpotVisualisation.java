@@ -1,5 +1,6 @@
 package com.trading.runner;
 
+import java.awt.Color;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -25,7 +26,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 		super.init();
 		addButton("Previous", () -> previous(), true);
 		addButton("Next", () -> next(), true);
-		addButton("Delete", () -> delete(), true);
+		addButton("Delete", () -> delete(),  Color.RED);
 	}
 	
 	private void delete() {
@@ -52,7 +53,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("US100.cash", EnumTimeRange.M15);
-		String type = "ACCUMULATION_RECORDED";
+		String type = "RANGE_AUTO";
 		hotSpots = hotSpotRepository.findByCodeOrderByDateEnd(type);
 		if (hotSpots.isEmpty()) {
 			log.info("No HotSpot found for type " + type);
@@ -66,6 +67,8 @@ public class HotSpotVisualisation extends AbstractRunner {
 		log.info("Loading HotSpot with id {}", hotspot.getId());
 		dateStart = hotspot.getDateStart();
 		dateEnd =  hotspot.getDateEnd();
+		data.setTimeRange(hotspot.getTimeRange());
+		topPanel.setTimeRange(hotspot.getTimeRange());
 	}
 
 	protected void applyToCandles(List<Candle> list) {
