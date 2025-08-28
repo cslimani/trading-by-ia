@@ -13,10 +13,9 @@ from joblib import dump
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
-from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import (
     roc_auc_score, average_precision_score,
     classification_report, confusion_matrix
@@ -31,6 +30,8 @@ T_SINCE_COL = "t_since_break"
 
 FEATURES = [
     "accum_size",
+    "risk_ratio",
+    "range_swing_high_ratio",
     # "ema_20",
     # "ema_50",
     # "rsi_14",
@@ -122,27 +123,36 @@ def main():
     X_test,  y_test  = X.iloc[mask_te], y[mask_te]
     df_train, df_test = df.iloc[mask_tr], df.iloc[mask_te]
 
-    # Préprocessing
+    # Préprocessing : imputation uniquement (HGB n’a pas besoin de scaling)
     preproc = ColumnTransformer([
-        ("num", Pipeline([
-            ("imp", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler())
-        ]), FEATURES)
+        ("num", SimpleImputer(strategy="median"), FEATURES)
     ])
 
-    base = GradientBoostingClassifier(random_state=42)
+    # Modèle moderne et rapide
+    base = HistGradientBoostingClassifier(
+        random_state=42,
+        early_stopping="auto"  # utilise une fraction de validation interne
+        # (tu peux aussi fixer validation_fraction et n_iter_no_change)
+    )
 
     pipe = Pipeline([
         ("prep", preproc),
         ("model", base)
     ])
 
+    # Grille adaptée à HGB (pas de 'subsample')
     param_grid = {
-        "model__n_estimators": [200, 400, 600],
-        "model__learning_rate": [0.02, 0.05, 0.1],
-        "model__max_depth": [2, 3, 4],
-        "model__subsample": [0.6, 0.8, 1.0],
-        "model__min_samples_leaf": [20, 50, 100]
+        "model__learning_rate": [0.03, 0.05, 0.1],
+        "model__max_leaf_nodes": [15, 31, 63, 127],   # contrôle la complexité
+        # (optionnel) alternative à max_leaf_nodes :
+        # "model__max_depth": [None, 3, 5, 7],
+        "model__min_samples_leaf": [10, 20, 50, 100],
+        "model__l2_regularization": [0.0, 0.1, 1.0],
+        "model__max_bins": [255],                     # safe default; baisse si RAM tendue
+        "model__n_estimators": [200, 400, 800],
+        "model__max_features": [1.0, 0.8, 0.6],       # sous-échantillonnage de features
+        "model__validation_fraction": [0.1, 0.2],
+        "model__n_iter_no_change": [10, 20]
     }
 
     # Splits de CV temporels par groupes
@@ -159,12 +169,13 @@ def main():
         cv=cv_splits,              # iterable (train_idx, val_idx)
         n_jobs=-1, verbose=1, random_state=42
     )
+    # IMPORTANT : transmet les poids via le nom de l’étape
     search.fit(X_train, y_train, **{"model__sample_weight": w_train})
 
     print("\nMeilleurs hyperparamètres :", search.best_params_)
     best = search.best_estimator_
 
-    # Calibration
+    # Calibration (toujours possible)
     cal = CalibratedClassifierCV(best, method="isotonic", cv=3)
     cal.fit(X_train, y_train, sample_weight=w_train)
 

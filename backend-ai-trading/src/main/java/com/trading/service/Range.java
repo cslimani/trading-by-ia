@@ -36,6 +36,7 @@ public class Range {
 	Candle firstAccumulationCandle;
 	AtomicInteger nbBreakDown = new AtomicInteger();
 	AtomicInteger nbBreakUp = new AtomicInteger();
+	Double rangeSwingHighRatio;
 	
 	public boolean isSame(Range newRange) {
 		return newRange.getHeight() == height && newRange.getIndexStart() == indexStart;

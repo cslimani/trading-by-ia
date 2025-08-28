@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -24,15 +25,17 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 
 	private static final int MIN_RANGE_WIDTH = 40;
 	private static final Double MAX_RANGE_ATR_RATIO = 4d;
-	private static final Double RATIO_HEIGHT_SWING_HIGH = 1.5d;
-	FeatureWriter featureWriter = new FeatureWriter();
+	private static final Double RATIO_MAX_RANGE_SWING_HIGH = 0.7;
+	private static final String HOTSPOT_CODE = "RANGE_AUTO";
+	@Autowired
+	FeatureWriter featureWriter;
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
 	List<Integer> swingHighList = new ArrayList<Integer>();
 
-	LocalDateTime startDate = LocalDateTime.of(2025, Month.JANUARY, 1, 0, 0);
+	LocalDateTime startDate = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
 	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
 	String market = "US100.cash";
-	EnumTimeRange timeRange = EnumTimeRange.M1;
+	EnumTimeRange timeRange = EnumTimeRange.S30;
 	
 	@Override
 	public void run(String... args) throws Exception {
@@ -73,10 +76,12 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 					continue;
 				}
 
-				if (!isPreviousSwingHighValid(newRange)) {
+				double rangeSwingHighRatio = getRangeSwingHighRatio(newRange);
+				if (rangeSwingHighRatio > RATIO_MAX_RANGE_SWING_HIGH) {
 					continue;
 				}
-
+				newRange.setRangeSwingHighRatio(maxRangeHeight);
+				
 				range = newRange;
 				swingHighList.add(swingHighBefore.getIndex());
 
@@ -90,12 +95,12 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 			} else {
 				LocalDateTime swingHighBefore = range.getSwingHighBefore().getDate();
 				Candle firstAccumulationCandle =  range.getFirstAccumulationCandle();
-				List<LocalDateTime> keyDates = List.of(swingHighBefore, firstAccumulationCandle.getDate());
+				List<LocalDateTime> keyDates = List.of(swingHighBefore, firstAccumulationCandle.getDate(),c.getDate());
 				if (c.getClose() > range.getMax()) {
 					if(range.getNbBreakUp().getAndIncrement() > 0) {
 //						System.out.println("Break from top at " + c.getDate());
-//						saveHotSpot(swingHighBefore, c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
-						featureWriter.addFeature(candles, range, c, extremums2);
+						Integer indexEnd = featureWriter.addFeature(candles, range, c, extremums2, market, timeRange, HOTSPOT_CODE);
+						saveHotSpot(swingHighBefore, candles.get(indexEnd).getDate(), keyDates, market, timeRange, HOTSPOT_CODE);
 //						continueTrade(candles, range, c, extremums2);
 						increaseCount("BREAK UP");
 						range = null;
@@ -143,12 +148,12 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 	}
 
 
-	private boolean isPreviousSwingHighValid(Range range) {
+	private double getRangeSwingHighRatio(Range range) {
 		Double priceSwingHigh = range.getSwingHighBefore().getHigh();
 		Double priceRangeTop = range.getMax();
 		Double priceRangeBottom = range.getMin();
 		Double rangeHeight =  priceRangeTop - priceRangeBottom;
-		return priceSwingHigh >= priceRangeBottom + RATIO_HEIGHT_SWING_HIGH*rangeHeight;
+		return rangeHeight / (priceSwingHigh - priceRangeBottom);
 	}
 
 
