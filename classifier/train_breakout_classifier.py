@@ -109,6 +109,16 @@ def make_weights(df, y):
     w_class = np.where(y == 1, w_pos, w_neg)
     return (w_group.values * w_class).astype(float)
 
+def filter_cv_splits_with_both_classes(cv_splits, y_all):
+    safe = []
+    for tr, va in cv_splits:
+        y_va = y_all[va]
+        if np.unique(y_va).size == 2:
+            safe.append((tr, va))
+    if not safe:
+        raise ValueError("Aucun pli de CV n'a les deux classes. Revoir la stratégie de split.")
+    return safe
+
 # -------------- MAIN --------------
 def main():
     df = load_df(CSV_PATH)
@@ -142,21 +152,23 @@ def main():
 
     # Grille adaptée à HGB (pas de 'subsample')
     param_grid = {
-        "model__learning_rate": [0.03, 0.05, 0.1],
-        "model__max_leaf_nodes": [15, 31, 63, 127],   # contrôle la complexité
-        # (optionnel) alternative à max_leaf_nodes :
+         "model__learning_rate": [0.03, 0.05, 0.1],
+        "model__max_iter": [200, 400, 800],          # <= remplace n_estimators
+        "model__max_leaf_nodes": [15, 31, 63, 127],
+        # (optionnel) alternative :
         # "model__max_depth": [None, 3, 5, 7],
         "model__min_samples_leaf": [10, 20, 50, 100],
         "model__l2_regularization": [0.0, 0.1, 1.0],
-        "model__max_bins": [255],                     # safe default; baisse si RAM tendue
-        "model__n_estimators": [200, 400, 800],
-        "model__max_features": [1.0, 0.8, 0.6],       # sous-échantillonnage de features
+        "model__max_bins": [255],
+        "model__max_features": [1.0, 0.8, 0.6],
         "model__validation_fraction": [0.1, 0.2],
-        "model__n_iter_no_change": [10, 20]
+        "model__n_iter_no_change": [10, 20],
     }
 
     # Splits de CV temporels par groupes
-    cv_splits = make_group_time_cv_splits(df_train, n_splits=N_SPLITS)
+
+    cv_raw = make_group_time_cv_splits(df_train, n_splits=N_SPLITS)
+    cv_splits = filter_cv_splits_with_both_classes(cv_raw, y_train)
 
     # Pondérations (groupe + classe)
     w_train = make_weights(df_train, y_train)

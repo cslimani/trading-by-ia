@@ -23,8 +23,8 @@ public class AbstractService {
 	CandleRepository candleRepository;
 	@Autowired
 	HotSpotRepository hotSpotRepository;
-	public Map<String, Integer> mapCountInteger = new HashMap<String, Integer>();
-	public Map<String, Double> mapCountFloat = new HashMap<String, Double>();
+	public static Map<String, Integer> mapCountInteger = new HashMap<String, Integer>();
+	public static Map<String, Double> mapCountFloat = new HashMap<String, Double>();
 	
 	public void setIndex(List<Candle> candles) {
 		for (int i = 0; i < candles.size(); i++) {

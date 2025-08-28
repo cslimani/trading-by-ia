@@ -32,10 +32,10 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
 	List<Integer> swingHighList = new ArrayList<Integer>();
 
-	LocalDateTime startDate = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
+	LocalDateTime startDate = LocalDateTime.of(2025, Month.JANUARY, 1, 0, 0);
 	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
 	String market = "US100.cash";
-	EnumTimeRange timeRange = EnumTimeRange.S30;
+	EnumTimeRange timeRange = EnumTimeRange.M1;
 	
 	@Override
 	public void run(String... args) throws Exception {

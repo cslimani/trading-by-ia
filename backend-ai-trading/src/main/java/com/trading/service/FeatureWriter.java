@@ -52,8 +52,12 @@ public class FeatureWriter extends AbstractService{
 			
 			double startTradePrice = c.getOpen();
 			double rr = (tp - startTradePrice) / (startTradePrice - sl);
-			boolean isTP = isTradeToTP(candles, tp, sl);
-
+			boolean isTP = isTradeToTP(c, candles, tp, sl);
+			if (isTP) {
+				increaseCount("TP");
+			} else {
+				increaseCount("SL");
+			}
 				
 			Map<String, Double> mapFeature = new HashMap<String, Double>();
 			mapFeature.put("timestamp", Utils.getTimestamp(c.getDate()));
@@ -72,8 +76,8 @@ public class FeatureWriter extends AbstractService{
 		return indexEnd;
 	}
 
-	private boolean isTradeToTP(List<Candle> candles, double tp, double sl) {
-		for (int i = 0; i< candles.size(); i++) {
+	private boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
+		for (int i = cStart.getIndex(); i < candles.size(); i++) {
 			Candle c = candles.get(i);
 			if (c.getHigh() >= tp) {
 				return true;
