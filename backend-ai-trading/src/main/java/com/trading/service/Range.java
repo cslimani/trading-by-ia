@@ -32,6 +32,7 @@ public class Range {
 	@NonNull
 	public Double min;
 	
+	public Double maxHeight;
 	Candle swingHighBefore;
 	Candle firstAccumulationCandle;
 	AtomicInteger nbBreakDown = new AtomicInteger();

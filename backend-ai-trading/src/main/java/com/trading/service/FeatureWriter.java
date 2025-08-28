@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
+import com.trading.dto.TakeProfit;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.extremum.Extremum;
@@ -23,6 +24,7 @@ import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 @Component
 public class FeatureWriter extends AbstractService{
 
+	private static final Integer NB_MAX_PRICE = 40;
 	private String sourcePath = "/data/trading_ml/bars_after_break.csv";
 	private String targetFolder = "/data/trading_ml/backup";
 	List<Map<String, Double>> listMapFeatures = new ArrayList<>();
@@ -30,50 +32,88 @@ public class FeatureWriter extends AbstractService{
 	public Integer addFeature(List<Candle> candles, Range range, Candle breakCandle, List<Extremum> extremums2,
 			String market, EnumTimeRange timeRange, String hotspotCode) throws IOException {
 		Integer indexEnd = breakCandle.getIndex();
+		double tp1 = range.getMax() + range.getHeight();
+		double tp2 = range.getMin() + range.getMaxHeight()/2;
+		double tp3 = range.getSwingHighBefore().getClose();
+		List<TakeProfit> tpList = List.of(new TakeProfit(tp1), new TakeProfit(tp2), new TakeProfit(tp3));
 		for(int i = breakCandle.getIndex() + 1; i < candles.size(); i++) {
 			Candle c = candles.get(i);
-//			if (c.isDate(2, 1) && c.isTime(20, 36, 0)) {
-//				System.out.println();
-//			}
-			indexEnd = i;
-			double tp = range.getMax() + range.getHeight();
-			Candle slCandle = getFirstExtremumBeforeAndLowerThan(c, extremums2, Type.MIN, c.getOpen());
-			double sl = slCandle.getLow();
 			Candle swingHighBefore = range.getSwingHighBefore();
-			if (c.getHigh() > tp) {
-				break;
+			//			if (c.isDate(2, 1) && c.isTime(20, 36, 0)) {
+			//				System.out.println();
+			//			}
+			indexEnd = i;
+			
+			if (tpList.stream().filter(TakeProfit::getReached).count() == tpList.size()) {
+				return c.getIndex();
 			}
 			if (c.getLow() < range.getMin()) {
-				break;
+				return c.getIndex();
 			}
-			if (i > breakCandle.getIndex() + 100) {
-				break;
+			if (i > breakCandle.getIndex() + 50) {
+				return -1;
 			}
 			
-			double startTradePrice = c.getOpen();
-			double rr = (tp - startTradePrice) / (startTradePrice - sl);
-			boolean isTP = isTradeToTP(c, candles, tp, sl);
-			if (isTP) {
-				increaseCount("TP");
-			} else {
-				increaseCount("SL");
-			}
+			for (TakeProfit tp : tpList) {
+				if (tp.getReached()) {
+					continue;
+				}
+				Candle slCandle = getFirstExtremumBeforeAndLowerThan(c, extremums2, Type.MIN, c.getOpen());
+				double sl = slCandle.getLow();
+				double startTradePrice = c.getOpen();
+				double rr = (tp.getPrice() - startTradePrice) / (startTradePrice - sl);
 				
-			Map<String, Double> mapFeature = new HashMap<String, Double>();
-			mapFeature.put("timestamp", Utils.getTimestamp(c.getDate()));
-			mapFeature.put("accum_id", Utils.getTimestamp(swingHighBefore.getDate()));
-			mapFeature.put("t_since_break", Double.valueOf(i - breakCandle.getIndex()));
-			mapFeature.put("risk_ratio", rr);
-			mapFeature.put("range_swing_high_ratio", range.getRangeSwingHighRatio());
-			mapFeature.put("accum_size", Double.valueOf(breakCandle.getIndex() - range.getIndexStart()));
-			mapFeature.put("y", isTP ? 1d : 0d);
-			listMapFeatures.add(mapFeature);
-			
-			List<LocalDateTime> keyDates = List.of(swingHighBefore.getDate(), breakCandle.getDate(),c.getDate(), slCandle.getDate());
-//			saveHotSpot(swingHighBefore.getDate(), c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
+				
+				if (c.getHigh() > tp.getPrice()) {
+					tp.setReached(true);
+				}
+				if (rr < 1) {
+					increaseCount("TP < 1");
+					continue;
+				}
+
+				boolean isTP = isTradeToTP(c, candles, tp.getPrice(), sl);
+				if (isTP) {
+					increaseCount("TP");
+				} else {
+					increaseCount("SL");
+				}
+
+				double swingHighDistance = (swingHighBefore.getClose() - c.getClose())/range.getMaxHeight();
+				
+				Map<String, Double> mapFeature = new HashMap<String, Double>();
+				mapFeature.put("timestamp", Utils.getTimestamp(c.getDate()));
+				mapFeature.put("accum_id", Utils.getTimestamp(swingHighBefore.getDate()));
+				mapFeature.put("t_since_break", Double.valueOf(i - breakCandle.getIndex()));
+				mapFeature.put("risk_ratio", rr);
+				mapFeature.put("range_swing_high_ratio", range.getRangeSwingHighRatio());
+				mapFeature.put("swing_high_distance", swingHighDistance);
+				mapFeature.put("accum_size", Double.valueOf(breakCandle.getIndex() - range.getIndexStart()));
+				mapFeature.put("y", isTP ? 1d : 0d);
+//				addPriceFeature(mapFeature, candles, c.getIndex(), range);
+				listMapFeatures.add(mapFeature);
+				System.out.println("New accumulation " + breakCandle.getDate());
+				List<LocalDateTime> keyDates = List.of(swingHighBefore.getDate(), breakCandle.getDate(),c.getDate(), slCandle.getDate());
+			};
+			//			saveHotSpot(swingHighBefore.getDate(), c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
 		}
-		System.out.println("New accumulation " + breakCandle.getDate());
+		
 		return indexEnd;
+	}
+
+	private void addPriceFeature(Map<String, Double> mapFeature, List<Candle> candles, Integer currentIndex, Range range) {
+		for(int i = 0 ; i < NB_MAX_PRICE; i++) {
+			int tmpIndex = currentIndex - NB_MAX_PRICE + 1 + i;
+			Candle c = candles.get(tmpIndex);
+			mapFeature.put("o_" + i, normalize(c.getOpen(), range));
+			mapFeature.put("h_" + i, normalize(c.getHigh(), range));
+			mapFeature.put("c_" + i, normalize(c.getClose(), range));
+			mapFeature.put("l_" + i, normalize(c.getLow(), range));
+		}
+	}
+
+	private Double normalize(double price, Range range) {
+		return (price - range.getMin()) / range.getMaxHeight();
 	}
 
 	private boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
@@ -97,7 +137,7 @@ public class FeatureWriter extends AbstractService{
 				.get()
 				.getCandle();
 	}
-	
+
 	public Candle getFirstExtremumBeforeAndLowerThan(Candle c,  List<Extremum> extremums, Type type, Double maxValue) {
 		return extremums.stream()
 				.filter(e -> e.type == type)
