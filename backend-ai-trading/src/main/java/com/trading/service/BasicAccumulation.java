@@ -18,29 +18,27 @@ import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 
-import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-
 @Component
 @Profile("basic-accumulation")
 public class BasicAccumulation extends AbstractService implements CommandLineRunner {
 
-	private static final int EXTREMUM_PARAM = 5;
-	private static final double ALPHA_BREAK = 0.3;
-	private static final double TETA_BREAK = 0.3;
-
+	private static final int MIN_RANGE_WIDTH = 40;
+	private static final Double MAX_RANGE_ATR_RATIO = 4d;
+	private static final Double RATIO_HEIGHT_SWING_HIGH = 1.5d;
+	FeatureWriter featureWriter = new FeatureWriter();
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
 	List<Integer> swingHighList = new ArrayList<Integer>();
-	
+
 	LocalDateTime startDate = LocalDateTime.of(2025, Month.JANUARY, 1, 0, 0);
 	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
 	String market = "US100.cash";
 	EnumTimeRange timeRange = EnumTimeRange.M1;
-
+	
 	@Override
 	public void run(String... args) throws Exception {
 		System.out.println("Impulse Detection starting");
+		featureWriter.backupFile();
+		
 		hotSpotRepository.deleteAll();
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
 				market,
@@ -50,63 +48,98 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		setIndex(candles);
 		AtrCalculator.compute(candles, 10);
 		List<Extremum> extremums7 = analyzer.findExtrema(candles, 7, false);
-		
+		List<Extremum> extremums2 = analyzer.findExtrema(candles, 2, false);
+
 		Range range = null;
 		for (int i = 100; i < candles.size() - 100; i++) {
 			Candle c = candles.get(i);
-			Double averageATR = AtrCalculator.average(candles, i, 100);
-			Double maxRangeHeight = 4*averageATR;
-			if (isInvalid(List.of(maxRangeHeight, averageATR))) {
-				continue;
-			}
 			if (range == null) {
+				Double averageATR = AtrCalculator.average(candles, i, 50);
+				Double maxRangeHeight = MAX_RANGE_ATR_RATIO*averageATR;
+				if (isInvalid(List.of(maxRangeHeight, averageATR))) {
+					continue;
+				}
 				Range newRange = getLargestRange(candles, i, maxRangeHeight);
 				if (!isRangeValid(newRange, candles)) {
 					continue;
 				}
-				
+
 				Candle firstAccumulationCandle = candles.get(newRange.getIndexStart());
 				Candle swingHighBefore = getFirstExtremumBefore(firstAccumulationCandle, extremums7, Type.MAX);
 				newRange.setSwingHighBefore(swingHighBefore);
 				newRange.setFirstAccumulationCandle(firstAccumulationCandle);
 				if (swingHighList.contains(swingHighBefore.getIndex())) {
-					System.out.println("Swing high already met at " + swingHighBefore.getIndex());
+//					System.out.println("Swing high already met at " + swingHighBefore.getIndex());
 					continue;
 				}
-				
+
 				if (!isPreviousSwingHighValid(newRange)) {
 					continue;
 				}
-				
-				
+
 				range = newRange;
 				swingHighList.add(swingHighBefore.getIndex());
-				
+
+				increaseCount("TOTAL");
 				int rangeWidth = range.indexEnd - range.indexStart;
-				increaseCount("RANGE_AUTO");
-				System.out.println();
-				System.out.println("rangeWidth " + rangeWidth);
-				System.out.println("rangeStart " + candles.get(range.indexStart).getDate());
-				System.out.println("rangeEnd " + candles.get(range.indexEnd).getDate());
-				System.out.println();
+//				System.out.println();
+//				System.out.println("rangeWidth " + rangeWidth);
+//				System.out.println("rangeStart " + candles.get(range.indexStart).getDate());
+//				System.out.println("rangeEnd " + candles.get(range.indexEnd).getDate());
+//				System.out.println();
 			} else {
 				LocalDateTime swingHighBefore = range.getSwingHighBefore().getDate();
 				Candle firstAccumulationCandle =  range.getFirstAccumulationCandle();
 				List<LocalDateTime> keyDates = List.of(swingHighBefore, firstAccumulationCandle.getDate());
 				if (c.getClose() > range.getMax()) {
-					System.out.println("Break from top at " + c.getDate());
-					saveHotSpot(swingHighBefore, c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
-					range = null;
+					if(range.getNbBreakUp().getAndIncrement() > 0) {
+//						System.out.println("Break from top at " + c.getDate());
+//						saveHotSpot(swingHighBefore, c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
+						featureWriter.addFeature(candles, range, c, extremums2);
+//						continueTrade(candles, range, c, extremums2);
+						increaseCount("BREAK UP");
+						range = null;
+					}
 				} else if (c.getClose() < range.getMin()) {
-					saveHotSpot(swingHighBefore, c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
-					System.out.println("Break from bottom at" + c.getDate());
-					range = null;
+					if(range.getNbBreakDown().getAndIncrement() > 0) {
+						//						saveHotSpot(swingHighBefore, c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
+//						System.out.println("Break from bottom at" + c.getDate());
+						increaseCount("BREAK DOWN");
+						range = null;
+					}
 				} else {
-					extendRange(range);
+					//					extendRange(range, c);
 				}
 			}
 		}
 		displayMapCount();
+		featureWriter.writeAll();
+	}
+
+
+	private void continueTrade(List<Candle> candles, Range range, Candle candleBreak, List<Extremum> extremums2) {
+		double tp = range.getMax() + range.getHeight()*1.5;
+		double sl = getFirstExtremumBefore(candleBreak, extremums2, Type.MIN).getLow();
+		double startTradePrice = candles.get(candleBreak.getIndex()+1).getOpen();
+		double rr = (tp - startTradePrice) / (startTradePrice - sl);
+		if (rr < 1) {
+			return;
+		}
+		for (int i=  candleBreak.getIndex()+1; i< candles.size(); i++) {
+			Candle c = candles.get(i);
+			if (c.getHigh() >= tp) {
+				increaseCount("TP1");
+				System.out.println("Won " + rr + "R");
+				increaseCount("TOTAL_WON", rr);
+				break;
+			}
+			if (c.getLow() <= sl) {
+				increaseCount("SL");
+				System.out.println("Lost -1*R");
+				increaseCount("TOTAL_WON", -1d);
+				break;
+			}
+		}
 	}
 
 
@@ -115,14 +148,16 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		Double priceRangeTop = range.getMax();
 		Double priceRangeBottom = range.getMin();
 		Double rangeHeight =  priceRangeTop - priceRangeBottom;
-		return priceSwingHigh >= priceRangeBottom + 1.5*rangeHeight;
+		return priceSwingHigh >= priceRangeBottom + RATIO_HEIGHT_SWING_HIGH*rangeHeight;
 	}
 
 
-	private void extendRange(Range range) {
-		// TODO Auto-generated method stub
-		
-	}
+	//	private void extendRange(Range range, Candle c) {
+	//		range.setDateEnd(c.getDate());
+	//		range.setMin(Math.min(range.getMin(), c.getLow()));
+	//		range.setMax(Math.max(range.getMax(), c.getHigh()));
+	//		range.setIndexEnd(c.getIndex());
+	//	}
 
 
 	private boolean isRangeValid(Range range, List<Candle> candles) {
@@ -130,7 +165,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 			return false;
 		}
 		int rangeWidth = range.indexEnd - range.indexStart;
-		if (rangeWidth < 50) {
+		if (rangeWidth < MIN_RANGE_WIDTH) {
 			return false;
 		}
 		for(int i =0; i<candles.size(); i++) {
@@ -154,9 +189,9 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 	private Range getLargestRange(List<Candle> candles, int endIndex, Double maxRangeHeight) {
 		Range range = null;
 		for (int i = 1; i < endIndex; i++) {
-//			if (candles.get(endIndex).isDate(3, 1) && candles.get(endIndex).isTime(0, 40, 0)) {
-//				System.out.println();
-//			}
+			//			if (candles.get(endIndex).isDate(3, 1) && candles.get(endIndex).isTime(0, 40, 0)) {
+			//				System.out.println();
+			//			}
 			List<Candle> subList = new ArrayList<Candle>(candles.subList(endIndex-i, endIndex+1));
 			PercentileResult candleHigh = percentile(subList, 95d, true);
 			PercentileResult candleLow = percentile(subList, 5d, false);
@@ -164,10 +199,10 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 			if (rangeHeight > maxRangeHeight) {
 				return range;
 			}
-			
+
 			removeLeadingAboveMedian(subList);
 			if (subList.isEmpty()) {
-//				increaseCount("EMPTY_AFTER_REMOVE_LEADING");
+				//				increaseCount("EMPTY_AFTER_REMOVE_LEADING");
 				return null;
 			}
 			int startIndex = endIndex - subList.size() +1;
@@ -187,45 +222,17 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		return range;
 	}
 
-	 public static void removeLeadingAboveMedian(List<Candle> candles) {
-	        double median = MedianCalculator.median(candles);
-	        int index = 0;
-	        while (index < candles.size() && candles.get(index).close > median) {
-	            index++;
-	        }
-	        if (index > 0) {
-	            candles.subList(0, index).clear();
-	        }
-	    }
-	 
-	@Data
-	@RequiredArgsConstructor
-	public static class Range {
-
-		public boolean isSame(Range newRange) {
-			return newRange.getHeight() == height && newRange.getIndexStart() == indexStart;
+	public static void removeLeadingAboveMedian(List<Candle> candles) {
+		double median = MedianCalculator.median(candles);
+		int index = 0;
+		while (index < candles.size() && candles.get(index).close > median) {
+			index++;
 		}
-		@NonNull
-		public LocalDateTime dateStart;
-		@NonNull
-		public LocalDateTime dateEnd;
-		@NonNull
-		public Integer indexStart;
-		@NonNull
-		public Integer indexEnd;
-		@NonNull
-		public Double high;
-		@NonNull
-		public Double low;
-		@NonNull
-		public Double height;
-		@NonNull
-		public Double max;
-		@NonNull
-		public Double min;
-		Candle swingHighBefore;
-		Candle firstAccumulationCandle;
+		if (index > 0) {
+			candles.subList(0, index).clear();
+		}
 	}
+
 
 	public static class PercentileResult {
 		public final double value;

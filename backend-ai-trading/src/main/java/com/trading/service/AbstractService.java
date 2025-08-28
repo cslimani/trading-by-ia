@@ -23,7 +23,8 @@ public class AbstractService {
 	CandleRepository candleRepository;
 	@Autowired
 	HotSpotRepository hotSpotRepository;
-	public Map<String, Integer> mapCount = new HashMap<String, Integer>();
+	public Map<String, Integer> mapCountInteger = new HashMap<String, Integer>();
+	public Map<String, Double> mapCountFloat = new HashMap<String, Double>();
 	
 	public void setIndex(List<Candle> candles) {
 		for (int i = 0; i < candles.size(); i++) {
@@ -32,7 +33,10 @@ public class AbstractService {
 	}
 	
 	public Integer getCount(String key) {
-		return mapCount.get(key);
+		return mapCountInteger.get(key);
+	}
+	public Double getCountFloat(String key) {
+		return mapCountFloat.get(key);
 	}
 	
 	public Candle getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
@@ -45,16 +49,28 @@ public class AbstractService {
 	}
 	
 	public void increaseCount(String key) {
-		if (mapCount.containsKey(key)) {
-			mapCount.put(key, mapCount.get(key) + 1);
+		if (mapCountInteger.containsKey(key)) {
+			mapCountInteger.put(key, mapCountInteger.get(key) + 1);
 		} else {
-			mapCount.put(key, 1);
+			mapCountInteger.put(key, 1);
+		}
+	}
+	
+	public void increaseCount(String key, Double value) {
+		if (mapCountFloat.containsKey(key)) {
+			mapCountFloat.put(key, mapCountFloat.get(key) + value);
+		} else {
+			mapCountFloat.put(key, value);
 		}
 	}
 	
 	public void displayMapCount() {
 		System.out.println();
-		mapCount.forEach((k,v) -> {
+		mapCountInteger.forEach((k,v) -> {
+			System.out.println(k + " : " + v);
+		});
+		System.out.println();
+		mapCountFloat.forEach((k,v) -> {
 			System.out.println(k + " : " + v);
 		});
 	}
