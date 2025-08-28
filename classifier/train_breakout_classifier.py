@@ -30,8 +30,8 @@ T_SINCE_COL = "t_since_break"
 
 FEATURES = [
     "accum_size",
-    "risk_ratio",
     "range_swing_high_ratio",
+    "risk_ratio",
     # "ema_20",
     # "ema_50",
     # "rsi_14",
@@ -122,6 +122,7 @@ def filter_cv_splits_with_both_classes(cv_splits, y_all):
 # -------------- MAIN --------------
 def main():
     df = load_df(CSV_PATH)
+    n_features = len(FEATURES)
     check_columns(df)
 
     X = df[FEATURES]
@@ -139,7 +140,9 @@ def main():
     ])
 
     # Modèle moderne et rapide
+    monotonic = [0]*(n_features-1) + [-1]
     base = HistGradientBoostingClassifier(
+        monotonic_cst=monotonic,
         random_state=42,
         early_stopping="auto"  # utilise une fraction de validation interne
         # (tu peux aussi fixer validation_fraction et n_iter_no_change)
