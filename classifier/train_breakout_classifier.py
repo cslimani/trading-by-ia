@@ -42,8 +42,8 @@ FEATURES = [
 
 TEST_GROUP_RATIO = 0.2          # dernier 20% des accumulations (par temps) en holdout
 N_SPLITS = 5                    # pour la CV sur les groupes
-MODEL_OUT = "breakout_model_dynamic.joblib"
-PREDICTIONS_OUT = "oos_predictions_dynamic.csv"
+MODEL_OUT = "data/breakout_model_dynamic.joblib"
+PREDICTIONS_OUT = "data/oos_predictions_dynamic.csv"
 
 # -------------- UTILS --------------
 def load_df(path):
