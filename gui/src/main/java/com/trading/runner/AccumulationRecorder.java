@@ -8,7 +8,6 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Iterables;
 import com.trading.dto.jsonb.HotSpotData;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
@@ -30,7 +29,7 @@ public class AccumulationRecorder extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("GOLD", EnumTimeRange.M1);
-		dateEnd = LocalDateTime.of(2025, 9, 27, 1, 0);
+		dateEnd = LocalDateTime.of(2015, 1, 5, 1, 0);
 		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
 				.stream()
 				.map(hs -> hs.getKeyDates())

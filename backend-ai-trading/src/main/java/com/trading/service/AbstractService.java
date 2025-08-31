@@ -29,6 +29,7 @@ import com.trading.repository.HotSpotRepository;
 
 public class AbstractService {
 
+	private static final Integer NB_MAX_PRICE = 50;
 	public String sourcePath = "/data/trading_ml/bars_after_break.csv";
 	public String targetFolder = "/data/trading_ml/backup";
 	public List<Map<String, Object>> listMapFeatures = new CopyOnWriteArrayList<Map<String,Object>>();
@@ -62,7 +63,7 @@ public class AbstractService {
 		}
 	}
 	
-	public void increaseCount(String key, Double value) {
+	public void increaseDouble(String key, Double value) {
 		if (mapCountFloat.containsKey(key)) {
 			 mapCountFloat.get(key).add(value);
 		} else {
@@ -102,13 +103,11 @@ public class AbstractService {
 				.build());
 	}
 	
-	public Candle getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
+	public Optional<Extremum> getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
 		return extremums.stream()
 				.filter(e -> e.type == type)
 				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
-				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()))
-				.get()
-				.getCandle();
+				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()));
 	}
 
 	public Optional<Extremum> getFirstExtremumBeforeAndLowerThan(Candle c,  List<Extremum> extremums, Type type, Double maxValue) {
@@ -131,6 +130,14 @@ public class AbstractService {
 		writeLine(header);
 	}
 
+	public Candle getSpringCandle(List<Candle> candles, Range range, Candle candleBreak) {
+		Candle accStart = range.getFirstAccumulationCandle();
+		return candles.stream()
+				.filter(c -> c.getIndex() > accStart.getIndex() && c.getIndex() < candleBreak.getIndex())
+				.min(Comparator.comparingDouble(c -> c.getLow()))
+				.get();
+	}
+	
 	public void writeLine(String line) throws IOException {
 		FileUtils.writeStringToFile(new File(sourcePath), line + System.lineSeparator(), Charset.defaultCharset(), true);
 	}
@@ -146,6 +153,32 @@ public class AbstractService {
 	public boolean isInvalid(List<Double> list) {
 		return list.stream()
 				.anyMatch(d -> Double.isInfinite(d) || Double.isNaN(d));
+	}
+	
+	public void addPriceFeature(Map<String, Object> mapFeature, List<Candle> candles, Integer currentIndex, Range range) {
+		for(int i = 0 ; i < NB_MAX_PRICE; i++) {
+			int tmpIndex = currentIndex - NB_MAX_PRICE + 1 + i;
+			Candle c = candles.get(tmpIndex);
+			int index = i +10;
+			mapFeature.put("o_" + index, normalize(c.getOpen(), range));
+			mapFeature.put("h_" + index, normalize(c.getHigh(), range));
+			mapFeature.put("c_" + index, normalize(c.getClose(), range));
+			mapFeature.put("l_" + index, normalize(c.getLow(), range));
+			mapFeature.put("v_" + index, normalize(c.getVolume(), range));
+		}
+	}
+
+	public boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
+		for (int i = cStart.getIndex(); i < candles.size(); i++) {
+			Candle c = candles.get(i);
+			if (c.getHigh() >= tp) {
+				return true;
+			}
+			if (c.getLow() <= sl) {
+				return false;
+			}
+		}
+		return false;
 	}
 	
 	public void writeAll() throws IOException {

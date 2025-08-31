@@ -17,7 +17,6 @@ import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 @Component
 public class FeatureWriter extends AbstractService{
 
-	private static final Integer NB_MAX_PRICE = 40;
 
 
 	public Integer addFeature(List<Candle> candles, Range range, Candle breakCandle, List<Extremum> extremums3,
@@ -87,7 +86,7 @@ public class FeatureWriter extends AbstractService{
 
 				double swingHighDistance = (swingHighBefore.getClose() - c.getClose())/range.getMaxHeight();
 				
-				Map<String, Double> mapFeature = new HashMap<String, Double>();
+				Map<String, Object> mapFeature = new HashMap<String, Object>();
 				mapFeature.put("timestamp", Utils.getTimestamp(c.getDate()));
 				mapFeature.put("accum_id", Utils.getTimestamp(swingHighBefore.getDate()));
 				mapFeature.put("t_since_break", Double.valueOf(i - breakCandle.getIndex()));
@@ -108,31 +107,6 @@ public class FeatureWriter extends AbstractService{
 		return indexEnd;
 	}
 
-	private void addPriceFeature(Map<String, Double> mapFeature, List<Candle> candles, Integer currentIndex, Range range) {
-		for(int i = 0 ; i < NB_MAX_PRICE; i++) {
-			int tmpIndex = currentIndex - NB_MAX_PRICE + 1 + i;
-			Candle c = candles.get(tmpIndex);
-			int index = i +10;
-			mapFeature.put("o_" + index, normalize(c.getOpen(), range));
-			mapFeature.put("h_" + index, normalize(c.getHigh(), range));
-			mapFeature.put("c_" + index, normalize(c.getClose(), range));
-			mapFeature.put("l_" + index, normalize(c.getLow(), range));
-			mapFeature.put("v_" + index, normalize(c.getVolume(), range));
-		}
-	}
-
-	private boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
-		for (int i = cStart.getIndex(); i < candles.size(); i++) {
-			Candle c = candles.get(i);
-			if (c.getHigh() >= tp) {
-				return true;
-			}
-			if (c.getLow() <= sl) {
-				return false;
-			}
-		}
-		return false;
-	}
 
 	
 

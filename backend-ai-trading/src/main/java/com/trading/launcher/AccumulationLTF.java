@@ -74,20 +74,20 @@ public class AccumulationLTF extends AbstractService implements CommandLineRunne
 			}
 
 			//			Candle impulsionStart = getImpulsionStart(c, candles);
-			Candle impulsionStart = getFirstExtremumBefore(c, extremums, Type.MAX);
+//			Candle impulsionStart = getFirstExtremumBefore(c, extremums, Type.MAX);
 			Candle impulsionEnd = c;
 
-			if (!isFreeSpaceBehind(impulsionStart, impulsionEnd, candles, 60, 0.5)) {
+//			if (!isFreeSpaceBehind(impulsionStart, impulsionEnd, candles, 60, 0.5)) {
 				//				increaseCount("NO_FREE_SPACE_BEHIND");
 				//				continue;
-			}
+//			}
 
-			if (isInHTFZone(hotspotsHTF, impulsionEnd)) {
-				increaseCount("IS_IN_HTF_ZONE");
-			}
+//			if (isInHTFZone(hotspotsHTF, impulsionEnd)) {
+//				increaseCount("IS_IN_HTF_ZONE");
+//			}
 			//ACCUMULATION MAY START
-			lookForTrade(impulsionStart, impulsionEnd, candles);
-			Candle candleEnd = candleRepository.findNthCandleAfterDate(market,timeRange.name(), c.getDate(), 50);
+//			lookForTrade(impulsionStart, impulsionEnd, candles);
+//			Candle candleEnd = candleRepository.findNthCandleAfterDate(market,timeRange.name(), c.getDate(), 50);
 			//			saveHotSpot(impulsionStart.getDate(),
 			//					candleEnd.getDate(),
 			//					List.of(impulsionStart.getDate(), c.getDate()));
@@ -178,16 +178,16 @@ public class AccumulationLTF extends AbstractService implements CommandLineRunne
 			return false;
 		}
 
-		// CHOCH
-		Candle lastMax = maximums.get(0).getCandle();
-		Candle lastMinBeforeMax = getFirstExtremumBefore(lastMax, extremums, Type.MIN);
-
-		for (int i = lastMax.getIndex(); i < c.getIndex(); i++) {
-			Candle cTmp = candles.get(i);
-			if (cTmp.getLow() < lastMinBeforeMax.getLow() + tetaBreak*cTmp.getAtr()) {
-				return false;
-			}
-		}
+//		// CHOCH
+//		Candle lastMax = maximums.get(0).getCandle();
+//		Candle lastMinBeforeMax = getFirstExtremumBefore(lastMax, extremums, Type.MIN);
+//
+//		for (int i = lastMax.getIndex(); i < c.getIndex(); i++) {
+//			Candle cTmp = candles.get(i);
+//			if (cTmp.getLow() < lastMinBeforeMax.getLow() + tetaBreak*cTmp.getAtr()) {
+//				return false;
+//			}
+//		}
 		return true;
 	}
 

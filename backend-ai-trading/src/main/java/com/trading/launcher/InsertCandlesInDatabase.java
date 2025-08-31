@@ -46,8 +46,8 @@ public class InsertCandlesInDatabase extends AbstractService implements CommandL
 		/**
 		 * PARAMS
 		 */
-		File file = new File("/data/tickdata/DAX30.7z");
-		String market = "DAX30";
+		File file = new File("/data/tickdata/GOLD_2003_2015.csv.7z");
+		String market = "GOLD";
 
 
 		try (SevenZFile sevenZFile =  new SevenZFile.Builder().setFile(file).get()) {

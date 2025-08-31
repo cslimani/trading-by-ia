@@ -2,7 +2,6 @@ package com.trading.gui;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.IntStream;
@@ -30,7 +29,6 @@ public class TopPanel  extends AbstractPanel{
 	private JComboBox<String> marketComboBox;
 	private JTextArea positionTextArea;
 	private JTextArea distanceTextArea;
-	DecimalFormat df = new DecimalFormat("#.#");
 	Double detlaTotal = 0d;
 	
 	@Autowired

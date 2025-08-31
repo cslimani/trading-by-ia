@@ -17,7 +17,6 @@ import com.trading.dto.DataDTO;
 import com.trading.gui.MainPanel;
 import com.trading.gui.PricePanel;
 import com.trading.gui.TopPanel;
-import com.trading.repository.MarketRepository;
 import com.trading.service.PriceService;
 
 import jakarta.annotation.PostConstruct;
@@ -41,8 +40,6 @@ public class GuiFrame extends JFrame {
 	private PriceService priceService;
 	@Autowired
 	private DataDTO data;
-	@Autowired
-	private MarketRepository marketDAO;
 	
 	
 //	public static EnumTimeRange TIME_RANGE = EnumTimeRange.M1;

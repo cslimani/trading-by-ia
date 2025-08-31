@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
-import com.trading.indicator.AmprCalculator;
 import com.trading.indicator.AtrCalculator;
 import com.trading.indicator.EmaCalculator;
 

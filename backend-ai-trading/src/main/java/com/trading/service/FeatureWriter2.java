@@ -20,12 +20,12 @@ public class FeatureWriter2 extends AbstractService{
 	private static final Integer NB_MAX_PRICE = 40;
 
 
-	public Integer addFeature(List<Candle> candles, Range range, Candle breakCandle, List<Extremum> extremums3,
+	public Integer addFeature(List<Candle> candles, Range range, Candle breakCandle, List<Extremum> extremumsEntry,
 			String market, EnumTimeRange timeRange, String hotspotCode) throws IOException {
 		Integer indexEnd = breakCandle.getIndex();
 		Candle swingHighBefore = range.getSwingHighBefore();
 		double nbCandlesAboveRange = 0;
-		int nbCandlesUnderBreak = 0;
+		double nbCandlesUnderRange = 0;
 		for(int i = breakCandle.getIndex() + 1; i < candles.size(); i++) {
 			Candle candleStartTrade = candles.get(i);
 			double startTradePrice = candleStartTrade.getOpen();
@@ -45,10 +45,13 @@ public class FeatureWriter2 extends AbstractService{
 			if (candleStartTrade.getHigh() > swingHighBefore.getLow()) {
 				return candleStartTrade.getIndex();
 			}
-			if (previousCandle.getHigh() < breakCandle.getHigh()) {
-				nbCandlesAboveRange++;
+			if (previousCandle.getClose() > range.getMax()) {
+				nbCandlesAboveRange += 1;
 			}
-			if (nbCandlesAboveRange < 4 || previousCandle.getClose() < breakCandle.getClose()) {
+			if (previousCandle.getClose() < range.getMax()) {
+				nbCandlesUnderRange++;
+			}
+			if (nbCandlesAboveRange < 4 || nbCandlesUnderRange < 4 || previousCandle.getClose() < breakCandle.getHigh()) {
 				continue;
 			}
 			double distanceOpenSlAtr = 0;
@@ -62,7 +65,7 @@ public class FeatureWriter2 extends AbstractService{
 				
 			Candle slCandle = previousCandle;
 			while (distanceOpenSlAtr < 1 && countSL++ < 5) {
-				Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremums3, Type.MIN, startTradePrice);
+				Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremumsEntry, Type.MIN, startTradePrice);
 				if (extremumOpt.isPresent()) {
 					slCandle = extremumOpt.get().getCandle();
 					distanceOpenSl = startTradePrice - slCandle.getLow();
@@ -74,12 +77,10 @@ public class FeatureWriter2 extends AbstractService{
 			if (countSL >=5 || slCandle.getIndex().equals(previousCandle.getIndex())) {
 				break;
 			}
-			double tp = startTradePrice + distanceOpenSl;
+//			double tp = startTradePrice + distanceOpenSl;
+			double tp = swingHighBefore.getLow();
 			double sl = slCandle.getLow();
 			double rr = (tp - startTradePrice) / (startTradePrice - sl);
-			if (previousCandle.getClose() > range.getMax()) {
-				nbCandlesAboveRange += 1;
-			}
 			
 			if (rr < 1) {
 				increaseCount("TP < 1");
@@ -104,6 +105,7 @@ public class FeatureWriter2 extends AbstractService{
 			mapFeature.put("f_distanceToRangeATR", distanceToRangeATR);
 			mapFeature.put("f_swing_high_distance", swingHighDistanceATR);
 			mapFeature.put("f_nb_candles_above_range", nbCandlesAboveRange);
+			mapFeature.put("f_nb_candles_under_range", nbCandlesUnderRange);
 			mapFeature.put("f_sl_distance", distanceOpenSlAtr);
 			mapFeature.put("f_accum_size", Double.valueOf(breakCandle.getIndex() - range.getIndexStart()));
 			mapFeature.put("date", breakCandle.getDate());
@@ -111,9 +113,11 @@ public class FeatureWriter2 extends AbstractService{
 			//				mapFeature.put("y", new Random().nextBoolean() ? 1d : 0d);
 //			addPriceFeature(mapFeature, candles, candleStartTrade.getIndex(), range);
 			listMapFeatures.add(mapFeature);
+//			System.out.println("RR " + rr + " y=" + isTP);
 //			System.out.println("New accumulation " + breakCandle.getDate() + "SL at : " + slCandle.getDate());
 			List<LocalDateTime> keyDates = List.of(swingHighBefore.getDate(), breakCandle.getDate(),candleStartTrade.getDate(), slCandle.getDate());
 			saveHotSpot(swingHighBefore.getDate(), candleStartTrade.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
+			break;
 		};
 
 		return indexEnd;
@@ -123,31 +127,6 @@ public class FeatureWriter2 extends AbstractService{
 		return (c.getClose() - c.getOpen())/ c.getAtr();
 	}
 
-	private void addPriceFeature(Map<String, Object> mapFeature, List<Candle> candles, Integer currentIndex, Range range) {
-		for(int i = 0 ; i < NB_MAX_PRICE; i++) {
-			int tmpIndex = currentIndex - NB_MAX_PRICE + 1 + i;
-			Candle c = candles.get(tmpIndex);
-			int index = i +10;
-			mapFeature.put("o_" + index, normalize(c.getOpen(), range));
-			mapFeature.put("h_" + index, normalize(c.getHigh(), range));
-			mapFeature.put("c_" + index, normalize(c.getClose(), range));
-			mapFeature.put("l_" + index, normalize(c.getLow(), range));
-			mapFeature.put("v_" + index, normalize(c.getVolume(), range));
-		}
-	}
-
-	private boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
-		for (int i = cStart.getIndex(); i < candles.size(); i++) {
-			Candle c = candles.get(i);
-			if (c.getHigh() >= tp) {
-				return true;
-			}
-			if (c.getLow() <= sl) {
-				return false;
-			}
-		}
-		return false;
-	}
 
 
 

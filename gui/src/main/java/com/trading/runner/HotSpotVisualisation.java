@@ -52,7 +52,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 
 	@Override
 	protected void runnerInit() {
-		setup("GOLD", EnumTimeRange.M15);
+		setup("EURUSD", EnumTimeRange.M15);
 		String type = "RANGE_AUTO";
 		hotSpots = hotSpotRepository.findByCodeOrderByDateEnd(type);
 		if (hotSpots.isEmpty()) {
@@ -69,6 +69,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 		dateEnd =  hotspot.getDateEnd();
 		data.setTimeRange(hotspot.getTimeRange());
 		topPanel.setTimeRange(hotspot.getTimeRange());
+		data.setMarketCode(hotspot.getMarket());
 	}
 
 	protected void applyToCandles(List<Candle> list) {

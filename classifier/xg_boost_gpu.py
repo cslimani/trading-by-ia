@@ -216,6 +216,24 @@ def main():
     print("\nConfusion matrix (thr=0.5):\n", confusion_matrix(y_test, y_pred))
     print("\nClassification report:\n", classification_report(y_test, y_pred, digits=3))
 
+
+    eval_df = df_test[[GROUP_COL]].copy()
+    eval_df["y"] = y_test
+    eval_df["p"] = proba_cal
+    eval_df = eval_df.reset_index(drop=True)
+    aucs, skipped = [], 0
+    for g, grp in eval_df.groupby(GROUP_COL):
+        if grp["y"].nunique() < 2:
+            skipped += 1
+            continue
+        aucs.append(roc_auc_score(grp["y"].values, grp["p"].values))
+    if aucs:
+        macro_auc = float(np.mean(aucs))
+        print(f"ROC AUC macro par accumulation: {macro_auc:.5f}  "
+              f"(groupes utilisés={len(aucs)}, ignorés={skipped})")
+    else:
+        print("ROC AUC macro par accumulation: impossible (aucun groupe avec 2 classes)")
+
     # oos_break = df_test[T_SINCE_COL] == 0
     # if oos_break.any():
     #     proba_b0 = proba_cal[oos_break]; y_b0 = y_test[oos_break]
