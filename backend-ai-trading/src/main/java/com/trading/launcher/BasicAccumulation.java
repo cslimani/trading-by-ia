@@ -21,7 +21,6 @@ import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.AtrCalculator;
 import com.trading.indicator.MedianCalculator;
-import com.trading.indicator.PercentileHelper;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.indicator.extremum.SwingExtremaFinder.Type;
@@ -54,7 +53,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		System.out.println("Accumulation Break starting");
 		featureWriter.backupFile();
 		hotSpotRepository.deleteAll();
-
+		long startProcess = System.currentTimeMillis();
 		Map.of(
 				"GOLD", LocalDateTime.of(2012, Month.JANUARY, 1, 0, 0)
 				,"US100", LocalDateTime.of(2018, Month.JANUARY, 1, 0, 0)
@@ -82,6 +81,8 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		}
 		displayMapCount();
 		featureWriter.writeAll();
+		long endProcess = System.currentTimeMillis();
+		System.out.println("Total time processing " + (endProcess - startProcess)/1000 + " sec");
 	}
 
 
@@ -277,53 +278,36 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 
 	private Range getLargestRange(List<Candle> candles, int endIndex, Double maxRangeHeight) {
 		Range range = null;
-		double min = Double.MAX_VALUE;
-		double max = Double.MIN_VALUE;
+		for (int i = 1; i < endIndex; i++) {
+			//			if (candles.get(endIndex).isDate(3, 1) && candles.get(endIndex).isTime(0, 40, 0)) {
+			//				System.out.println();
+			//			}
+			List<Candle> subList = new ArrayList<Candle>(candles.subList(endIndex-i, endIndex+1));
+			PercentileResult candleHigh = percentile(subList, 95d, true);
+			PercentileResult candleLow = percentile(subList, 5d, false);
+			double rangeHeight = Math.abs(candleHigh.value - candleLow.value);
+			if (rangeHeight > maxRangeHeight) {
+				return range;
+			}
 
-		for (int i = 0; i < endIndex; i++) {
-			Candle candle = candles.get(endIndex-i);
-			if (candle.getLow() < min) {
-				min = candle.getLow();
+			removeLeadingAboveMedian(subList);
+			if (subList.isEmpty()) {
+				//				increaseCount("EMPTY_AFTER_REMOVE_LEADING");
+				return null;
 			}
-			if (candle.getHigh() > max) {
-				max = candle.getHigh();
-			}
-			double rangeHeight = max - min;
-			if (rangeHeight <= maxRangeHeight ) {
-				int startIndex = endIndex - i;
-				range = new Range(
-						candles.get(startIndex).getDate(),
-						candles.get(endIndex).getDate(),
-						startIndex,
-						endIndex, 
-						max, 
-						min, 
-						rangeHeight,
-						max, 
-						min);
-			} else {
-				List<Candle> subList = new ArrayList<Candle>(candles.subList(endIndex - i -1, endIndex+1));
-				PercentileResult candleHigh =  percentile(subList, 95d, true);
-				PercentileResult candleLow = percentile(subList, 5d, false);
-				rangeHeight = Math.abs(candleHigh.value - candleLow.value);
-				if (rangeHeight > maxRangeHeight) {
-					int startIndex = endIndex - subList.size() +1;
-					Double maxRange = subList.stream().map(c -> c.getHigh()).max(Double::compareTo).get();
-					Double minRange = subList.stream().map(c -> c.getLow()).min(Double::compareTo).get();
-					range = new Range(
-							candles.get(startIndex).getDate(),
-							candles.get(endIndex).getDate(),
-							startIndex,
-							endIndex, 
-							candleHigh.value, 
-							candleLow.value, 
-							rangeHeight,
-							maxRange, 
-							minRange);
-					removeLeadingAboveMedian(subList);
-					return range;
-				}
-			}
+			int startIndex = endIndex - subList.size() +1;
+			Double maxRange = subList.stream().map(c -> c.getHigh()).max(Double::compareTo).get();
+			Double minRange = subList.stream().map(c -> c.getLow()).min(Double::compareTo).get();
+			range = new Range(
+					candles.get(startIndex).getDate(),
+					candles.get(endIndex).getDate(),
+					startIndex,
+					endIndex, 
+					candleHigh.value, 
+					candleLow.value, 
+					rangeHeight,
+					maxRange, 
+					minRange);
 		}
 		return range;
 	}
