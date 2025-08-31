@@ -1,4 +1,4 @@
-package com.trading.service;
+package com.trading.launcher;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -20,6 +20,7 @@ import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.indicator.extremum.SwingExtremaFinder.Type;
+import com.trading.service.AbstractService;
 
 @Component
 @Profile("accumulation-ltf")
@@ -33,7 +34,7 @@ public class AccumulationLTF extends AbstractService implements CommandLineRunne
 
 	LocalDateTime startDate = LocalDateTime.of(2025, Month.JANUARY, 1, 0, 0);
 	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
-	String market = "US100.cash";
+	String market = "US100";
 	EnumTimeRange timeRange = EnumTimeRange.M1;
 
 	@Override

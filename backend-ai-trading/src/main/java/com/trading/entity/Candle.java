@@ -1,5 +1,6 @@
 package com.trading.entity;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import com.trading.enums.EnumTimeRange;
@@ -34,11 +35,25 @@ public class Candle {
 	public double high;
 	public double low;
 	public double close;
+	public double volume;
 	@Enumerated(EnumType.STRING)
 	EnumTimeRange timeRange;
-
 	String market;
+
+	public Candle(String market,EnumTimeRange tf, Instant dateInstant,
+			double open, double high, double low, double close, long volume) {
+		this.dateInstant = dateInstant;
+		this.timeRange = tf;
+		this.open = open;
+		this.high = high;
+		this.low = low;
+		this.close = close;
+		this.volume = volume;
+		this.market = market;
+	}
 	
+	@Transient
+	public Instant dateInstant;
 	@Transient
 	public double tr;
 	@Transient
@@ -61,7 +76,7 @@ public class Candle {
 	public Double macd;
 	@Transient
 	public Double macdSignal;
-	
+
 	@Transient
 	public Double getMacdDiff() {
 		if (macd != null && macdSignal != null) {
@@ -86,7 +101,7 @@ public class Candle {
 	public boolean isDate(int day, int month) {
 		return date.getDayOfMonth() == day && date.getMonthValue() == month;
 	}
-	
+
 	public boolean isBefore(Candle candle) {
 		return date.isBefore(candle.getDate());
 	}

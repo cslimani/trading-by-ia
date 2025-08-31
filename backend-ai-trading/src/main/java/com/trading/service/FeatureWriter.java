@@ -1,18 +1,11 @@
 package com.trading.service;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
 import com.trading.dto.TakeProfit;
@@ -25,20 +18,23 @@ import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 public class FeatureWriter extends AbstractService{
 
 	private static final Integer NB_MAX_PRICE = 40;
-	private String sourcePath = "/data/trading_ml/bars_after_break.csv";
-	private String targetFolder = "/data/trading_ml/backup";
-	List<Map<String, Double>> listMapFeatures = new ArrayList<>();
 
-	public Integer addFeature(List<Candle> candles, Range range, Candle breakCandle, List<Extremum> extremums2,
+
+	public Integer addFeature(List<Candle> candles, Range range, Candle breakCandle, List<Extremum> extremums3,
 			String market, EnumTimeRange timeRange, String hotspotCode) throws IOException {
 		Integer indexEnd = breakCandle.getIndex();
+		Candle swingHighBefore = range.getSwingHighBefore();
 		double tp1 = range.getMax() + range.getHeight();
-		double tp2 = range.getMin() + range.getMaxHeight()/2;
+		double tp2 = range.getMin() + (swingHighBefore.getClose() - range.getMin())/2;
 		double tp3 = range.getSwingHighBefore().getClose();
-		List<TakeProfit> tpList = List.of(new TakeProfit(tp1), new TakeProfit(tp2), new TakeProfit(tp3));
+		List<TakeProfit> tpList = List.of(
+				new TakeProfit(tp1)
+//				new TakeProfit(tp2),
+//				new TakeProfit(tp3)
+		);
 		for(int i = breakCandle.getIndex() + 1; i < candles.size(); i++) {
 			Candle c = candles.get(i);
-			Candle swingHighBefore = range.getSwingHighBefore();
+			
 			//			if (c.isDate(2, 1) && c.isTime(20, 36, 0)) {
 			//				System.out.println();
 			//			}
@@ -58,14 +54,24 @@ public class FeatureWriter extends AbstractService{
 				if (tp.getReached()) {
 					continue;
 				}
-				Candle slCandle = getFirstExtremumBeforeAndLowerThan(c, extremums2, Type.MIN, c.getOpen());
-				double sl = slCandle.getLow();
+				double distanceOpenSL = 0;
+				int countSL = 0;
+				Candle slCandle = c;
 				double startTradePrice = c.getOpen();
+				while (distanceOpenSL < 2 && countSL++ < 5) {
+//					slCandle = getFirstExtremumBeforeAndLowerThan(slCandle, extremums3, Type.MIN, c.getOpen());
+					distanceOpenSL = (c.getOpen() - slCandle.getLow())/c.getAtr();
+				}
+				double sl = slCandle.getLow();
 				double rr = (tp.getPrice() - startTradePrice) / (startTradePrice - sl);
 				
-				
+				if (distanceOpenSL < 2) {
+					increaseCount("SL_TOO_SMALL");
+					continue;
+				}
 				if (c.getHigh() > tp.getPrice()) {
 					tp.setReached(true);
+					continue;
 				}
 				if (rr < 1) {
 					increaseCount("TP < 1");
@@ -90,8 +96,9 @@ public class FeatureWriter extends AbstractService{
 				mapFeature.put("swing_high_distance", swingHighDistance);
 				mapFeature.put("accum_size", Double.valueOf(breakCandle.getIndex() - range.getIndexStart()));
 				mapFeature.put("y", isTP ? 1d : 0d);
-//				addPriceFeature(mapFeature, candles, c.getIndex(), range);
-				listMapFeatures.add(mapFeature);
+//				mapFeature.put("y", new Random().nextBoolean() ? 1d : 0d);
+				addPriceFeature(mapFeature, candles, c.getIndex(), range);
+//				listMapFeatures.add(mapFeature);
 				System.out.println("New accumulation " + breakCandle.getDate());
 				List<LocalDateTime> keyDates = List.of(swingHighBefore.getDate(), breakCandle.getDate(),c.getDate(), slCandle.getDate());
 			};
@@ -105,15 +112,13 @@ public class FeatureWriter extends AbstractService{
 		for(int i = 0 ; i < NB_MAX_PRICE; i++) {
 			int tmpIndex = currentIndex - NB_MAX_PRICE + 1 + i;
 			Candle c = candles.get(tmpIndex);
-			mapFeature.put("o_" + i, normalize(c.getOpen(), range));
-			mapFeature.put("h_" + i, normalize(c.getHigh(), range));
-			mapFeature.put("c_" + i, normalize(c.getClose(), range));
-			mapFeature.put("l_" + i, normalize(c.getLow(), range));
+			int index = i +10;
+			mapFeature.put("o_" + index, normalize(c.getOpen(), range));
+			mapFeature.put("h_" + index, normalize(c.getHigh(), range));
+			mapFeature.put("c_" + index, normalize(c.getClose(), range));
+			mapFeature.put("l_" + index, normalize(c.getLow(), range));
+			mapFeature.put("v_" + index, normalize(c.getVolume(), range));
 		}
-	}
-
-	private Double normalize(double price, Range range) {
-		return (price - range.getMin()) / range.getMaxHeight();
 	}
 
 	private boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
@@ -129,56 +134,6 @@ public class FeatureWriter extends AbstractService{
 		return false;
 	}
 
-	public Candle getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
-		return extremums.stream()
-				.filter(e -> e.type == type)
-				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
-				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()))
-				.get()
-				.getCandle();
-	}
-
-	public Candle getFirstExtremumBeforeAndLowerThan(Candle c,  List<Extremum> extremums, Type type, Double maxValue) {
-		return extremums.stream()
-				.filter(e -> e.type == type)
-				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
-				.filter(e -> e.getPrice() < maxValue)
-				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()))
-				.get()
-				.getCandle();
-	}
-
-	public void writeHeaders() throws IOException {
-		if (listMapFeatures.isEmpty()) {
-			return;
-		}
-		Map<String, Double> map = listMapFeatures.get(0);
-		String header = map.keySet().stream().sorted().collect(Collectors.joining(","));
-		writeLine(header);
-	}
-
-	private void writeLine(String line) throws IOException {
-		FileUtils.writeStringToFile(new File(sourcePath), line + System.lineSeparator(), Charset.defaultCharset(), true);
-	}
-
-	public void backupFile() {
-		Utils.backupFile(sourcePath, targetFolder);
-	}
-
-	public void writeAll() throws IOException {
-		writeHeaders();
-		DecimalFormat df = new DecimalFormat("0.#####"); 
-		listMapFeatures.forEach(map -> {
-			List<String> keys = map.keySet().stream().sorted().toList();
-			String line = keys.stream()
-					.map(k -> df.format( map.get(k)))
-					.collect(Collectors.joining(","));
-			try {
-				writeLine(line);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-	}
+	
 
 }

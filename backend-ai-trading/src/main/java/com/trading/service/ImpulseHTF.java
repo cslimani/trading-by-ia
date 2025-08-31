@@ -30,7 +30,7 @@ public class ImpulseHTF extends AbstractService implements CommandLineRunner {
 	LocalDateTime fetchStartDate = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
 	LocalDateTime startDate = LocalDateTime.of(2025, Month.JANUARY, 1, 0, 0);
 	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
-	String market = "US100.cash";
+	String market = "US100";
 
 	@Override
 	public void run(String... args) throws Exception {

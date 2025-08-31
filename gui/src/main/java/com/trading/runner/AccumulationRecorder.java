@@ -28,6 +28,20 @@ public class AccumulationRecorder extends AbstractRunner {
 	private List<LocalDateTime> accumulationDates = new ArrayList<LocalDateTime>();
 
 	@Override
+	protected void runnerInit() {
+		setup("GOLD", EnumTimeRange.M1);
+		dateEnd = LocalDateTime.of(2025, 9, 27, 1, 0);
+		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
+				.stream()
+				.map(hs -> hs.getKeyDates())
+				.flatMap(List::stream)
+				.toList());
+		if (!dates.isEmpty()) {
+//			dateEnd =  Iterables.getLast(dates);
+		}
+	}
+	
+	@Override
 	public void init() {
 		super.init();
 		addButton("Reset", () -> reset(), true);
@@ -39,20 +53,7 @@ public class AccumulationRecorder extends AbstractRunner {
 		refreshTopPanel();
 		applyToCandles(candles);
 	}
-
-	@Override
-	protected void runnerInit() {
-		setup("US100.cash", EnumTimeRange.M1);
-		dateEnd = LocalDateTime.of(2025, 1, 2, 1, 0);
-		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
-				.stream()
-				.map(hs -> hs.getKeyDates())
-				.flatMap(List::stream)
-				.toList());
-		if (!dates.isEmpty()) {
-//			dateEnd =  Iterables.getLast(dates);
-		}
-	}
+	
 
 	@Override
 	public void keyReleased(int keyCode) {

@@ -1,10 +1,14 @@
-package com.trading.service;
+package com.trading.launcher;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -18,48 +22,82 @@ import com.trading.indicator.MedianCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.indicator.extremum.SwingExtremaFinder.Type;
+import com.trading.service.AbstractService;
+import com.trading.service.FeatureWriter2;
+import com.trading.service.Range;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Profile("basic-accumulation")
+@Slf4j
 public class BasicAccumulation extends AbstractService implements CommandLineRunner {
 
 	private static final int MIN_RANGE_WIDTH = 40;
 	private static final Double MAX_RANGE_ATR_RATIO = 4d;
 	private static final Double RATIO_MAX_RANGE_SWING_HIGH = 0.7;
 	private static final String HOTSPOT_CODE = "RANGE_AUTO";
-	@Autowired
-	FeatureWriter featureWriter;
-	SwingExtremaFinder analyzer = new SwingExtremaFinder();
-	List<Integer> swingHighList = new ArrayList<Integer>();
 
-	LocalDateTime startDate = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
-	LocalDateTime endDate = LocalDateTime.of(2026, Month.DECEMBER, 1, 0, 0);
-	String market = "US100.cash";
+	@Autowired
+	FeatureWriter2 featureWriter;
+	SwingExtremaFinder analyzer = new SwingExtremaFinder();
+
 	EnumTimeRange timeRange = EnumTimeRange.M1;
+
+	ExecutorService executor = Executors.newFixedThreadPool(15);
 
 	@Override
 	public void run(String... args) throws Exception {
-		System.out.println("Impulse Detection starting");
+		System.out.println("Accumulation Break starting");
 		featureWriter.backupFile();
-
 		hotSpotRepository.deleteAll();
+
+//		List.of("GOLD", "US100", "DAX30")
+		List.of("DAX30")
+		.forEach(market -> {
+			LocalDateTime startDate = LocalDateTime.of(2018, Month.JANUARY, 1, 0, 0);
+			LocalDateTime endDate = LocalDateTime.of(2025, Month.DECEMBER, 1, 0, 0);
+
+			while (startDate.isBefore(endDate)) {
+				final LocalDateTime startDateFinal = startDate;
+				executor.submit(() -> {
+					try {
+						process(market, startDateFinal, startDateFinal.plusMonths(1));
+					} catch (Exception e) {
+						log.error("Error processing {}", startDateFinal, e);
+					}
+				});
+				startDate = startDate.plusMonths(1);
+			}
+		});
+		executor.shutdown();
+		if (!executor.awaitTermination(30, TimeUnit.MINUTES)) {
+			executor.shutdownNow();
+		}
+		displayMapCount();
+		featureWriter.writeAll();
+	}
+
+
+	private void process(String market, LocalDateTime startDate, LocalDateTime endDate) throws IOException {
+		System.out.println("Start processing " + startDate + " for " + market);
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
 				market,
 				timeRange,
 				startDate,
 				endDate);
 		setIndex(candles);
-		AtrCalculator.compute(candles, 10);
+		AtrCalculator.compute(candles, 50);
 		List<Extremum> extremums7 = analyzer.findExtrema(candles, 7, false);
-		List<Extremum> extremums2 = analyzer.findExtrema(candles, 2, false);
-
+		List<Extremum> extremums3 = analyzer.findExtrema(candles, 3, false);
+		List<Integer> swingHighList = new ArrayList<>();
 		Range range = null;
 		for (int i = 100; i < candles.size() - 100; i++) {
 			Candle c = candles.get(i);
 			if (range == null) {
-				Double averageATR = AtrCalculator.average(candles, i, 50);
-				Double maxRangeHeight = MAX_RANGE_ATR_RATIO*averageATR;
-				if (isInvalid(List.of(maxRangeHeight, averageATR))) {
+				//				Double averageATR = AtrCalculator.average(candles, i, 50);
+				Double maxRangeHeight = MAX_RANGE_ATR_RATIO*c.getAtr();
+				if (isInvalid(List.of(maxRangeHeight, c.getAtr()))) {
 					continue;
 				}
 				Range newRange = getLargestRange(candles, i, maxRangeHeight);
@@ -80,7 +118,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 				if (rangeSwingHighRatio > RATIO_MAX_RANGE_SWING_HIGH) {
 					continue;
 				}
-				newRange.setRangeSwingHighRatio(maxRangeHeight);
+				newRange.setRangeSwingHighRatio(rangeSwingHighRatio);
 
 				range = newRange;
 				swingHighList.add(swingHighBefore.getIndex());
@@ -97,21 +135,21 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 				Candle firstAccumulationCandle =  range.getFirstAccumulationCandle();
 				List<LocalDateTime> keyDates = List.of(swingHighBefore, firstAccumulationCandle.getDate(),c.getDate());
 				if (c.getClose() > range.getMax()) {
-					if(range.getNbBreakUp().getAndIncrement() > 0) {
-						//						System.out.println("Break from top at " + c.getDate());
-						Integer indexEnd = featureWriter.addFeature(candles, range, c, extremums2, market, timeRange, HOTSPOT_CODE);
-						range = null;
-						if (indexEnd > 0) {
-							saveHotSpot(swingHighBefore, candles.get(indexEnd).getDate(), keyDates, market, timeRange, HOTSPOT_CODE);
-							//						continueTrade(candles, range, c, extremums2);
-							increaseCount("BREAK UP");
-						}
-					}
+					//					if(range.getNbBreakUp().getAndIncrement() > 0) {
+					//						System.out.println("Break from top at " + c.getDate());
+					increaseCount("BREAK UP");
+					Integer indexEnd = featureWriter.addFeature(candles, range, c, extremums3, market, timeRange, HOTSPOT_CODE);
+					range = null;
+					//						if (indexEnd > 0) {
+					//							saveHotSpot(swingHighBefore, candles.get(indexEnd).getDate(), keyDates, market, timeRange, HOTSPOT_CODE);
+					//							//						continueTrade(candles, range, c, extremums2);
+					//						}
+					//					}
 				} else if (c.getClose() < range.getMin()) {
+					increaseCount("BREAK DOWN");
 					if(range.getNbBreakDown().getAndIncrement() > 0) {
 						//						saveHotSpot(swingHighBefore, c.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
 						//						System.out.println("Break from bottom at" + c.getDate());
-						increaseCount("BREAK DOWN");
 						range = null;
 					}
 				} else {
@@ -119,8 +157,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 				}
 			}
 		}
-		displayMapCount();
-		featureWriter.writeAll();
+
 	}
 
 
@@ -186,13 +223,6 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		}
 		return false;
 	}
-
-
-	private boolean isInvalid(List<Double> list) {
-		return list.stream()
-				.anyMatch(d -> Double.isInfinite(d) || Double.isNaN(d));
-	}
-
 
 	private Range getLargestRange(List<Candle> candles, int endIndex, Double maxRangeHeight) {
 		Range range = null;

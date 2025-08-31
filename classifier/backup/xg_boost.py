@@ -1,4 +1,4 @@
-# train_dynamic_breakout_classifier.py
+# train_dynamic_breakout_classifier_xgb.py
 # Multi-lignes par accumulation : 1 ligne par barre entre break et TP/SL.
 # Colonnes attendues au minimum :
 #  - accum_id      : identifiant de l'accumulation (groupe)
@@ -15,11 +15,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import (
     roc_auc_score, average_precision_score,
     classification_report, confusion_matrix
 )
+import xgboost as xgb
 
 # -------------- CONFIG --------------
 CSV_PATH = "/data/trading_ml/bars_after_break.csv"
@@ -27,18 +27,6 @@ TIME_COL = "timestamp"
 GROUP_COL = "accum_id"
 TARGET_COL = "y"
 T_SINCE_COL = "t_since_break"
-
-FEATURES = [
-    "accum_size",
-    "range_swing_high_ratio",
-    "risk_ratio",
-    # "ema_20",
-    # "ema_50",
-    # "rsi_14",
-    # "atr_break",
-    # "dist_tp", "dist_sl",
-    # ... ajoute tes features ici
-]
 
 TEST_GROUP_RATIO = 0.2          # dernier 20% des accumulations (par temps) en holdout
 N_SPLITS = 5                    # pour la CV sur les groupes
@@ -52,12 +40,28 @@ def load_df(path):
     # on force un index séquentiel pour que les splits par indices fonctionnent
     return df.sort_values([TIME_COL, GROUP_COL, T_SINCE_COL]).reset_index(drop=True)
 
-def check_columns(df):
+def audit_splits(df, splits):
+    ok = True
+    for k, (tr, va) in enumerate(splits, 1):
+        gtr = set(df.iloc[tr][GROUP_COL])
+        gva = set(df.iloc[va][GROUP_COL])
+        # 1) aucun id partagé
+        if gtr & gva:
+            print(f"[Fold {k}] Ids partagés:", gtr & gva); ok = False
+        # 2) ordre temporel (approx) :
+        t_tr_max = df.iloc[tr][TIME_COL].max()
+        t_va_min = df.iloc[va][TIME_COL].min()
+        if t_tr_max >= t_va_min:
+            print(f"[Fold {k}] Train déborde sur la val (t_train_max >= t_val_min).")
+            ok = False
+    return ok
+
+def check_columns(df, _features):
     required = {GROUP_COL, TIME_COL, TARGET_COL, T_SINCE_COL}
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"Colonnes manquantes: {missing}")
-    for f in FEATURES:
+    for f in _features:
         if f not in df.columns:
             raise ValueError(f"Feature manquante: {f}")
 
@@ -119,59 +123,91 @@ def filter_cv_splits_with_both_classes(cv_splits, y_all):
         raise ValueError("Aucun pli de CV n'a les deux classes. Revoir la stratégie de split.")
     return safe
 
+def permute_train_within_group_local(y_train, groups_train, rng):
+    y_perm = y_train.copy()
+    for g in np.unique(groups_train):
+        idx = np.where(groups_train == g)[0]
+        if idx.size > 1:
+            y_perm[idx] = rng.permutation(y_perm[idx])
+    return y_perm
+
 # -------------- MAIN --------------
 def main():
     df = load_df(CSV_PATH)
+    FEATURES = [
+        "risk_ratio",
+        "accum_size",
+        "range_swing_high_ratio",
+        "t_since_break",
+        "swing_high_distance",
+    ]
+    # FEATURES += [c for c in df.columns if c.startswith("o_")]
+    # FEATURES += [c for c in df.columns if c.startswith("h_")]
+    # FEATURES += [c for c in df.columns if c.startswith("l_")]
+    # FEATURES += [c for c in df.columns if c.startswith("c_")]
+    # FEATURES += [c for c in df.columns if c.startswith("v_")]
     n_features = len(FEATURES)
-    check_columns(df)
+    check_columns(df, FEATURES)
 
     X = df[FEATURES]
     y = df[TARGET_COL].astype(int).values
 
     # Holdout par groupes (derniers groupes en temps)
     mask_tr, mask_te = split_holdout_by_group(df, TEST_GROUP_RATIO)
-    X_train, y_train = X.iloc[mask_tr], y[mask_tr]
-    X_test,  y_test  = X.iloc[mask_te], y[mask_te]
-    df_train, df_test = df.iloc[mask_tr], df.iloc[mask_te]
+    X_train, y_train = X.loc[mask_tr], y[mask_tr]
+    X_test,  y_test  = X.loc[mask_te], y[mask_te]
+    df_train, df_test = df.loc[mask_tr], df.loc[mask_te]
 
-    # Préprocessing : imputation uniquement (HGB n’a pas besoin de scaling)
+#   # Pour test : permutation locale de y_train dans chaque groupe
+    # rng = np.random.default_rng(0)
+    # groups_train = df_train[GROUP_COL].values
+    # y_train = permute_train_within_group_local(y_train, groups_train, rng)
+
+    # Préprocessing : imputation uniquement (XGBoost gère aussi les NaN, mais on garde l'équivalence)
     preproc = ColumnTransformer([
         ("num", SimpleImputer(strategy="median"), FEATURES)
     ])
 
-    # Modèle moderne et rapide
-    monotonic = [0]*(n_features-1) + [-1]
-    base = HistGradientBoostingClassifier(
-        monotonic_cst=monotonic,
+    # Modèle XGBoost (GPU)
+    # Remplace "gpu_hist" par "hist" si vous n'avez pas XGBoost compilé avec CUDA.
+    base = xgb.XGBClassifier(
+        tree_method="hist",
+        device="cuda",
+        eval_metric="logloss",
         random_state=42,
-        early_stopping="auto"  # utilise une fraction de validation interne
-        # (tu peux aussi fixer validation_fraction et n_iter_no_change)
+        n_jobs=-1
     )
+
+    # (optionnel) Contraintes monotoniques, même esprit que le script HGB :
+    monotonic = [-1] + [0]*(n_features-1)
+    # Pour activer dans XGBoost, décommentez ci-dessous :
+    # base.set_params(monotone_constraints="(" + ",".join(map(str, monotonic)) + ")")
 
     pipe = Pipeline([
         ("prep", preproc),
         ("model", base)
     ])
 
-    # Grille adaptée à HGB (pas de 'subsample')
+    # Grille adaptée à XGBoost
     param_grid = {
-         "model__learning_rate": [0.03, 0.05, 0.1],
-        "model__max_iter": [200, 400, 800],          # <= remplace n_estimators
-        "model__max_leaf_nodes": [15, 31, 63, 127],
-        # (optionnel) alternative :
-        # "model__max_depth": [None, 3, 5, 7],
-        "model__min_samples_leaf": [10, 20, 50, 100],
-        "model__l2_regularization": [0.0, 0.1, 1.0],
-        "model__max_bins": [255],
-        "model__max_features": [1.0, 0.8, 0.6],
-        "model__validation_fraction": [0.1, 0.2],
-        "model__n_iter_no_change": [10, 20],
+        "model__learning_rate": [0.03, 0.05, 0.1],
+        "model__n_estimators": [200, 400, 800],
+        "model__max_depth": [3, 5, 7, 9],
+        "model__min_child_weight": [1, 5, 10, 20],
+        "model__subsample": [0.6, 0.8, 1.0],
+        "model__colsample_bytree": [0.6, 0.8, 1.0],
+        "model__gamma": [0, 0.1, 0.5, 1.0],
+        "model__reg_lambda": [1.0, 5.0, 10.0],
+        "model__reg_alpha": [0.0, 0.1, 1.0],
+        # (optionnel) early stopping via fit_params avec eval_set par fold — à gérer à part
     }
 
     # Splits de CV temporels par groupes
-
     cv_raw = make_group_time_cv_splits(df_train, n_splits=N_SPLITS)
     cv_splits = filter_cv_splits_with_both_classes(cv_raw, y_train)
+
+    if not audit_splits(df_train, cv_splits):
+        raise ValueError("Problème dans les splits de CV. Abandon.")
 
     # Pondérations (groupe + classe)
     w_train = make_weights(df_train, y_train)
@@ -198,6 +234,7 @@ def main():
     proba = cal.predict_proba(X_test)[:, 1]
     y_pred = (proba >= 0.5).astype(int)
     print("\n=== OOS (toutes lignes) ===")
+    print(f"Instances de test : {len(y_test)}")
     print("ROC AUC :", roc_auc_score(y_test, proba))
     print("PR  AUC :", average_precision_score(y_test, proba))
     print("\nConfusion matrix (thr=0.5):\n", confusion_matrix(y_test, y_pred))

@@ -1,12 +1,22 @@
 package com.trading.service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.trading.entity.Candle;
@@ -19,12 +29,16 @@ import com.trading.repository.HotSpotRepository;
 
 public class AbstractService {
 
+	public String sourcePath = "/data/trading_ml/bars_after_break.csv";
+	public String targetFolder = "/data/trading_ml/backup";
+	public List<Map<String, Object>> listMapFeatures = new CopyOnWriteArrayList<Map<String,Object>>();
+	
 	@Autowired
-	CandleRepository candleRepository;
+	public CandleRepository candleRepository;
 	@Autowired
-	HotSpotRepository hotSpotRepository;
-	public static Map<String, Integer> mapCountInteger = new HashMap<String, Integer>();
-	public static Map<String, Double> mapCountFloat = new HashMap<String, Double>();
+	public HotSpotRepository hotSpotRepository;
+	public static Map<String, AtomicInteger> mapCountInteger = new ConcurrentHashMap<String, AtomicInteger>();
+	public static Map<String, DoubleAdder> mapCountFloat = new ConcurrentHashMap<String, DoubleAdder>();
 	
 	public void setIndex(List<Candle> candles) {
 		for (int i = 0; i < candles.size(); i++) {
@@ -33,34 +47,27 @@ public class AbstractService {
 	}
 	
 	public Integer getCount(String key) {
-		return mapCountInteger.get(key);
+		return mapCountInteger.get(key).get();
 	}
 	public Double getCountFloat(String key) {
-		return mapCountFloat.get(key);
+		return mapCountFloat.get(key).doubleValue();
 	}
 	
-	public Candle getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
-		return extremums.stream()
-				.filter(e -> e.type == type)
-				.filter(e -> e.getDate().isBefore(c.getDate()))
-				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()))
-				.get()
-				.getCandle();
-	}
 	
 	public void increaseCount(String key) {
 		if (mapCountInteger.containsKey(key)) {
-			mapCountInteger.put(key, mapCountInteger.get(key) + 1);
+			mapCountInteger.get(key).incrementAndGet();
 		} else {
-			mapCountInteger.put(key, 1);
+			mapCountInteger.put(key, new AtomicInteger(1));
 		}
 	}
 	
 	public void increaseCount(String key, Double value) {
 		if (mapCountFloat.containsKey(key)) {
-			mapCountFloat.put(key, mapCountFloat.get(key) + value);
+			 mapCountFloat.get(key).add(value);
 		} else {
-			mapCountFloat.put(key, value);
+			DoubleAdder da = new DoubleAdder();
+			mapCountFloat.put(key, da);
 		}
 	}
 	
@@ -93,5 +100,74 @@ public class AbstractService {
 				.code(code)
 				.creationDate(LocalDateTime.now())
 				.build());
+	}
+	
+	public Candle getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
+		return extremums.stream()
+				.filter(e -> e.type == type)
+				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
+				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()))
+				.get()
+				.getCandle();
+	}
+
+	public Optional<Extremum> getFirstExtremumBeforeAndLowerThan(Candle c,  List<Extremum> extremums, Type type, Double maxValue) {
+		if (c == null) {
+			return null;
+		}
+		return extremums.stream()
+				.filter(e -> e.type == type)
+				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
+				.filter(e -> e.getPrice() < maxValue)
+				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()));
+	}
+
+	public void writeHeaders() throws IOException {
+		if (listMapFeatures.isEmpty()) {
+			return;
+		}
+		Map<String, Object> map = listMapFeatures.get(0);
+		String header = map.keySet().stream().sorted().collect(Collectors.joining(","));
+		writeLine(header);
+	}
+
+	public void writeLine(String line) throws IOException {
+		FileUtils.writeStringToFile(new File(sourcePath), line + System.lineSeparator(), Charset.defaultCharset(), true);
+	}
+
+	public void backupFile() {
+		Utils.backupFile(sourcePath, targetFolder);
+	}
+
+	public Double normalize(double price, Range range) {
+		return (price - range.getMin()) / range.getMaxHeight();
+	}
+
+	public boolean isInvalid(List<Double> list) {
+		return list.stream()
+				.anyMatch(d -> Double.isInfinite(d) || Double.isNaN(d));
+	}
+	
+	public void writeAll() throws IOException {
+		writeHeaders();
+		DecimalFormat df = new DecimalFormat("0.##"); 
+		listMapFeatures.forEach(map -> {
+			List<String> keys = map.keySet().stream().sorted().toList();
+			String line = keys.stream()
+					.map(k -> {
+						Object value = map.get(k);
+						if (value instanceof Double d) {
+							return df.format(d);
+						} else {
+							return String.valueOf(value);
+						}
+					})
+					.collect(Collectors.joining(","));
+			try {
+				writeLine(line);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 }

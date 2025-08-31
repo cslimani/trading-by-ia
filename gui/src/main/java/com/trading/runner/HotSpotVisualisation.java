@@ -52,7 +52,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 
 	@Override
 	protected void runnerInit() {
-		setup("US100.cash", EnumTimeRange.M15);
+		setup("GOLD", EnumTimeRange.M15);
 		String type = "RANGE_AUTO";
 		hotSpots = hotSpotRepository.findByCodeOrderByDateEnd(type);
 		if (hotSpots.isEmpty()) {
