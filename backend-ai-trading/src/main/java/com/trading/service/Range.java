@@ -43,4 +43,8 @@ public class Range {
 		return newRange.getHeight() == height && newRange.getIndexStart() == indexStart;
 	}
 	
+	public int size() {
+		return indexEnd - indexStart;
+	}
+	
 }

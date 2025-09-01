@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
 
+import com.trading.dto.HotSpotData;
 import com.trading.enums.EnumTimeRange;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,6 +50,10 @@ public class HotSpot {
 	@JdbcTypeCode(SqlTypes.ARRAY)
 	@Column(columnDefinition = "timestamp[]")
 	private List<LocalDateTime> keyDates;
+	
+	@Type(JsonType.class)  
+	@Column(columnDefinition = "jsonb")
+	private HotSpotData data;
 
 }
 

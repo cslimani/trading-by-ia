@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
+import com.trading.dto.HorizontalLine;
+import com.trading.dto.HotSpotData;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.extremum.Extremum;
@@ -22,39 +24,52 @@ public class FeatureWriterSpring extends AbstractService{
 			String market, EnumTimeRange timeRange, String hotspotCode) throws IOException {
 		Integer indexEnd = breakCandle.getIndex();
 		Candle swingHighBefore = range.getSwingHighBefore();
-		Candle candleStartTrade = candles.get(indexEnd);
+		Candle candleStartTrade = candles.get(indexEnd+1);
 		double startTradePrice = candleStartTrade.getOpen();
-		Candle previousCandle = candles.get(indexEnd-1);
 		double distanceOpenSlAtr = 0;
 		double distanceOpenSl = 0;
 		int countSL = 0;
 
-		Candle slCandle = previousCandle;
+		Candle slCandle = breakCandle;
 		while (distanceOpenSlAtr < 1 && countSL++ < 5) {
 			Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremumsEntry, Type.MIN, startTradePrice);
 			if (extremumOpt.isPresent()) {
 				slCandle = extremumOpt.get().getCandle();
 				distanceOpenSl = startTradePrice - slCandle.getLow();
-				distanceOpenSlAtr = distanceOpenSl/previousCandle.getAtr();
+				distanceOpenSlAtr = distanceOpenSl/breakCandle.getAtr();
 			} else {
 				continue;
 			}
 		}
-		if (countSL >=5 || slCandle.getIndex().equals(previousCandle.getIndex())) {
+		if (countSL >=5 || slCandle.getIndex().equals(breakCandle.getIndex())) {
 //			increaseCount("FEATURE NO SL FOUND");
 			return 0;
 		}
 		//			double tp = startTradePrice + distanceOpenSl;
-		double tp = swingHighBefore.getLow();
-		double sl = slCandle.getLow();
-		double rr = (tp - startTradePrice) / (startTradePrice - sl);
+		double slPrice = slCandle.getLow();
+		double slDistance = startTradePrice - slPrice;
+		if (slDistance < 0 ) {
+			increaseCount("FEATURE slDistance < 0");
+			return 0;
+		}
+		
+		double tp = startTradePrice + slDistance;
+		double rr = (tp - startTradePrice) / (startTradePrice - slPrice);
 
+		if (rr < 0) {
+			increaseCount("FEATURE RR < 0");
+			return 0;
+		}
 		if (rr < 1) {
-			increaseCount("FEATURE TP < 1");
+			increaseCount("FEATURE RR < 1");
+			return 0;
+		}
+		if ( rr > 5) {
+			increaseCount("FEATURE RR > 5");
 			return 0;
 		}
 
-		boolean isTP = isTradeToTP(candleStartTrade, candles, tp, sl);
+		boolean isTP = isTradeToTP(candleStartTrade, candles, tp, slPrice);
 		if (isTP) {
 			increaseDouble("RR", rr);
 			increaseCount("FEATURE TP");
@@ -82,7 +97,30 @@ public class FeatureWriterSpring extends AbstractService{
 				candleStartTrade.getDate(),
 				slCandle.getDate(),
 				springCandle.getDate());
-		saveHotSpot(swingHighBefore.getDate(), candleStartTrade.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
+		
+		
+		HorizontalLine lineSL = HorizontalLine.builder()
+				.color("#FF0000")
+				.price(slCandle.getLow())
+				.type("SL")
+				.dateStart(slCandle.getDate())
+				.build();
+		HorizontalLine lineTP = HorizontalLine.builder()
+				.color("#00FF00")
+				.price(tp)
+				.type("TP")
+				.dateStart(candleStartTrade.getDate())
+				.build();
+		HorizontalLine lineStart = HorizontalLine.builder()
+				.color("#FFFFFF")
+				.price(startTradePrice)
+				.type("START")
+				.dateStart(candleStartTrade.getDate())
+				.build();
+		HotSpotData data = HotSpotData.builder()
+				.lines(List.of(lineSL, lineTP, lineStart))
+				.build();
+		saveHotSpot(swingHighBefore.getDate(), candleStartTrade.getDate(), keyDates, market, timeRange, "RANGE_AUTO", data);
 		return 0;
 	}
 

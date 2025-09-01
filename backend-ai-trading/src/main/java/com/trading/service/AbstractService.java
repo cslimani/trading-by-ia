@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.trading.dto.HotSpotData;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
@@ -91,7 +92,8 @@ public class AbstractService {
 			LocalDateTime dateEnd,
 			List<LocalDateTime> keyDates,
 			String market, 
-			EnumTimeRange timeRange, String code) {
+			EnumTimeRange timeRange, String code,
+			HotSpotData data) {
 		hotSpotRepository.save(HotSpot.builder()
 				.market(market)
 				.timeRange(timeRange)
@@ -99,6 +101,7 @@ public class AbstractService {
 				.dateEnd(dateEnd)
 				.keyDates(keyDates)
 				.code(code)
+				.data(data)
 				.creationDate(LocalDateTime.now())
 				.build());
 	}

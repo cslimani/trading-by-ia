@@ -1,8 +1,6 @@
-package com.trading.dto.jsonb;
+package com.trading.dto;
 
 import java.util.List;
-
-import com.trading.dto.HorizontalLine;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -78,7 +78,7 @@ public class FeatureWriter2 extends AbstractService{
 				break;
 			}
 //			double tp = startTradePrice + distanceOpenSl;
-			double tp = swingHighBefore.getLow();
+			double tp = swingHighBefore.getHigh();
 			double sl = slCandle.getLow();
 			double rr = (tp - startTradePrice) / (startTradePrice - sl);
 			
@@ -116,7 +116,7 @@ public class FeatureWriter2 extends AbstractService{
 //			System.out.println("RR " + rr + " y=" + isTP);
 //			System.out.println("New accumulation " + breakCandle.getDate() + "SL at : " + slCandle.getDate());
 			List<LocalDateTime> keyDates = List.of(swingHighBefore.getDate(), breakCandle.getDate(),candleStartTrade.getDate(), slCandle.getDate());
-			saveHotSpot(swingHighBefore.getDate(), candleStartTrade.getDate(), keyDates, market, timeRange, "RANGE_AUTO");
+			saveHotSpot(swingHighBefore.getDate(), candleStartTrade.getDate(), keyDates, market, timeRange, "RANGE_AUTO", null);
 			break;
 		};
 

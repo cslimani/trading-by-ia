@@ -2,14 +2,14 @@ package com.trading.dto;
 
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@Builder
 @NoArgsConstructor
 public class HorizontalLine {
 
@@ -18,8 +18,4 @@ public class HorizontalLine {
 	String type;
 	LocalDateTime dateStart;
 	
-	@JsonIgnore
-	public boolean isTypeStopLoss() {
-		return "SL".equals(type);
-	}
 }

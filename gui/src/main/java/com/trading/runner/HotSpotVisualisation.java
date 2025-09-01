@@ -70,6 +70,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 		data.setTimeRange(hotspot.getTimeRange());
 		topPanel.setTimeRange(hotspot.getTimeRange());
 		data.setMarketCode(hotspot.getMarket());
+		data.setPricesToDraw(hotspot.getData().getLines());
 	}
 
 	protected void applyToCandles(List<Candle> list) {

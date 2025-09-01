@@ -45,7 +45,7 @@ public class DistanceFeature extends AbstractFeature{
 				atr = Double.MAX_VALUE;
 			}
 			int delta = candleEnd.getIndex() - candleStart.getIndex();
-			topPanel.updateIndicator("width = " + delta + "    price = " +  Double.valueOf(Math.abs(price - priceStart)).intValue()
+			topPanel.updateIndicator("width = " + delta + "    price = " +  String.format("%.1f", (Math.abs(price - priceStart)))
 					+ "   price/ATR = " + String.format("%.1f",  Math.abs(price - priceStart)/atr));
 //			Double ampr = AmprCalculator.getAMPR(data.getCandles(),
 //					atrCalculator.getMapATR(),

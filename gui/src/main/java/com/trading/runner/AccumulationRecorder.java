@@ -29,7 +29,7 @@ public class AccumulationRecorder extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("GOLD", EnumTimeRange.M1);
-		dateEnd = LocalDateTime.of(2015, 1, 5, 1, 0);
+		dateEnd = LocalDateTime.of(2015, 1, 2, 1, 34);
 		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
 				.stream()
 				.map(hs -> hs.getKeyDates())
@@ -108,10 +108,10 @@ public class AccumulationRecorder extends AbstractRunner {
 				.timeRange(data.getTimeRange())
 				.dateStart(dateStart)
 				.dateEnd(dateEnd)
-				.data(HotSpotData.builder()
-						.result(result)
-						.spring(accumulationDates.size() == 4)
-						.build())
+//				.data(HotSpotData.builder()
+//						.result(result)
+//						.spring(accumulationDates.size() == 4)
+//						.build())
 				.keyDates(accumulationDates)
 				.code(HOTSPOT_CODE)
 				.creationDate(LocalDateTime.now())

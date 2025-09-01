@@ -102,9 +102,16 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 	private void drawHorizontalLines() {
 		for (HorizontalLine line : data.getPricesToDraw()) {
-			g2d.setColor(line.getColor());
+			g2d.setColor(Color.decode(line.getColor()));
 			int y = priceToYPixel(line.getPrice());
-			g2d.drawLine(0, y, data.getViewTotalWidth(), y);
+			int x = 0;
+			if (line.getDateStart() != null) {
+				Integer xStart = dateToPixel(line.getDateStart());
+				if (xStart != null) {
+					x = xStart;
+				}
+			}
+			g2d.drawLine(x, y, data.getViewTotalWidth(), y);
 		}
 	}
 
