@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.DoubleAdder;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.trading.dto.HotSpotData;
@@ -75,13 +76,16 @@ public class AbstractService {
 	
 	public void displayMapCount() {
 		System.out.println();
-		mapCountInteger.forEach((k,v) -> {
-			System.out.println(k + " : " + v);
-		});
-		System.out.println();
-		mapCountFloat.forEach((k,v) -> {
-			System.out.println(k + " : " + v);
-		});
+		mapCountInteger.entrySet().stream()
+		.map(e -> e.getKey() + " : " + e.getValue())
+		.sorted()
+		.forEach(v -> System.out.println(StringUtils.substringAfter(v, "_")));
+		
+		mapCountFloat.entrySet().stream()
+		.map(e -> e.getKey() + " : " + e.getValue())
+		.sorted()
+		.forEach(v -> System.out.println(StringUtils.substringAfter(v, "_")));
+		
 	}
 	
 	public String format(LocalDateTime dateTime) {
@@ -106,10 +110,16 @@ public class AbstractService {
 				.build());
 	}
 	
-	public Optional<Extremum> getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type) {
+	public Optional<Extremum> getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type, boolean checkIndex) {
 		return extremums.stream()
 				.filter(e -> e.type == type)
-				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
+				.filter(e -> {
+					int shift = 0;
+					if (checkIndex) {
+						shift = e.getK();
+					}
+					return e.getCandle().getIndex() < c.getIndex() - shift;
+				})
 				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()));
 	}
 

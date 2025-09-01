@@ -71,11 +71,11 @@ public class FeatureWriterSpring extends AbstractService{
 
 		boolean isTP = isTradeToTP(candleStartTrade, candles, tp, slPrice);
 		if (isTP) {
-			increaseDouble("RR", rr);
-			increaseCount("FEATURE TP");
+			increaseDouble("20_RR", rr);
+			increaseCount("10_TP");
 		} else {
-			increaseDouble("RR", -1d);
-			increaseCount("FEATURE SL");
+			increaseDouble("20_RR", -1d);
+			increaseCount("11_SL");
 		}
 		Candle springCandle = getSpringCandle(candles, range, candleStartTrade);
 
@@ -95,8 +95,9 @@ public class FeatureWriterSpring extends AbstractService{
 		List<LocalDateTime> keyDates = List.of(swingHighBefore.getDate(),
 				breakCandle.getDate(),
 				candleStartTrade.getDate(),
-				slCandle.getDate(),
-				springCandle.getDate());
+				slCandle.getDate()
+//				,springCandle.getDate()
+				);
 		
 		
 		HorizontalLine lineSL = HorizontalLine.builder()
