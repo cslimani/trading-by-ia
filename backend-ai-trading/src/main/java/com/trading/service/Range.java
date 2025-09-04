@@ -31,6 +31,8 @@ public class Range {
 	public Double max;
 	@NonNull
 	public Double min;
+	@NonNull
+	public Candle candleMin;
 	
 	public Double maxHeight;
 	Candle swingHighBefore;

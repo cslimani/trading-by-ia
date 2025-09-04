@@ -42,71 +42,73 @@ public class InsertCandlesInDatabase extends AbstractService implements CommandL
 	@Override
 	public void run(String... args) throws Exception {
 		long starTime = System.currentTimeMillis();
-
-		/**
-		 * PARAMS
-		 */
-		File file = new File("/data/tickdata/GOLD_2003_2015.csv.7z");
-		String market = "GOLD";
-
-
-		try (SevenZFile sevenZFile =  new SevenZFile.Builder().setFile(file).get()) {
-			SevenZArchiveEntry entry;
-
-			while ((entry = sevenZFile.getNextEntry()) != null) {
-				if (!entry.isDirectory()) {
-					System.out.println("Extraction : " + entry.getName());
-
-					InputStream entryStream = new InputStream() {
-						private final byte[] buf = new byte[8192];
-						private int off = 0, limit = 0;
-
-						@Override
-						public int read() throws IOException {
-							if (off >= limit) {
-								limit = sevenZFile.read(buf, 0, buf.length);
-								off = 0;
-								if (limit < 0) return -1;
-							}
-							return buf[off++] & 0xFF;
-						}
-					};
-
-					// IOUtils.lineIterator consomme ligne par ligne
-					Iterator<String> it = IOUtils.lineIterator(
-							new InputStreamReader(entryStream, StandardCharsets.UTF_8));
-
-					Instant currentDay = null;
-					List<Tick> ticks = new ArrayList<>(1000_000);
-					while (it.hasNext()) {
-						String line = it.next();
-						Tick tick = tickToCandles.parseTick(line);
-						if (tick != null) {
-							if (currentDay == null) {
-								currentDay = tick.getTime().truncatedTo(ChronoUnit.DAYS);
-							}
-							if (!isSameDay(currentDay, tick.getTime())) {
-								List<Tick> ticksCopy = new ArrayList<>(ticks);
-								executor.submit(() -> {
-									try {
-										tickToCandles.buildByTicks(market, new ArrayList<Tick>(ticksCopy));
-									} catch (Exception e) {
-										log.error("Error", e);
-									}
-								});
-								ticks.clear();
-								currentDay = tick.getTime().truncatedTo(ChronoUnit.DAYS);
-								System.out.println();
-								System.out.println("Changing day to " + currentDay);
-							}
-							ticks.add(tick);
-						}
-					}
-					tickToCandles.buildByTicks(market, ticks);
-					System.out.println("Transforming ticks to candles");
-				}
+		List.of("US30").forEach(market -> {
+			System.out.println("Processing " + market);
+			File file = new File(String.format("/data/tickdata/%s.7z", market));
+			if (!file.exists()) {
+				System.out.println("File does not exist");
+				return;
 			}
-		}
+			try (SevenZFile sevenZFile =  new SevenZFile.Builder().setFile(file).get()) {
+				SevenZArchiveEntry entry;
+
+				while ((entry = sevenZFile.getNextEntry()) != null) {
+					if (!entry.isDirectory()) {
+						System.out.println("Extraction : " + entry.getName());
+
+						InputStream entryStream = new InputStream() {
+							private final byte[] buf = new byte[8192];
+							private int off = 0, limit = 0;
+
+							@Override
+							public int read() throws IOException {
+								if (off >= limit) {
+									limit = sevenZFile.read(buf, 0, buf.length);
+									off = 0;
+									if (limit < 0) return -1;
+								}
+								return buf[off++] & 0xFF;
+							}
+						};
+
+						// IOUtils.lineIterator consomme ligne par ligne
+						Iterator<String> it = IOUtils.lineIterator(
+								new InputStreamReader(entryStream, StandardCharsets.UTF_8));
+
+						Instant currentDay = null;
+						List<Tick> ticks = new ArrayList<>(1000_000);
+						while (it.hasNext()) {
+							String line = it.next();
+							Tick tick = tickToCandles.parseTick(line);
+							if (tick != null) {
+								if (currentDay == null) {
+									currentDay = tick.getTime().truncatedTo(ChronoUnit.DAYS);
+								}
+								if (!isSameDay(currentDay, tick.getTime())) {
+									List<Tick> ticksCopy = new ArrayList<>(ticks);
+									executor.submit(() -> {
+										try {
+											tickToCandles.buildByTicks(market, new ArrayList<Tick>(ticksCopy));
+										} catch (Exception e) {
+											log.error("Error", e);
+										}
+									});
+									ticks.clear();
+									currentDay = tick.getTime().truncatedTo(ChronoUnit.DAYS);
+//									System.out.println();
+//									System.out.println("Changing day to " + currentDay);
+								}
+								ticks.add(tick);
+							}
+						}
+						tickToCandles.buildByTicks(market, ticks);
+						System.out.println("Transforming ticks to candles");
+					}
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		});
 		long endTime = System.currentTimeMillis();
 		executor.shutdown();
 		if (!executor.awaitTermination(30, TimeUnit.MINUTES)) {

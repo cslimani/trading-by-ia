@@ -30,19 +30,19 @@ public class FeatureWriterSpring extends AbstractService{
 		double distanceOpenSl = 0;
 		int countSL = 0;
 
-		Candle slCandle = breakCandle;
-		while (distanceOpenSlAtr < 1 && countSL++ < 5) {
-			Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremumsEntry, Type.MIN, startTradePrice);
-			if (extremumOpt.isPresent()) {
-				slCandle = extremumOpt.get().getCandle();
-				distanceOpenSl = startTradePrice - slCandle.getLow();
-				distanceOpenSlAtr = distanceOpenSl/breakCandle.getAtr();
-			} else {
-				continue;
-			}
-		}
+		Candle slCandle = range.getCandleMin();
+//		while (distanceOpenSlAtr < 1 && countSL++ < 5) {
+//			Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremumsEntry, Type.MIN, startTradePrice);
+//			if (extremumOpt.isPresent()) {
+//				slCandle = extremumOpt.get().getCandle();
+//				distanceOpenSl = startTradePrice - slCandle.getLow();
+//				distanceOpenSlAtr = distanceOpenSl/breakCandle.getAtr();
+//			} else {
+//				continue;
+//			}
+//		}
 		if (countSL >=5 || slCandle.getIndex().equals(breakCandle.getIndex())) {
-//			increaseCount("FEATURE NO SL FOUND");
+			increaseCount("FEATURE NO SL FOUND");
 			return 0;
 		}
 		//			double tp = startTradePrice + distanceOpenSl;
@@ -100,26 +100,32 @@ public class FeatureWriterSpring extends AbstractService{
 				);
 		
 		
-		HorizontalLine lineSL = HorizontalLine.builder()
+		HorizontalLine lineTradeSL = HorizontalLine.builder()
 				.color("#FF0000")
 				.price(slCandle.getLow())
 				.type("SL")
 				.dateStart(slCandle.getDate())
 				.build();
-		HorizontalLine lineTP = HorizontalLine.builder()
+		HorizontalLine lineTradeTP = HorizontalLine.builder()
 				.color("#00FF00")
 				.price(tp)
 				.type("TP")
 				.dateStart(candleStartTrade.getDate())
 				.build();
-		HorizontalLine lineStart = HorizontalLine.builder()
+		HorizontalLine lineTradeStart = HorizontalLine.builder()
 				.color("#FFFFFF")
 				.price(startTradePrice)
 				.type("START")
 				.dateStart(candleStartTrade.getDate())
 				.build();
+		HorizontalLine lineRangeTop = HorizontalLine.builder()
+				.color("#FFFFFF")
+				.price(range.getMax())
+				.type("TOP_RANGE")
+				.dateStart(range.getDateStart())
+				.build();
 		HotSpotData data = HotSpotData.builder()
-				.lines(List.of(lineSL, lineTP, lineStart))
+				.lines(List.of(lineRangeTop))
 				.build();
 		saveHotSpot(swingHighBefore.getDate(), candleStartTrade.getDate(), keyDates, market, timeRange, "RANGE_AUTO", data);
 		return 0;
