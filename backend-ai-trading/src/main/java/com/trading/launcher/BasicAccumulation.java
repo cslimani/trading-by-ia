@@ -37,8 +37,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BasicAccumulation extends AbstractService implements CommandLineRunner {
 
-	private static final int MIN_RANGE_WIDTH = 40;
-	private static final Double MAX_RANGE_ATR_RATIO = 4d;
+	private static final int MIN_RANGE_WIDTH = 60;
+	private static final Double MAX_RANGE_ATR_RATIO = 5d;
 	private static final Double RATIO_MAX_RANGE_SWING_HIGH = 0.7;
 	private static final String HOTSPOT_CODE = "RANGE_AUTO";
 
@@ -57,8 +57,8 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 		hotSpotRepository.deleteAll();
 		long startProcess = System.currentTimeMillis();
 		 Map<String, LocalDateTime> bigMap = Map.ofEntries(
-				 entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-//		            ,entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//				 entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+		            entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 //		            entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
 //		            entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
 //		            entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
@@ -168,7 +168,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 				LocalDateTime dateSwingHighBefore = range.getSwingHighBefore().getDate();
 				Candle firstAccumulationCandle =  range.getFirstAccumulationCandle();
 				List<LocalDateTime> keyDates = List.of(dateSwingHighBefore, firstAccumulationCandle.getDate(),c.getDate());
-				if (c.getClose() > range.getMax()) {
+				if (Math.max(c.getClose(), c.getOpen()) > range.getMax() + c.getAtr()) {
 					//					if(range.getNbBreakUp().getAndIncrement() > 0) {
 					//						System.out.println("Break from top at " + c.getDate());
 					increaseCount("1_BREAK UP");
@@ -204,13 +204,19 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 	private void extendRange(Range range, Candle c) {
 		range.setIndexEnd(c.getIndex());
 		range.setDateEnd(c.getDate());
+//		double max = Math.max(c.getClose(), c.getOpen());
+//		if (max > range.getMax()) {
+//			range.setMax(max);
+//			range.setMaxHeight(max);
+//		}
+//		range.setMax(MAX_RANGE_ATR_RATIO);
 	}
 
 
 	private boolean isCondition(List<Candle> candles, Range range, Candle c, List<Extremum> extremumsEntry) {
-		if(c.getDate().getHour() < 9 && c.getDate().getHour() >= 20) {
-			return false;
-		}
+//		if(c.getDate().getHour() < 9 || c.getDate().getHour() >= 20) {
+//			return false;
+//		}
 		if (!priceBeforeAboveRange(candles, range)) {
 			return false;
 		}
@@ -225,7 +231,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 
 
 	private boolean priceBeforeAboveRange(List<Candle> candles, Range range) {
-		int startIndex = range.indexStart - 100;
+		int startIndex = range.indexStart - 200;
 		int endIndex = range.getSwingHighBefore().getIndex();
 		for (int i = Math.max(0, startIndex); i< endIndex; i++) {
 			if (candles.get(i).getLow() < (range.max + range.min)/2) {
@@ -307,7 +313,7 @@ public class BasicAccumulation extends AbstractService implements CommandLineRun
 			return false;
 		}
 		int rangeWidth = range.indexEnd - range.indexStart;
-		if (rangeWidth < 50) {
+		if (rangeWidth < MIN_RANGE_WIDTH) {
 			return false;
 		}
 		for(int i =0; i < range.indexStart; i++) {
