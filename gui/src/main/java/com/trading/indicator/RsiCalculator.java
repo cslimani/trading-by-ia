@@ -28,6 +28,9 @@ public class RsiCalculator implements Indicator {
 	private void init() {
 		Double sumFirstCandlesHigh = 0d;
 		Double sumFirstCandlesLow = 0d;
+		if (candles.isEmpty()) {
+			return;
+		}
 		for (int i = 1; i <= nbPeriods; i++) {
 			Candle candle = candles.get(i);
 			Double diff = candle.getClose() - candles.get(i - 1).getClose();

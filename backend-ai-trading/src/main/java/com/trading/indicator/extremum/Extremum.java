@@ -3,7 +3,7 @@ package com.trading.indicator.extremum;
 import java.time.LocalDateTime;
 
 import com.trading.entity.Candle;
-import com.trading.indicator.extremum.SwingExtremaFinder.Type;
+import com.trading.enums.ExtremumType;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,11 +17,11 @@ public class Extremum {
 	@Include
 	public LocalDateTime date;
 	public double price;
-	public Type type;
+	public ExtremumType type;
 	public Candle bosBreakingCandle;
 	public Integer k;
 	
-	public Extremum(Candle candle, LocalDateTime date, double price, Type type, Integer k) {
+	public Extremum(Candle candle, LocalDateTime date, double price, ExtremumType type, Integer k) {
 		this.candle = candle;
 		this.date = date;
 		this.price = price;
@@ -30,11 +30,14 @@ public class Extremum {
 	}
 	
 	public boolean isMax() {
-		return type == Type.MAX;
+		return type == ExtremumType.MAX;
 	}
 
 	public boolean isMin() {
-		return type == Type.MIN;
+		return type == ExtremumType.MIN;
 	}
 	
+	public Integer getIndex() {
+		return candle.getIndex();
+	}
 }

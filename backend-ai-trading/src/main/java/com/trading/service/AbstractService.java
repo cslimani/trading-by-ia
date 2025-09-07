@@ -19,13 +19,14 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.trading.dto.HotSpotData;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
+import com.trading.enums.ExtremumType;
 import com.trading.indicator.extremum.Extremum;
-import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 import com.trading.repository.CandleRepository;
 import com.trading.repository.HotSpotRepository;
 
@@ -35,27 +36,35 @@ public class AbstractService {
 	public String sourcePath = "/data/trading_ml/bars_after_break.csv";
 	public String targetFolder = "/data/trading_ml/backup";
 	public List<Map<String, Object>> listMapFeatures = new CopyOnWriteArrayList<Map<String,Object>>();
+	public boolean debug;
 	
 	@Autowired
 	public CandleRepository candleRepository;
 	@Autowired
 	public HotSpotRepository hotSpotRepository;
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 	public static Map<String, AtomicInteger> mapCountInteger = new ConcurrentHashMap<String, AtomicInteger>();
 	public static Map<String, DoubleAdder> mapCountFloat = new ConcurrentHashMap<String, DoubleAdder>();
-	
+
 	public void setIndex(List<Candle> candles) {
 		for (int i = 0; i < candles.size(); i++) {
 			candles.get(i).setIndex(i);
 		}
 	}
-	
+
 	public Integer getCount(String key) {
 		return mapCountInteger.get(key).get();
 	}
 	public Double getCountFloat(String key) {
 		return mapCountFloat.get(key).doubleValue();
 	}
-	
+
+	public void debug(String message) {
+		if (debug) {
+			System.out.println(message);
+		}
+	}
 	
 	public void increaseCount(String key) {
 		if (mapCountInteger.containsKey(key)) {
@@ -64,34 +73,39 @@ public class AbstractService {
 			mapCountInteger.put(key, new AtomicInteger(1));
 		}
 	}
-	
+
 	public void increaseDouble(String key, Double value) {
 		if (mapCountFloat.containsKey(key)) {
-			 mapCountFloat.get(key).add(value);
+			mapCountFloat.get(key).add(value);
 		} else {
 			DoubleAdder da = new DoubleAdder();
 			mapCountFloat.put(key, da);
 		}
 	}
-	
+
+	public Optional<Candle> getIndexByDate(LocalDateTime date, List<Candle> candles) {
+		return candles.stream()
+				.filter(c -> c.getDate().isEqual(date))
+				.findFirst();
+	}
+
 	public void displayMapCount() {
 		System.out.println();
 		mapCountInteger.entrySet().stream()
 		.map(e -> e.getKey() + " : " + e.getValue())
 		.sorted()
 		.forEach(v -> System.out.println(StringUtils.substringAfter(v, "_")));
-		
+
 		mapCountFloat.entrySet().stream()
 		.map(e -> e.getKey() + " : " + e.getValue())
 		.sorted()
 		.forEach(v -> System.out.println(StringUtils.substringAfter(v, "_")));
-		
 	}
-	
+
 	public String format(LocalDateTime dateTime) {
 		return dateTime.format(DateTimeFormatter.ofPattern("dd/MM HH:mm"));
 	}
-	
+
 	public void saveHotSpot(LocalDateTime dateStart, 
 			LocalDateTime dateEnd,
 			List<LocalDateTime> keyDates,
@@ -109,8 +123,8 @@ public class AbstractService {
 				.creationDate(LocalDateTime.now())
 				.build());
 	}
-	
-	public Optional<Extremum> getFirstExtremumBefore(Candle c,  List<Extremum> extremums, Type type, boolean checkIndex) {
+
+	public Optional<Extremum> getFirstExtremumBefore(Candle c,  List<Extremum> extremums, ExtremumType type, boolean checkIndex) {
 		return extremums.stream()
 				.filter(e -> e.type == type)
 				.filter(e -> {
@@ -123,14 +137,16 @@ public class AbstractService {
 				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()));
 	}
 
-	public Optional<Extremum> getFirstExtremumBeforeAndLowerThan(Candle c,  List<Extremum> extremums, Type type, Double maxValue) {
+	public Optional<Extremum> getFirstExtremumBeforeAndLowerThan(Candle c,  List<Extremum> extremums, ExtremumType type, Double value, boolean lower) {
 		if (c == null) {
 			return null;
 		}
 		return extremums.stream()
 				.filter(e -> e.type == type)
 				.filter(e -> e.getCandle().getIndex() < c.getIndex() - e.getK())
-				.filter(e -> e.getPrice() < maxValue)
+				.filter(e -> {
+					return 	lower ? e.getPrice() < value : e.getPrice() > value;
+				})
 				.max(Comparator.comparingInt(e -> e.getCandle().getIndex()));
 	}
 
@@ -150,7 +166,7 @@ public class AbstractService {
 				.min(Comparator.comparingDouble(c -> c.getLow()))
 				.get();
 	}
-	
+
 	public void writeLine(String line) throws IOException {
 		FileUtils.writeStringToFile(new File(sourcePath), line + System.lineSeparator(), Charset.defaultCharset(), true);
 	}
@@ -167,7 +183,7 @@ public class AbstractService {
 		return list.stream()
 				.anyMatch(d -> Double.isInfinite(d) || Double.isNaN(d));
 	}
-	
+
 	public void addPriceFeature(Map<String, Object> mapFeature, List<Candle> candles, Integer currentIndex, Range range) {
 		for(int i = 0 ; i < NB_MAX_PRICE; i++) {
 			int tmpIndex = currentIndex - NB_MAX_PRICE + 1 + i;
@@ -181,7 +197,7 @@ public class AbstractService {
 		}
 	}
 
-	public boolean isTradeToTP(Candle cStart, List<Candle> candles, double tp, double sl) {
+	public boolean isTradeToTPBuy(Candle cStart, List<Candle> candles, double tp, double sl) {
 		for (int i = cStart.getIndex(); i < candles.size(); i++) {
 			Candle c = candles.get(i);
 			if (c.getHigh() >= tp) {
@@ -193,7 +209,20 @@ public class AbstractService {
 		}
 		return false;
 	}
-	
+
+	public boolean isTradeToTPSell(Candle cStart, List<Candle> candles, double tp, double sl) {
+		for (int i = cStart.getIndex(); i < candles.size(); i++) {
+			Candle c = candles.get(i);
+			if (c.getLow() <= tp) {
+				return true;
+			}
+			if (c.getHigh() >= sl) {
+				return false;
+			}
+		}
+		return false;
+	}
+
 	public void writeAll() throws IOException {
 		writeHeaders();
 		DecimalFormat df = new DecimalFormat("0.##"); 
@@ -216,4 +245,27 @@ public class AbstractService {
 			}
 		});
 	}
+
+	public double getRangeSwingHighRatio(Range range) {
+		Double priceSwingHigh = range.getSwingHighBefore().getHigh();
+		Double priceRangeTop = range.getMax();
+		Double priceRangeBottom = range.getMin();
+		Double rangeHeight =  priceRangeTop - priceRangeBottom;
+		range.setMaxHeight(rangeHeight);
+		return rangeHeight / (priceSwingHigh - priceRangeBottom);
+	}
+	
+	 public int backupHotSpots() {
+	        String sql = """
+	            INSERT INTO hot_spot_backup (
+	        			creation_date,	 date_end,	 date_start,	 market,	 time_range,
+	        		 code,	 key_dates,	 data,	 backup_date	            )
+	         SELECT	  creation_date,	 date_end,	 date_start,	 market,
+	        		 time_range,	 code,	 key_dates,	 data,	 ?
+	            FROM hot_spot
+	            """;
+	        LocalDateTime backupDate = LocalDateTime.now();
+	        return jdbcTemplate.update(sql, backupDate);
+	    }
+
 }

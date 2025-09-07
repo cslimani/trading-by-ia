@@ -1,12 +1,12 @@
 package com.trading.indicator.extremum;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import com.trading.entity.Candle;
+import com.trading.enums.ExtremumType;
 
 /**
  * Détecte les extrêmes (swing highs / swing lows) dans une série de bougies.
@@ -50,10 +50,10 @@ public class SwingExtremaFinder {
             }
 
             if (isMax) {
-                candidates.add(new Extremum(c, c.getDate(), c.getHigh(), Type.MAX, N));
+                candidates.add(new Extremum(c, c.getDate(), c.getHigh(), ExtremumType.MAX, N));
             }
             if (isMin) {
-                candidates.add(new Extremum(c, c.getDate(), c.getLow(), Type.MIN, N));
+                candidates.add(new Extremum(c, c.getDate(), c.getLow(), ExtremumType.MIN, N));
             }
         }
 
@@ -79,8 +79,8 @@ public class SwingExtremaFinder {
             if (prev.type == cur.type) {
                 // Conflit d’alternance → on garde le plus "fort"
                 boolean keepCur =
-                        (cur.type == Type.MAX && cur.price >= prev.price) ||
-                        (cur.type == Type.MIN && cur.price <= prev.price);
+                        (cur.type == ExtremumType.MAX && cur.price >= prev.price) ||
+                        (cur.type == ExtremumType.MIN && cur.price <= prev.price);
 
                 if (keepCur) {
                     out.set(out.size() - 1, cur); // remplacer le précédent

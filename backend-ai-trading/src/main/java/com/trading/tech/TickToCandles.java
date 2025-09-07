@@ -40,18 +40,22 @@ public class TickToCandles {
 
 	public Map<EnumTimeRange, List<Candle>> buildByTicks(String market, List<Tick> ticks) {
 		return build(market, ticks,
-				EnumSet.of(EnumTimeRange.H4
-						,EnumTimeRange.H1, EnumTimeRange.M15, EnumTimeRange.M5, EnumTimeRange.M2, EnumTimeRange.M1, EnumTimeRange.S30
-						),
-				PriceSource.MID);
+				EnumSet.of(
+						EnumTimeRange.M30, EnumTimeRange.M10,EnumTimeRange.M3),
+//				EnumSet.of(
+//						EnumTimeRange.H4	,EnumTimeRange.H1, EnumTimeRange.M15,
+//						EnumTimeRange.M30, EnumTimeRange.M10,EnumTimeRange.M3,
+//						EnumTimeRange.M5, EnumTimeRange.M2,  EnumTimeRange.M1, EnumTimeRange.S30),
+				PriceSource.BID);
 	}
 
-	public Map<EnumTimeRange, List<Candle>> buildByLines(String market, List<String> csvLines) {
-		List<Tick> ticks = parseTicks(csvLines);
-		return build(market, ticks,
-				EnumSet.of(EnumTimeRange.H4, EnumTimeRange.H1, EnumTimeRange.M15, EnumTimeRange.M5, EnumTimeRange.M2, EnumTimeRange.M1, EnumTimeRange.S30),
-				PriceSource.MID);
-	}
+//	public Map<EnumTimeRange, List<Candle>> buildByLines(String market, List<String> csvLines) {
+//		List<Tick> ticks = parseTicks(csvLines);
+//		return build(market, ticks,
+//				EnumSet.of(EnumTimeRange.H4	,EnumTimeRange.H1, EnumTimeRange.M15,EnumTimeRange.M30, EnumTimeRange.M10,
+//						EnumTimeRange.M5, EnumTimeRange.M2, EnumTimeRange.M3, EnumTimeRange.M1, EnumTimeRange.S30),
+//				PriceSource.BID);
+//	}
 
 	public Map<EnumTimeRange, List<Candle>> build(String market, List<Tick> ticks,
 			Set<EnumTimeRange> timeframes,

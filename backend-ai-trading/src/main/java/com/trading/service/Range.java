@@ -5,42 +5,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.trading.entity.Candle;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Range {
 
-	@NonNull
 	public LocalDateTime dateStart;
-	@NonNull
 	public LocalDateTime dateEnd;
-	@NonNull
 	public Integer indexStart;
-	@NonNull
 	public Integer indexEnd;
-	@NonNull
 	public Double high;
-	@NonNull
 	public Double low;
-	@NonNull
 	public Double height;
-	@NonNull
 	public Double max;
-	@NonNull
 	public Double min;
-	@NonNull
 	public Candle candleMin;
+	public Candle candleMax;
 	
 	public Double maxHeight;
 	Candle swingHighBefore;
 	Candle firstAccumulationCandle;
-	AtomicInteger nbBreakDown = new AtomicInteger();
-	AtomicInteger nbBreakUp = new AtomicInteger();
+	AtomicInteger nbBreakDown;
+	AtomicInteger nbBreakUp;
 	Double rangeSwingHighRatio;
-	
+	Boolean breakFromTop;
 	public boolean isSame(Range newRange) {
 		return newRange.getHeight() == height && newRange.getIndexStart() == indexStart;
 	}

@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
+import com.trading.enums.ExtremumType;
 import com.trading.indicator.EmaCalculator;
 import com.trading.indicator.MacdCalculator;
 import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
-import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 
 @Component
 @Profile("impulse-htf")
@@ -55,11 +55,11 @@ public class ImpulseHTF extends AbstractService implements CommandLineRunner {
 
 		List<Extremum> tops = analyzer.findExtrema(candlesM15, 5)
 				.stream()
-				.filter(e -> e.type == Type.MAX)
+				.filter(e -> e.type == ExtremumType.MAX)
 				.toList();
 		List<Extremum> bottoms = analyzer.findExtrema(candlesM15, 8, false)
 				.stream()
-				.filter(e -> e.type == Type.MIN)
+				.filter(e -> e.type == ExtremumType.MIN)
 				.toList();
 		processBOS(tops, candlesM15);
 

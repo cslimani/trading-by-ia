@@ -5,11 +5,9 @@ import java.time.Month;
 import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
-import com.trading.indicator.extremum.CandleMinMaxAnalyzerMine;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 
 //@Component

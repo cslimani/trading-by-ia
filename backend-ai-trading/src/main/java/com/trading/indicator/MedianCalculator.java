@@ -19,4 +19,16 @@ public class MedianCalculator {
 
 		return closes.get(closes.size() / 2);
 	}
+	
+	public static double medianPrices(List<Double> prices) {
+		if (prices == null || prices.isEmpty()) {
+			throw new IllegalArgumentException("Empty list");
+		}
+
+		List<Double> closes = prices.stream()
+				.sorted()
+				.collect(Collectors.toList());
+
+		return closes.get(closes.size() / 2);
+	}
 }

@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
+import com.trading.enums.ExtremumType;
 import com.trading.indicator.extremum.Extremum;
-import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 
 @Component
 public class FeatureWriter2 extends AbstractService{
@@ -65,7 +65,7 @@ public class FeatureWriter2 extends AbstractService{
 				
 			Candle slCandle = previousCandle;
 			while (distanceOpenSlAtr < 1 && countSL++ < 5) {
-				Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremumsEntry, Type.MIN, startTradePrice);
+				Optional<Extremum> extremumOpt = getFirstExtremumBeforeAndLowerThan(slCandle, extremumsEntry, ExtremumType.MIN, startTradePrice, true);
 				if (extremumOpt.isPresent()) {
 					slCandle = extremumOpt.get().getCandle();
 					distanceOpenSl = startTradePrice - slCandle.getLow();
@@ -87,7 +87,7 @@ public class FeatureWriter2 extends AbstractService{
 				continue;
 			}
 			
-			boolean isTP = isTradeToTP(candleStartTrade, candles, tp, sl);
+			boolean isTP = isTradeToTPBuy(candleStartTrade, candles, tp, sl);
 			if (isTP) {
 				increaseCount("TP");
 			} else {

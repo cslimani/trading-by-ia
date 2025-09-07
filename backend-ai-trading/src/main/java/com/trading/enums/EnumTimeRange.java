@@ -11,7 +11,9 @@ public enum EnumTimeRange {
 
 	 H4(Duration.ofHours(4)),
      H1(Duration.ofHours(1)),
+     M30(Duration.ofMinutes(30)),
      M15(Duration.ofMinutes(15)),
+     M10(Duration.ofMinutes(10)),
      M5(Duration.ofMinutes(5)),
      M3(Duration.ofMinutes(3)),
      M2(Duration.ofMinutes(2)),

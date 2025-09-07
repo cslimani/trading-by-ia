@@ -76,7 +76,8 @@ public class Candle {
 	public Double macd;
 	@Transient
 	public Double macdSignal;
-
+	@Transient
+	public boolean rescued;
 	@Transient
 	public Double getMacdDiff() {
 		if (macd != null && macdSignal != null) {
@@ -87,11 +88,11 @@ public class Candle {
 
 	@Transient
 	public double getMax() {
-		return high;
+		return Math.max(close, open);
 	}
 	@Transient
 	public double getMin() {
-		return low;
+		return Math.min(close, open);
 	}
 
 	public boolean isTime(int hour, int minute, int sec) {

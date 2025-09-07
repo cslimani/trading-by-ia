@@ -60,13 +60,13 @@ public class HotSpotRecorder extends AbstractRunner {
 					.creationDate(LocalDateTime.now())
 					.build());
 			dates.add(date);
-			applyToCandles(candles);
+			afterPricesLoaded(candles);
 			log.info("Recording one hot stop");
 		}
 	}
 	
 	@Override
-	protected void applyToCandles(List<Candle> list) {	
+	public void afterPricesLoaded(List<Candle> list) {	
 		list.stream()
 		.filter(c ->  dates != null && dates.contains(c.getDate()))
 		.forEach(c -> {

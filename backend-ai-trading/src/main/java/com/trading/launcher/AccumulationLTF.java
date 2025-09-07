@@ -13,13 +13,13 @@ import org.springframework.stereotype.Component;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
+import com.trading.enums.ExtremumType;
 import com.trading.indicator.AtrCalculator;
 import com.trading.indicator.EmaCalculator;
 import com.trading.indicator.MacdCalculator;
 import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
-import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 import com.trading.service.AbstractService;
 
 @Component
@@ -171,7 +171,7 @@ public class AccumulationLTF extends AbstractService implements CommandLineRunne
 
 		// BOS
 		boolean bos = extremums.stream()
-		.filter(e -> e.getType() == Type.MAX)
+		.filter(e -> e.getType() == ExtremumType.MAX)
 		.anyMatch(e -> 	e.getBosBreakingCandle() == null 
 					&& c.getClose() > e.getCandle().getHigh() + alphaBreak*c.getAtr());
 		if (!bos) {
@@ -215,7 +215,7 @@ public class AccumulationLTF extends AbstractService implements CommandLineRunne
 
 	private void processBOS(Candle c, List<Extremum> extremums, List<Candle> candles, double alphaBreak) {
 		extremums.stream()
-		.filter(e -> e.getType() == Type.MAX)
+		.filter(e -> e.getType() == ExtremumType.MAX)
 		.forEach(e -> {
 			if (e.getBosBreakingCandle() == null 
 					&& c.getClose() > e.getCandle().getHigh() + alphaBreak*c.getAtr()) {

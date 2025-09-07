@@ -216,14 +216,15 @@ public abstract class AbstractRunner implements Runner {
 			candles.stream().filter(c -> c.getDate().equals(point.getDate())).forEach(c -> c.setColor(Color.WHITE));
 		});
 		data.setCandles(candles);
-		applyToCandles(candles);
+//		afterPricesLoaded(candles);
+		
 		if (currentMarket == null || !currentMarket.equals(data.getMarketCode())) {
 			currentMarket = data.getMarketCode();
 			leftPanel.updateButtons();
 		}
 	}
 
-	protected void applyToCandles(List<Candle> list) {		
+	public void afterPricesLoaded(List<Candle> list) {		
 	}
 
 

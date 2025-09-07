@@ -28,13 +28,13 @@ public class AccumulationRecorder extends AbstractRunner {
 
 	@Override
 	protected void runnerInit() {
-		setup("GOLD", EnumTimeRange.M1);
-		dateEnd = LocalDateTime.of(2015, 1, 2, 1, 34);
-		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
-				.stream()
-				.map(hs -> hs.getKeyDates())
-				.flatMap(List::stream)
-				.toList());
+		setup("GOLD", EnumTimeRange.M5);
+		dateEnd = LocalDateTime.of(2020, 1, 2, 0, 0);
+//		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndAsc(HOTSPOT_CODE)
+//				.stream()
+//				.map(hs -> hs.getKeyDates())
+//				.flatMap(List::stream)
+//				.toList());
 		if (!dates.isEmpty()) {
 //			dateEnd =  Iterables.getLast(dates);
 		}
@@ -50,7 +50,7 @@ public class AccumulationRecorder extends AbstractRunner {
 		dates.removeAll(accumulationDates);
 		accumulationDates.clear();
 		refreshTopPanel();
-		applyToCandles(candles);
+		afterPricesLoaded(candles);
 	}
 	
 
@@ -76,7 +76,7 @@ public class AccumulationRecorder extends AbstractRunner {
 	public void mouseClicked(LocalDateTime date, Double price) {
 		if (recordingEnabled || recordingNoSringEnabled) {
 			dates.add(date);
-			applyToCandles(candles);
+			afterPricesLoaded(candles);
 			accumulationDates.add(date);
 			refreshTopPanel();
 			LocalDateTime startDate = accumulationDates.get(0);
@@ -131,7 +131,7 @@ public class AccumulationRecorder extends AbstractRunner {
 	}
 
 	@Override
-	protected void applyToCandles(List<Candle> list) {	
+	public void afterPricesLoaded(List<Candle> list) {	
 		list.stream()
 		.filter(c ->  dates != null && dates.contains(c.getDate()))
 		.forEach(c -> {

@@ -74,6 +74,7 @@ public class PriceService {
 			data.getMapCandles().put(c.getDate(), c);
 			c.setEndDate(c.getDate().plusSeconds(c.getTimeRange().getNbSeconds()).minusNanos(1));
 		});
+		runner.afterPricesLoaded(candles);
 		this.rebuildGraphDates(panelWidth, false);
 	}
 

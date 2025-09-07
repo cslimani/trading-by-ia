@@ -12,7 +12,6 @@ import com.trading.dto.TakeProfit;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.extremum.Extremum;
-import com.trading.indicator.extremum.SwingExtremaFinder.Type;
 
 @Component
 public class FeatureWriter extends AbstractService{
@@ -77,7 +76,7 @@ public class FeatureWriter extends AbstractService{
 					continue;
 				}
 
-				boolean isTP = isTradeToTP(c, candles, tp.getPrice(), sl);
+				boolean isTP = isTradeToTPBuy(c, candles, tp.getPrice(), sl);
 				if (isTP) {
 					increaseCount("TP");
 				} else {
