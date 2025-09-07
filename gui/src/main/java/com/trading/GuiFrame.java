@@ -2,11 +2,14 @@ package com.trading;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Point;
 import java.io.IOException;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Component;
 import com.trading.dto.DataDTO;
 import com.trading.gui.MainPanel;
 import com.trading.gui.PricePanel;
+import com.trading.gui.SecondTopPanel;
 import com.trading.gui.TopPanel;
 import com.trading.service.PriceService;
 
@@ -32,6 +36,8 @@ public class GuiFrame extends JFrame {
 	private MainPanel mainPanel;
 	@Autowired
 	private TopPanel topPanel;
+	@Autowired
+	SecondTopPanel secondTopPanel;
 	@Autowired
 	private PricePanel pricePanel;
 //	@Autowired
@@ -63,15 +69,16 @@ public class GuiFrame extends JFrame {
 		centerAndRightPane.setLeftComponent(scrollPanel);                  // at the top we want our "topPanel"
 		centerAndRightPane.setRightComponent(pricePanel); 
 		
-//		JSplitPane centerAllTogetherPane = new JSplitPane();
-//		centerAllTogetherPane.setLayout(new BoxLayout(centerAllTogetherPane, BoxLayout.X_AXIS));
-//		centerAllTogetherPane.setLeftComponent(leftPanel);                  // at the top we want our "topPanel"
-//		centerAllTogetherPane.setRightComponent(centerAndRightPane); 
+		// conteneur qui regroupe les 2 lignes de boutons
+		JPanel topContainer = new JPanel();
+		topContainer.setLayout(new BoxLayout(topContainer, BoxLayout.Y_AXIS));
+		topContainer.add(topPanel);
+		topContainer.add(secondTopPanel);
 		
 		
 		JSplitPane splitPane = new JSplitPane();
 		splitPane.setLayout(new BoxLayout(splitPane, BoxLayout.Y_AXIS));
-		splitPane.setTopComponent(topPanel);                  // at the top we want our "topPanel"
+		splitPane.setTopComponent(topContainer);                  // at the top we want our "topPanel"
 		splitPane.setBottomComponent(centerAndRightPane); 
 		getContentPane().add(splitPane);
 		pack();

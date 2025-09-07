@@ -49,7 +49,6 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	private static final int MIN_RANGE_WIDTH = 30;
 	private static final Double MAX_RANGE_ATR_RATIO = 4.5d;
 	private static final Double MIN_RANGE_ATR_RATIO = 1d;
-	private static final Double RATIO_MAX_RANGE_SWING_HIGH = 0.7;
 	private static final String HOTSPOT_CODE = "RANGE_AUTO";
 	private static final double BAND_RATIO = 0.2d;
 	private static final double MIN_MAX_ATR_RATIO = 2d;

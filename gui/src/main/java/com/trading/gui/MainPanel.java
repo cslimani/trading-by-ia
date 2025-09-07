@@ -56,7 +56,7 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 	boolean isBusy;
 	TopPanel topPanel;
-
+	SecondTopPanel secondTopPanel;
 
 	public void init(JScrollPane scrollPane) {
 		this.scrollPane = scrollPane;
@@ -478,7 +478,10 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 	public void setTopPanel(TopPanel topPanel) {
 		this.topPanel = topPanel;
 	}
-
+	public void setSecondTopPanel(SecondTopPanel secondTopPanel) {
+		this.secondTopPanel = secondTopPanel;
+	}
+	
 	@Override
 	public void mousePressed(MouseEvent e) {
 		

@@ -47,17 +47,14 @@ public class TopPanel  extends AbstractPanel{
 	private void initButtons() {
 		mainPanel.setTopPanel(this);
 
-		colorPanel = new JTextArea();
-		colorPanel.setSize(100, 100);
-		colorPanel.setText(IntStream.range(1, 30).boxed().map(_ -> " ").reduce(" ", (s1,s2) -> s1+ s2));
+//		nbCandlesArea = new JTextArea();
+//		nbCandlesArea.setColumns(5);
+//		nbCandlesArea.setLocation(20, 0);
+//		add(nbCandlesArea);
 		
-		nbCandlesArea = new JTextArea();
-		nbCandlesArea.setLocation(20, 0);
-		add(nbCandlesArea);
-		
-		nbBosTextArea = new JTextArea();
-		nbBosTextArea.setLocation(20, 0);
-		add(nbBosTextArea);
+//		nbBosTextArea = new JTextArea();
+//		nbBosTextArea.setLocation(20, 0);
+//		add(nbBosTextArea);
 		
 		addButton("Unzoom max", () -> {
 			mainPanel.unzoomMaximum();
@@ -83,16 +80,18 @@ public class TopPanel  extends AbstractPanel{
 		addTimerangeButton(EnumTimeRange.M1);
 		addTimerangeButton(EnumTimeRange.M5);
 		
-		backTestInfoArea = new JTextArea();
-		backTestInfoArea.setLocation(0, 0);
-		add(backTestInfoArea);
+//		backTestInfoArea = new JTextArea();
+//		backTestInfoArea.setLocation(0, 0);
+//		add(backTestInfoArea);
 
 		positionTextArea = new JTextArea();
 		positionTextArea.setLocation(100, 0);
+		positionTextArea.setColumns(20);
 		add(positionTextArea);
 
 		indicatorTextArea = new JTextArea();
 		indicatorTextArea.setLocation(100, 0);
+		indicatorTextArea.setColumns(30);
 		add(indicatorTextArea);
 		
 		tradeInfoTextArea = new JTextArea();
