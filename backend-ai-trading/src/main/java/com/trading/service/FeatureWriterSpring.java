@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.HotSpotData;
+import com.trading.dto.Range;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.enums.ExtremumType;

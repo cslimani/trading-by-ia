@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +19,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.collections4.IterableUtils;
+import org.flywaydb.core.internal.util.CollectionsUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Iterables;
+import com.trading.dto.Range;
+import com.trading.dto.Spring;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
@@ -36,7 +40,6 @@ import com.trading.indicator.extremum.HybridMinMaxAnalyzer;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
 import com.trading.service.FeatureWriterSpring;
-import com.trading.service.Range;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -52,8 +55,10 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	private static final String HOTSPOT_CODE = "RANGE_AUTO";
 	private static final double BAND_RATIO = 0.2d;
 	private static final double MIN_MAX_ATR_RATIO = 2d;
-	private static final Integer NB_CANDLES_BEFORE = 70;
-	private static final double BREAK_ATR_RATIO = 0.5;
+	private static final Integer NB_CANDLES_BEFORE = 100;
+	private static final double BREAK_DOWN_ATR_RATIO = 1;
+	private static final double RATION_SPRING_CONFIRMATION = 0.1;
+	private static final double BREAK_UP_ATR_RATIO = 0.5;
 	private static final double NB_BOTTOMS_REQUIRED = 2;
 
 	Map<Integer, String> mapReason = new ConcurrentHashMap<>();
@@ -65,7 +70,6 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 
 	ExecutorService executor = Executors.newFixedThreadPool(15);
 
-
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
@@ -75,23 +79,25 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		List<HotSpot> hotSpotsToFind = new CopyOnWriteArrayList<HotSpot>();
 		long startProcess = System.currentTimeMillis();
 		Map<String, LocalDateTime> bigMap = Map.ofEntries(
-//				entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-//				entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//				entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+
+
+				//				entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				//				,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//				entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 				);
 		bigMap.forEach((market, startDate) -> {
 
@@ -138,7 +144,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				endDate.plusDays(1));
 		setIndex(candles);
 		AtrCalculator.compute(candles, 50);
-		List<LocalDateTime> swingHighList = new ArrayList<>();
+		List<Integer> rangeStartList = new ArrayList<>();
 		//		List<Extremum> extremumsSwing = analyzer.findExtrema(candles, 7, false);
 		//		List<Extremum> extremumsEntry = analyzer.findExtrema(candles, 5, false);
 		//		List<Integer> swingHighList = new ArrayList<>();
@@ -167,18 +173,18 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				if (!isConditionOnRangeValid(newRange, extremumsSwing, candles)) {
 					continue;
 				}
-				if (!newRange.getBreakFromTop()) {
+				if (newRange.getSprings().isEmpty()) {
 					continue;
 				}
-				if (swingHighList.contains(newRange.getDateStart())) {
+				if (rangeAlreadyExists(newRange, rangeStartList)) {
 					continue;
 				}
 
-				increaseCount("RANGE_OK");
+				increaseCount("_RANGE_OK");
 				//				System.out.println("New Range ok with end date" + newRange.getDateEnd());
 				checkHotSpotFound(newRange, candles, hotSpotsToFind);
 				saveHotSpot(newRange.getDateStart(),
-						newRange.getDateEnd(), 
+						newRange.getDateEnd().plusHours(1), 
 						List.of(newRange.getDateStart(), newRange.getDateEnd()),
 						market,
 						timeRange,
@@ -186,13 +192,19 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 						null);
 
 
-				swingHighList.add(newRange.getDateStart());
+				rangeStartList.add(newRange.getIndexStart());
 			} else {
 			}
 		}
 		checkHotSpotNotFound(candles, hotSpotsToFind);
 		return hotSpotsToFind;
 	}
+
+	private boolean rangeAlreadyExists(Range range, List<Integer> rangeStartList) {
+		return rangeStartList.stream()
+				.anyMatch(index -> Math.abs(range.getIndexStart() - index) < 100);
+	}
+
 
 	private void checkHotSpotNotFound(List<Candle> candles, List<HotSpot> hotSpotsToFind) {
 		for (HotSpot hotSpot : hotSpotsToFind) {
@@ -245,6 +257,9 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 			return false;
 		}
 		for (int i = range.getIndexStart() - NB_CANDLES_BEFORE; i < maxbeforeOpt.get().getIndex() ; i++) {
+			if (i < 0 ) {
+				return false;
+			}
 			if (candles.get(i).getLow() < median) {
 				mapReason.put(range.getIndexEnd(), "CANDLES BEFORE");
 				return false;
@@ -301,13 +316,13 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 					if (potentialRangeSize > maxRangeHeight) {
 						boolean rescueTop = false;
 						Candle maxTop = getMaxOfTops(maxList);
-						if (Math.abs(maxTop.getMax() - c.getMax()) < BREAK_ATR_RATIO *c.getAtr()) {
+						if (Math.abs(maxTop.getMax() - c.getMax()) < BREAK_UP_ATR_RATIO *c.getAtr()) {
 							rescueTop = true;
 							c.setRescued(true);
 						}
 						if (!rescueTop) {
 							debug(c.getDate() + " new max out of bounds");
-							if (isRangeValid(minList, maxList, BAND_RATIO, actualIndex)) {
+							if (isRangeValid(minList, maxList, actualIndex)) {
 								debug(c.getDate() + " return valid range");
 								return buildRange(candles, actualIndex, min, max, minList, maxList, extremumsReversed);
 							} else {
@@ -329,14 +344,14 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 					if (potentialRangeSize > maxRangeHeight) {
 						boolean rescueBottom = false;
 						Candle minBottom = getMinOfBottoms(minList);
-						if (Math.abs(minBottom.getMin() - c.getMin()) < BREAK_ATR_RATIO *c.getAtr()) {
+						if (Math.abs(minBottom.getMin() - c.getMin()) < BREAK_DOWN_ATR_RATIO *c.getAtr()) {
 							rescueBottom = true;
 							c.setRescued(true);
 						}
 						if (!rescueBottom) {
 							mapReason.put(actualIndex, "BREAK FROM BOTTOM");
 							debug(c.getDate() + " new min out of bounds");
-							if (isRangeValid(minList, maxList, BAND_RATIO, actualIndex)) {
+							if (isRangeValid(minList, maxList, actualIndex)) {
 								return null;
 								//						return buildRange(candles, endIndex, min, max, minList, maxList, extremumsReversed);
 							} else {
@@ -396,15 +411,16 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		int endIndex = -1;
 		Integer firstIndex = firstCandle.getIndex();
 		Boolean breakFromTop = null;
+
 		//First index
 		int startIndex = -1;
 		for (int i = 1; i < firstIndex; i++) {
 			Candle cTmp = candles.get(firstIndex - i);
-			if (cTmp.getMin() < min - BREAK_ATR_RATIO * cTmp.getAtr()) {
+			if (cTmp.getMin() < min - BREAK_DOWN_ATR_RATIO * cTmp.getAtr()) {
 				mapReason.put(actualIndex, "START FROM BOTTOM");
 				return null;
 			}
-			if (cTmp.getMax() > max + BREAK_ATR_RATIO * cTmp.getAtr()) {
+			if (cTmp.getMax() > max + BREAK_UP_ATR_RATIO * cTmp.getAtr()) {
 				startIndex = firstIndex -i +1;
 				break;
 			}
@@ -413,17 +429,24 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		//Last index
 		Integer lastIndex = lastCandle.getIndex();
 		for (int i = 1; lastIndex + i < candles.size(); i++) {
-			Candle cTmp = candles.get(lastIndex + i);
-			if (cTmp.getMin() < min - BREAK_ATR_RATIO * cTmp.getAtr()) {
-				endIndex = lastIndex + i -1;
+			int index = lastIndex + i;
+			Candle cTmpPrevious = candles.get(index - 1);
+			Candle cTmp = candles.get(index);
+			if (Math.abs(cTmp.getOpen() - cTmpPrevious.getClose()) > 2*cTmp.getAtr()) {
+				return null;				
+			}
+			if (cTmp.getMin() < min - BREAK_DOWN_ATR_RATIO * cTmp.getAtr()) {
+				endIndex = index -1;
 				breakFromTop = false;
 				break;
 			}
-			if (cTmp.getMax() > max + BREAK_ATR_RATIO * cTmp.getAtr()) {
-				endIndex = lastIndex + i -1;
+			if (cTmp.getMax() > max + BREAK_UP_ATR_RATIO * cTmp.getAtr()) {
+				endIndex = index -1;
 				breakFromTop = true;
 				break;
 			}
+			//			max = Math.max(max, cTmp.getMax());
+			//			min = Math.min(min, cTmp.getMin());
 		}
 		if (startIndex < 0) {
 			return null;
@@ -434,7 +457,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		if (startIndex >= endIndex) {
 			return null;
 		}
-
+		List<Spring> springs = processSprings(candles, startIndex, endIndex, toIndexList( minList), toIndexList(maxList));
 		return Range.builder()
 				.indexEnd(endIndex)
 				.dateStart(candles.get(startIndex).getDate())
@@ -442,8 +465,58 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				.indexStart(startIndex)
 				.breakFromTop(breakFromTop)
 				.min(min)
+				.springs(springs)
 				.max(max)
 				.build();
+	}
+
+	List<Integer> toIndexList(List<Candle> list){
+		return list.stream().map(c -> c.getIndex()).toList();
+	}
+
+	private List<Spring> processSprings(List<Candle> candles, int startIndex, int endIndex, List<Integer> minList, List<Integer> maxList) {
+		if (minList.get(0) > maxList.get(endIndex)) {
+			return List.of();
+		}
+		List<Spring> springs = new ArrayList<>();
+		double min = Double.MAX_VALUE;
+		double max = Double.MIN_VALUE;
+		Candle secondMinInBand = null;
+		Spring spring = null;
+		for (int i = startIndex;  i <= endIndex; i++) {
+			Candle c = candles.get(i);
+			if (secondMinInBand == null) {
+				min = Math.min(min, c.getLow());
+				max = Math.max(max, c.getMax());
+				if (minList.contains(i)) {
+					double height = max - min;
+					double bottomBandPrice = min + height * BAND_RATIO;
+					if (c.getMin() <= bottomBandPrice) {
+						//Now second min, we can start looking for Spring
+						secondMinInBand = c;
+					}
+				}
+			} else  {
+				
+			}
+
+			double springConfirmationPrice = candle + RATION_SPRING_CONFIRMATION * height;
+			if (c.getLow() < candle) {
+				if (spring == null) {
+					spring = new Spring();
+				}
+				if (c.getClose() < candle && spring.getIndexBreak() == null) {
+					spring.setIndexBreak(i);
+				}
+			}
+			if (spring != null && c.getClose() > springConfirmationPrice) {
+				if (spring.getIndexBreak() == null || (i - spring.getIndexBreak() < 5)) {
+					springs.add(spring);
+					spring = null;
+				}
+			}
+		}
+		return springs;
 	}
 
 
@@ -463,7 +536,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	}
 
 
-	private boolean isRangeValid(List<Candle> minList, List<Candle> maxList, double ratioBand, int actualIndex) {
+	private boolean isRangeValid(List<Candle> minList, List<Candle> maxList, int actualIndex) {
 		if (minList.size() < 2 || maxList.size() < 1) {
 			return false;
 		}
@@ -495,7 +568,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		//		boolean topsAreOk = sortedTopsList.get(1).getMax() >= topBandLimit;
 		//		boolean bottomsAreOk = sortedBottomsList.get(1).getMin() <= bottomBandLimit
 		//				&& sortedBottomsList.get(2).getMin() <= bottomBandLimit;
-		double bottomBandLimit = min + ratioBand * rangeHeight;
+		double bottomBandLimit = min + BAND_RATIO * rangeHeight;
 		long nbBottomsUnderBand = sortedBottomsList.stream()
 				.filter(c -> c.getMin() <= bottomBandLimit)
 				.count();
@@ -511,3 +584,4 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 
 
 }
+

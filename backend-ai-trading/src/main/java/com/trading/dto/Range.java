@@ -1,6 +1,8 @@
-package com.trading.service;
+package com.trading.dto;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.trading.entity.Candle;
@@ -28,6 +30,7 @@ public class Range {
 	public Candle candleMin;
 	public Candle candleMax;
 	
+	List<Spring> springs;
 	public Double maxHeight;
 	Candle swingHighBefore;
 	Candle firstAccumulationCandle;

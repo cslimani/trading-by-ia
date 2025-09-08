@@ -19,6 +19,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.trading.dto.Range;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.enums.ExtremumType;
@@ -28,7 +29,6 @@ import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
 import com.trading.service.FeatureWriterSpring;
-import com.trading.service.Range;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;

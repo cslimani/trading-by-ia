@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import com.trading.dto.Range;
 import com.trading.dto.TakeProfit;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;

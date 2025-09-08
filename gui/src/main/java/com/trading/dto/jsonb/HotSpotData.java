@@ -18,4 +18,5 @@ import lombok.Setter;
 public class HotSpotData {
 
 	List<HorizontalLine> lines;
+	List<String> labels;
 }

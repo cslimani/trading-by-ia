@@ -1,5 +1,6 @@
 package com.trading.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,6 @@ public interface HotSpotRepository extends JpaRepository<HotSpot, String> {
 
 	List<HotSpot> findByCodeOrderByDateEnd(String string);
 
-	List<HotSpot> findByCodeAndMarketAndTimeRange(String string, String market, EnumTimeRange timeRange);
+	HotSpot findByCodeAndMarketAndTimeRangeAndDateStart(String code, String market, EnumTimeRange timeRange, LocalDateTime dateStart);
 
 }

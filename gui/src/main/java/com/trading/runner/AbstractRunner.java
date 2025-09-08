@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.UIManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +31,7 @@ import com.trading.enums.EnumDirection;
 import com.trading.enums.EnumTimeRange;
 import com.trading.gui.LeftPanel;
 import com.trading.gui.MainPanel;
+import com.trading.gui.SecondTopPanel;
 import com.trading.gui.TopPanel;
 import com.trading.repository.CandleRepository;
 import com.trading.repository.HotSpotRepository;
@@ -47,7 +49,9 @@ public abstract class AbstractRunner implements Runner {
 	protected LocalDateTime dateEnd;
 	protected List<Candle> points = new ArrayList<Candle>();
 	protected String currentMarket;
-
+	protected List<String> labelList = new ArrayList<String>();
+	protected List<JButton> buttonList = new ArrayList<JButton>();
+	
 	@Autowired
 	public HotSpotRepository hotSpotRepository;
 	@Autowired
@@ -56,6 +60,8 @@ public abstract class AbstractRunner implements Runner {
 	public MainPanel mainPanel;
 	@Autowired
 	public TopPanel topPanel;
+	@Autowired
+	public SecondTopPanel secondTopPanel;
 	@Autowired
 	public LeftPanel leftPanel;
 	@Autowired
@@ -88,22 +94,22 @@ public abstract class AbstractRunner implements Runner {
 		topPanel.info(message, Color.red);
 	}
 
-	public void addButton(String name, Runnable runnable, Color color) {
-		addButton(name, runnable, true, null, color);
-	}
-	
-	public void addButton(String name, Runnable runnable, boolean reload) {
-		addButton(name, runnable, reload, null, null);
+	public JButton addButton(String name, Runnable runnable, Color color) {
+		return addButton(name, runnable, true, null, color);
 	}
 
-	public void addButton(String name, Runnable runnable, boolean reload, boolean unzoom) {
-		addButton(name, runnable, reload, unzoom, null, null);
+	public JButton addButton(String name, Runnable runnable, boolean reload) {
+		return addButton(name, runnable, reload, null, null);
 	}
 
-	public void addButton(String name, Runnable runnable, boolean reload, Runnable after, Color color) {
-		addButton(name, runnable, reload, false, after, color);
+	public JButton addButton(String name, Runnable runnable, boolean reload, boolean unzoom) {
+		return addButton(name, runnable, reload, unzoom, null, null);
 	}
-	public void addButton(String name, Runnable runnable, boolean reload, boolean unzoom, Runnable after, Color color) {
+
+	public JButton addButton(String name, Runnable runnable, boolean reload, Runnable after, Color color) {
+		return addButton(name, runnable, reload, false, after, color);
+	}
+	public JButton addButton(String name, Runnable runnable, boolean reload, boolean unzoom, Runnable after, Color color) {
 		JButton button = new JButton(name);
 		topPanel.add(button);
 		button.setLocation(20, 20);
@@ -124,6 +130,35 @@ public abstract class AbstractRunner implements Runner {
 				after.run();
 			}
 		});
+		return button;
+	}
+
+	public JButton addLabel(String name) {
+		JButton button = new JButton(name);
+		button.addActionListener(_ -> {
+			if (labelList.contains(name)) {
+				button.setBackground(UIManager.getColor("Button.background"));
+				labelList.remove(name);
+			} else {
+				button.setBackground(Color.GREEN);
+				labelList.add(name);
+			}
+		});
+		secondTopPanel.addLabel(button);
+		addSeparator(5);
+		buttonList.add(button);
+		return button;
+	}
+
+	public void clearLabels() {
+		labelList.clear();
+		for (JButton button : buttonList) {
+			button.setBackground(UIManager.getColor("Button.background"));
+		}
+	}
+	
+	public void addSeparator(int length) {
+		secondTopPanel.addSeparator(length);
 	}
 
 	public void setup(String market, EnumTimeRange tr) {
@@ -131,7 +166,7 @@ public abstract class AbstractRunner implements Runner {
 		data.setTimeRange(tr);
 		topPanel.setTimeRange(tr);
 	}
-	
+
 	public void init() {
 		runnerInit();
 		leftPanel.loadAllMarketsFromDatabase();
@@ -216,8 +251,8 @@ public abstract class AbstractRunner implements Runner {
 			candles.stream().filter(c -> c.getDate().equals(point.getDate())).forEach(c -> c.setColor(Color.WHITE));
 		});
 		data.setCandles(candles);
-//		afterPricesLoaded(candles);
-		
+		//		afterPricesLoaded(candles);
+
 		if (currentMarket == null || !currentMarket.equals(data.getMarketCode())) {
 			currentMarket = data.getMarketCode();
 			leftPanel.updateButtons();
@@ -302,6 +337,6 @@ public abstract class AbstractRunner implements Runner {
 	public void mouseClicked(LocalDateTime date, Double price) {
 	}
 
-	
+
 	protected abstract void runnerInit();
 }

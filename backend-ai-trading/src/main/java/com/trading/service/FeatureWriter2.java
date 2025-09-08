@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
+import com.trading.dto.Range;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.enums.ExtremumType;
