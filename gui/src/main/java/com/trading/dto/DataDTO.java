@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
@@ -45,6 +46,7 @@ public class DataDTO {
 	private int viewHeight=0;
 	private int nbCandlesAdded=0;
 	private List<HorizontalLine> pricesToDraw = new CopyOnWriteArrayList<>();
+	private Map<LocalDateTime, String> datesToColor = new HashMap<>();
 	int indexTrade = 0;
 	int index = 0;
 	LocalDateTime dateEnd;

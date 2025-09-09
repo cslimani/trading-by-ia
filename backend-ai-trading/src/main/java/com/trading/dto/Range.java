@@ -1,7 +1,6 @@
 package com.trading.dto;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,7 +28,8 @@ public class Range {
 	public Double min;
 	public Candle candleMin;
 	public Candle candleMax;
-	
+	List<Candle> minList;
+	List<Candle> maxList;
 	List<Spring> springs;
 	public Double maxHeight;
 	Candle swingHighBefore;
@@ -37,6 +37,7 @@ public class Range {
 	AtomicInteger nbBreakDown;
 	AtomicInteger nbBreakUp;
 	Double rangeSwingHighRatio;
+	LocalDateTime dateDecisionRangeValid;
 	Boolean breakFromTop;
 	public boolean isSame(Range newRange) {
 		return newRange.getHeight() == height && newRange.getIndexStart() == indexStart;

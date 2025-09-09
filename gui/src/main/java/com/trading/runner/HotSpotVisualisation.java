@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 
@@ -33,11 +34,11 @@ public class HotSpotVisualisation extends AbstractRunner {
 		super.init();
 		addButton("Previous", () -> previous(), true);
 		addButton("Next", () -> next(), true);
-//		addButton("Delete", () -> delete(),  Color.RED);
+		//		addButton("Delete", () -> delete(),  Color.RED);
 		saveButton = addButton("Save", () -> saveHotSpot(),  Color.GREEN);
-		
+
 		addLabel("BEARISH IMPULSE");
-		
+
 		addSeparator(40);
 		addLabel("BREAK & GO");
 		addSeparator(40);
@@ -47,20 +48,20 @@ public class HotSpotVisualisation extends AbstractRunner {
 		addLabel("BREAK & EXTEND");
 
 		addSeparator(40);
-		
+
 		addLabel("PULL BACK IN > MID");
 		addLabel("PULL BACK IN < MID");
-		
+
 		addSeparator(40);
 
 		addLabel("SPRING");
 		addLabel("INTERNAL SPRING");
-		
+
 		addSeparator(40);
 		addLabel("END GO UP");
 		addLabel("END GO DOWN");
 	}
-	
+
 	private void saveHotSpot() {
 		HotSpot newHotspot = HotSpot.builder()
 				.code("RANGE_LABELED")
@@ -72,29 +73,29 @@ public class HotSpotVisualisation extends AbstractRunner {
 				.data(HotSpotData.builder().labels(labelList).build())
 				.build();
 		hotSpotRepository.save(newHotspot);
-//		hotSpotRepository.delete(hotspot);
+		//		hotSpotRepository.delete(hotspot);
 		topPanel.setTradeInfo("OK", Color.GREEN);
 		saveButton.setEnabled(false);
 	}
 
-//	private void saveHotSpot() {
-//		LocalDateTime newDateStart = data.getCandles()
-//				.stream()
-//				.min(Comparator.comparingLong(c -> Duration.between(c.getDate(), hotspot.getDateStart()).abs().toMillis()))
-//				.get().getDate();
-//		
-//		HotSpot newHotspot = HotSpot.builder()
-//				.code("RANGE_TO_FIND")
-//				.market(hotspot.getMarket())
-//				.creationDate(LocalDateTime.now())
-//				.timeRange(data.getTimeRange())
-//				.dateStart(newDateStart)
-//				.dateEnd(Iterables.getLast(data.getCandles()).getDate())
-//				.build();
-//		hotSpotRepository.save(newHotspot);
-//		topPanel.setTradeInfo("OK", Color.GREEN);
-//	}
-	
+	//	private void saveHotSpot() {
+	//		LocalDateTime newDateStart = data.getCandles()
+	//				.stream()
+	//				.min(Comparator.comparingLong(c -> Duration.between(c.getDate(), hotspot.getDateStart()).abs().toMillis()))
+	//				.get().getDate();
+	//		
+	//		HotSpot newHotspot = HotSpot.builder()
+	//				.code("RANGE_TO_FIND")
+	//				.market(hotspot.getMarket())
+	//				.creationDate(LocalDateTime.now())
+	//				.timeRange(data.getTimeRange())
+	//				.dateStart(newDateStart)
+	//				.dateEnd(Iterables.getLast(data.getCandles()).getDate())
+	//				.build();
+	//		hotSpotRepository.save(newHotspot);
+	//		topPanel.setTradeInfo("OK", Color.GREEN);
+	//	}
+
 	private void delete() {
 		hotSpotRepository.delete(hotspot);
 		log.info("HotSpot deleted");
@@ -132,15 +133,19 @@ public class HotSpotVisualisation extends AbstractRunner {
 
 	public void loadElement(){
 		hotspot = hotSpots.get(index);
-		
+
 		log.info("Loading HotSpot with id {}", hotspot.getId());
 		dateStart = hotspot.getDateStart();
 		dateEnd =  hotspot.getDateEnd();
 		data.setTimeRange(hotspot.getTimeRange());
 		topPanel.setTimeRange(hotspot.getTimeRange());
 		data.setMarketCode(hotspot.getMarket());
-		if (hotspot.getData() != null) {
-			data.setPricesToDraw(hotspot.getData().getLines());
+		HotSpotData hsData = hotspot.getData();
+		if (hsData != null) {
+			data.setPricesToDraw(hsData.getLines());
+			if (hsData.getPoints() != null) {
+				data.setDatesToColor(hsData.getPoints().stream().collect(Collectors.toMap(s -> s.getDate(), s -> s.getColor())));
+			}
 		}
 		clearLabels();
 	}
@@ -156,14 +161,14 @@ public class HotSpotVisualisation extends AbstractRunner {
 			.filter(c -> hotspot.getKeyDates().contains(c.getDate()) )
 			.forEach(c -> c.setSelected(true));
 		}
-//		Optional<HotSpot> anyExists = hotSpotRepository.findByCodeAndMarketAndTimeRange("RANGE_TO_FIND", hotspot.getMarket(), hotspot.getTimeRange())
-//				.stream()
-//				.filter(hs -> getIndex(hs.getDateEnd()).isPresent() && getIndex(hotspot.getDateEnd()).isPresent())
-//				.filter(hs -> Math.abs(getIndex(hs.getDateEnd()).get() - getIndex(hotspot.getDateEnd()).get()) < 10)
-//				.findAny();
-//		if (anyExists.isPresent()) {
-//			topPanel.setTradeInfo("ALREADY FLAGED", Color.GREEN);
-//		}
+		//		Optional<HotSpot> anyExists = hotSpotRepository.findByCodeAndMarketAndTimeRange("RANGE_TO_FIND", hotspot.getMarket(), hotspot.getTimeRange())
+		//				.stream()
+		//				.filter(hs -> getIndex(hs.getDateEnd()).isPresent() && getIndex(hotspot.getDateEnd()).isPresent())
+		//				.filter(hs -> Math.abs(getIndex(hs.getDateEnd()).get() - getIndex(hotspot.getDateEnd()).get()) < 10)
+		//				.findAny();
+		//		if (anyExists.isPresent()) {
+		//			topPanel.setTradeInfo("ALREADY FLAGED", Color.GREEN);
+		//		}
 		HotSpot labeledHotSpot = hotSpotRepository.findByCodeAndMarketAndTimeRangeAndDateStart(
 				"RANGE_LABELED", hotspot.getMarket(),
 				hotspot.getTimeRange(), hotspot.getDateStart());

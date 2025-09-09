@@ -2,6 +2,7 @@ package com.trading.dto.jsonb;
 
 import java.util.List;
 
+import com.trading.dto.DatePoint;
 import com.trading.dto.HorizontalLine;
 
 import lombok.AllArgsConstructor;
@@ -19,4 +20,5 @@ public class HotSpotData {
 
 	List<HorizontalLine> lines;
 	List<String> labels;
+	List<DatePoint> points;
 }

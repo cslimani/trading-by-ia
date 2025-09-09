@@ -214,7 +214,10 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 				}
 				int y = getHeight() - priceToPixel(candle.getMax()-data.getPriceMin());
 				int height = priceToPixel(candle.getMax()-candle.getMin());
-				if (candle.getColor() != null) {
+				String color = data.getDatesToColor().get(candle.getDate());
+				if (color != null) {
+					g2d.setPaint(Color.decode(color));
+				} else if (candle.getColor() != null) {
 					g2d.setPaint(candle.getColor());
 				} else if (candle.isSelected()) {
 					g2d.setPaint(Color.decode("#4682B4"));
