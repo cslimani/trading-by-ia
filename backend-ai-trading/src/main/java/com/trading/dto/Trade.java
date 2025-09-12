@@ -17,12 +17,15 @@ public class Trade {
 	Double tp;
 	Double sl;
 	EnumTimeRange timeRange;
-	Double springBreakPrice;
+	Double springUnderPrice;
+	Double springAbovePrice;
+	
 	Double rangeMin;
 	Double rangeMax;
 	Double underRangeLimit;
 	Double aboveRange1;
 	Double aboveRange2;
 	Double aboveRange3;
+	Double height;
 	
 }

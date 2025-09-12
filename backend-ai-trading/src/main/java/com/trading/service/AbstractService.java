@@ -34,7 +34,7 @@ import com.trading.repository.HotSpotRepository;
 public class AbstractService {
 
 	private static final Integer NB_MAX_PRICE = 50;
-	public String sourcePath = "/data/trading_ml/bars_after_break.csv";
+	public String sourcePath = "/data/trading_ml/classifier_";
 	public String targetFolder = "/data/trading_ml/backup";
 	public List<Map<String, Object>> listMapFeatures = new CopyOnWriteArrayList<Map<String,Object>>();
 	public boolean debug;
@@ -103,6 +103,10 @@ public class AbstractService {
 		.forEach(v -> System.out.println(v.contains("_") ? StringUtils.substringAfter(v, "_") : v));
 	}
 
+	public void setSourceFileName(String suffix) {
+		this.sourcePath =  this.sourcePath + suffix + ".csv";		
+	}
+	
 	public String format(LocalDateTime dateTime) {
 		return dateTime.format(DateTimeFormatter.ofPattern("dd/MM HH:mm"));
 	}

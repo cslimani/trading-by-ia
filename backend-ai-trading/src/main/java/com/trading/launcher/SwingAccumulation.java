@@ -26,6 +26,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.trading.dto.DatePoint;
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.HotSpotData;
 import com.trading.dto.Range;
@@ -75,36 +76,42 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
-		System.out.println("Accumulation Break starting");
+		boolean isTrainData = true;
+		System.out.println("Accumulation Break starting with train data => " + isTrainData);
 		backupHotSpots();
 		hotSpotRepository.deleteByCode(HOTSPOT_CODE);
 		List<HotSpot> hotSpotsToFind = new CopyOnWriteArrayList<HotSpot>();
 		long startProcess = System.currentTimeMillis();
-		Map<String, LocalDateTime> bigMap = Map.ofEntries(
-//				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+		Map<String, LocalDateTime> marketDateMap = Map.ofEntries(
+				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 
-																entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-																,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-																entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+//																entry("GOLD",   LocalDateTime.of(2010, Month.JANUARY, 1, 0, 0)),
+//																entry("US100",  LocalDateTime.of(2018, Month.MAY, 1, 0, 0))
+//																,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("EURUSD", LocalDateTime.of(2015, Month.JANUARY, 1, 0, 0)),
+//																entry("BRENT",  LocalDateTime.of(2015, Month.JANUARY, 1, 0, 0)),
+//																entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("DAX30",  LocalDateTime.of(2015, Month.JANUARY, 1, 0, 0)),
+//																entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("AUDUSD", LocalDateTime.of(2015, Month.JANUARY, 1, 0, 0)),
+//																entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+//																entry("WTI", LocalDateTime.of(2015, Month.JANUARY, 1, 0, 0)),
+//																entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 				);
-		bigMap.forEach((market, startDate) -> {
-
-			LocalDateTime endDate = LocalDateTime.of(2025, Month.DECEMBER, 31, 23, 59);
-
+		marketDateMap.forEach((market, startDate) -> {
+			LocalDateTime endDate = null;
+			if (isTrainData) {
+				endDate = LocalDateTime.of(2023, Month.DECEMBER, 31, 23, 59);
+				
+			} else {
+				startDate = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
+				endDate = LocalDateTime.of(2025, Month.DECEMBER, 31, 23, 59);
+			}
 			while (startDate.isBefore(endDate)) {
 				final LocalDateTime startDateFinal = startDate;
 				executor.submit(() -> {
@@ -122,6 +129,8 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 			executor.shutdownNow();
 		}
 		displayMapCount();
+		
+		setSourceFileName(isTrainData ?  "train" : "test");
 		backupFile();
 		writeAll();
 		long endProcess = System.currentTimeMillis();
@@ -245,21 +254,21 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 
 				List<HorizontalLine> lines = List.of(
 						buildLine(newRange.getDateStart(), trade.getRangeMin(), "#00F53A"),
-						buildLine(newRange.getDateStart(), trade.getSpringBreakPrice(), "#FFFFFF"),
+						buildLine(newRange.getDateStart(), trade.getSpringUnderPrice(), "#FFFFFF"),
 						buildLine(newRange.getDateStart(), trade.getUnderRangeLimit(), "#F54927"),
 						buildLine(newRange.getDateStart(), trade.getAboveRange1(), "#FFFFFF"),
 						buildLine(newRange.getDateStart(), trade.getAboveRange2(), "#FFFFFF"),
 						buildLine(newRange.getDateStart(), trade.getAboveRange3(), "#FFFFFF")
 						);
-				saveHotSpot(trade.getStartDate(),
-						trade.getEndDate(), 
-						keyDates,
-						market,
-						EnumTimeRange.S30,
-						HOTSPOT_CODE,
-						HotSpotData.builder()
-						.lines(lines)
-						.build());
+//				saveHotSpot(trade.getStartDate(),
+//						trade.getEndDate(), 
+//						keyDates,
+//						market,
+//						EnumTimeRange.S30,
+//						HOTSPOT_CODE,
+//						HotSpotData.builder()
+//						.lines(lines)
+//						.build());
 				rangeStartList.add(newRange.getIndexStart());
 			} else {
 			}
@@ -546,6 +555,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				.indexRangeValidated(actualIndex)
 				.breakFromTop(breakFromTop)
 				.min(min)
+				.width(endIndex - startIndex)
 				.dateDecisionRangeValid(dateDecisionRangeValid)
 				.minList(minList)
 				.maxList(maxList)
@@ -593,10 +603,12 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				height = max - min;
 			} else {
 				sl = Math.min(sl, c.getLow());
-				if (candleBreak == null && c.getLow() < min - 0.5*c.getAtr()) {
+				double springUnderPrice = min - 0.5*c.getAtr();
+				double springAbovePrice = min + 0.5*c.getAtr();
+				if (candleBreak == null && c.getLow() < springUnderPrice) {
 					candleBreak = c;
 				}
-				if (candleBreak != null && c.getClose() > min + 0.5*c.getAtr()) {
+				if (candleBreak != null && c.getClose() > springAbovePrice) {
 					LocalDateTime indexStart = candlesS30.get(c.getIndex()-30).getDate();
 					LocalDateTime indexEnd = candlesS30.get(Math.min(c.getIndex()+5, candlesS30.size()-1)).getDate();
 
@@ -613,13 +625,15 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 							.rangeMax(max)
 							.sl(sl)
 							.tp(min + height/2)
-							.springBreakPrice(min - c.getAtr())
+							.springUnderPrice(springUnderPrice)
+							.springAbovePrice(springAbovePrice)
 							.underRangeLimit(min - 0.1 * height)
 							.aboveRange1(min + 0.05 * height)
 							.aboveRange2(min + 0.1 * height)
 							.aboveRange3(min + 0.15 * height)
+							.height(height)
 							.build();
-					addFeature(candlesS30, candleBreak, cTradeStart, trade);
+					addFeature(candlesS30, candleBreak, cTradeStart, trade, range);
 					return trade;
 				}
 				if (c.getHigh() > max) {
@@ -633,9 +647,10 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		return null;
 	}
 
-	private void addFeature(List<Candle> candlesS30, Candle cBreak, Candle cTradeStart, Trade trade) {
+	private void addFeature(List<Candle> candlesS30, Candle cBreak, Candle cTradeStart, Trade trade, Range range) {
 		boolean isTP = false;
 		double rr = (trade.getTp() - cTradeStart.getOpen()) / (cTradeStart.getOpen() - trade.getSl());
+		Candle endCandle = null;
 		if (!Double.isFinite(rr) || rr < 1) {
 			return;
 		}
@@ -643,20 +658,46 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 			Candle c = candlesS30.get(i);
 			if (c.getHigh() >= trade.getTp()) {
 				isTP = true;
+				endCandle = c;
 				increaseCount("TP");
+				increaseDouble("RESULT", rr);
 				break;
 			}
 			if (c.getLow() <= trade.getSl()) {
 				isTP = false;
+				endCandle = c;
 				increaseCount("SL");
+				increaseDouble("RESULT", -1d);
 				break;
 			}
 		}
-		double breakSize = (trade.getRangeMin() - trade.getSl())/cBreak.getAtr();
+		if (endCandle == null) {
+			return;
+		}
+		List<HorizontalLine> lines = List.of(
+				buildLine(trade.getStartDate(), trade.getRangeMin(), "#FFFFFF"),
+				buildLine(trade.getStartDate(), trade.getSl(), "#F54927"),
+				buildLine(trade.getStartDate(), trade.getTp(), "#00F53A"),
+				buildLine(trade.getStartDate(), trade.getSpringAbovePrice(), "#EBB731"),
+				buildLine(trade.getStartDate(), trade.getSpringUnderPrice(), "#EBB731")
+				);
+		saveHotSpot(trade.getStartDate(),
+				endCandle.getDate(), 
+				List.of(cTradeStart.getDate(), endCandle.getDate()),
+				cBreak.getMarket(),
+				EnumTimeRange.S30,
+				HOTSPOT_CODE,
+				HotSpotData.builder()
+				.lines(lines)
+				.points(List.of(DatePoint.builder().date(cTradeStart.getDate()).color("#FFFF3D").build()))
+				.build());
+		double breakSize = (trade.getRangeMin() - trade.getSl())/trade.getHeight();
 		Map<String, Object> mapFeature = new HashMap<String, Object>();
 		mapFeature.put("timestamp", Utils.getTimestamp(cBreak.getDate()));
 		mapFeature.put("f_time_since_break", cTradeStart.getIndex() - cBreak.getIndex());
 		mapFeature.put("f_rr", rr);
+		mapFeature.put("f_range_width", range.getWidth());
+		mapFeature.put("f_range_height", range.getHeight() / range.getCandleMax().getAtr());
 		mapFeature.put("f_breakSize", breakSize);
 		mapFeature.put("f_timestamp", Utils.getTimestamp(cBreak.getDate()));
 		mapFeature.put("y", isTP ? 1d : 0d);

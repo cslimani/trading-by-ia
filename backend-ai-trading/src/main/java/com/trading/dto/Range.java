@@ -22,7 +22,7 @@ public class Range {
 	public Integer indexStart;
 	public Integer indexEnd;
 	public Integer indexRangeValidated;
-	
+	public Integer width;
 	public Double high;
 	public Double low;
 	public Double height;
