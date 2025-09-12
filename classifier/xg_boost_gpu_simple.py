@@ -16,7 +16,7 @@ from packaging import version
 
 # -------- CONFIG --------
 CSV_PATH = "/data/trading_ml/bars_after_break.csv"
-TIME_COL, TARGET_COL, T_SINCE_COL = "timestamp", "y", "f_time_since_break"
+TIME_COL, TARGET_COL= "timestamp", "y"
 TEST_RATIO = 0.2
 N_SPLITS = 5
 RANDOM_SEED = 42
@@ -33,10 +33,10 @@ EARLY_STOPPING_ROUNDS = 150
 def load_df(path):
     df = pd.read_csv(path, parse_dates=[TIME_COL])
     df = df.replace([np.inf, -np.inf], np.nan)
-    return df.sort_values([TIME_COL, T_SINCE_COL]).reset_index(drop=True)
+    return df.sort_values([TIME_COL]).reset_index(drop=True)
 
 def check_columns(df, feats):
-    required = {TIME_COL, TARGET_COL, T_SINCE_COL}
+    required = {TIME_COL, TARGET_COL}
     miss = required - set(df.columns)
     if miss:
         raise ValueError(f"Colonnes manquantes: {miss}")
@@ -108,6 +108,7 @@ def main():
 
     df = load_df(CSV_PATH)
     FEATURES = [c for c in df.columns if c.startswith("f_")]
+    # FEATURES = ['f_timestamp']
     check_columns(df, FEATURES)
     X = df[FEATURES]; y = df[TARGET_COL].astype(int).values
 
@@ -194,14 +195,13 @@ def main():
         "features": FEATURES,
         "time_col": TIME_COL,
         "target_col": TARGET_COL,
-        "t_since_col": T_SINCE_COL,
         "cv_history": cv_history
     }, MODEL_OUT)
     booster.save_model(BOOSTER_JSON_OUT)
     print(f"\nModèle sauvegardé -> {MODEL_OUT}")
     print(f"Booster JSON -> {BOOSTER_JSON_OUT}")
 
-    out = df_test[[TIME_COL, T_SINCE_COL]].copy()
+    out = df_test[[TIME_COL]].copy()
     out["y_true"] = y_test
     out["proba_tp"] = proba_cal
     out["pred"] = y_pred

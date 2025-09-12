@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -68,8 +69,8 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
 
 	EnumTimeRange timeRange = EnumTimeRange.M5;
-
-	ExecutorService executor = Executors.newFixedThreadPool(1);
+	Random random = new Random();
+	ExecutorService executor = Executors.newFixedThreadPool(15);
 
 	@Override
 	@Transactional
@@ -80,25 +81,25 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		List<HotSpot> hotSpotsToFind = new CopyOnWriteArrayList<HotSpot>();
 		long startProcess = System.currentTimeMillis();
 		Map<String, LocalDateTime> bigMap = Map.ofEntries(
-				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+//				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 
-				//												entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-				//												,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//												entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+																entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+																,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+																entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 				);
 		bigMap.forEach((market, startDate) -> {
 
@@ -121,7 +122,8 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 			executor.shutdownNow();
 		}
 		displayMapCount();
-		featureWriter.writeAll();
+		backupFile();
+		writeAll();
 		long endProcess = System.currentTimeMillis();
 		System.out.println("Total time processing " + (endProcess - startProcess)/1000 + " sec");
 
@@ -598,6 +600,11 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 					LocalDateTime indexStart = candlesS30.get(c.getIndex()-30).getDate();
 					LocalDateTime indexEnd = candlesS30.get(Math.min(c.getIndex()+5, candlesS30.size()-1)).getDate();
 
+					int distance = c.getIndex() - candleBreak.getIndex();
+					if (distance > 50) {
+						return null;
+					}
+					Candle cTradeStart = candlesS30.get(c.getIndex()+1);
 					Trade trade = Trade.builder()
 							.startDate(indexStart)
 							.endDate(indexEnd)
@@ -612,10 +619,13 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 							.aboveRange2(min + 0.1 * height)
 							.aboveRange3(min + 0.15 * height)
 							.build();
-					addFeature(candlesS30, c, trade);
+					addFeature(candlesS30, candleBreak, cTradeStart, trade);
 					return trade;
 				}
 				if (c.getHigh() > max) {
+					return null;
+				}
+				if (c.getLow() < min - height*0.3) {
 					return null;
 				}
 			}
@@ -623,9 +633,13 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		return null;
 	}
 
-	private void addFeature(List<Candle> candlesS30, Candle cStart, Trade trade) {
+	private void addFeature(List<Candle> candlesS30, Candle cBreak, Candle cTradeStart, Trade trade) {
 		boolean isTP = false;
-		for (int i = cStart.getIndex(); i < candlesS30.size(); i++) {
+		double rr = (trade.getTp() - cTradeStart.getOpen()) / (cTradeStart.getOpen() - trade.getSl());
+		if (!Double.isFinite(rr) || rr < 1) {
+			return;
+		}
+		for (int i = cTradeStart.getIndex(); i < candlesS30.size(); i++) {
 			Candle c = candlesS30.get(i);
 			if (c.getHigh() >= trade.getTp()) {
 				isTP = true;
@@ -638,12 +652,15 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				break;
 			}
 		}
+		double breakSize = (trade.getRangeMin() - trade.getSl())/cBreak.getAtr();
 		Map<String, Object> mapFeature = new HashMap<String, Object>();
-		mapFeature.put("timestamp", Utils.getTimestamp(cStart.getDate()));
-		mapFeature.put("f_time_since_break", 0);
+		mapFeature.put("timestamp", Utils.getTimestamp(cBreak.getDate()));
+		mapFeature.put("f_time_since_break", cTradeStart.getIndex() - cBreak.getIndex());
+		mapFeature.put("f_rr", rr);
+		mapFeature.put("f_breakSize", breakSize);
+		mapFeature.put("f_timestamp", Utils.getTimestamp(cBreak.getDate()));
 		mapFeature.put("y", isTP ? 1d : 0d);
 		listMapFeatures.add(mapFeature);
-
 	}
 
 
