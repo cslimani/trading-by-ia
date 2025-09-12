@@ -51,7 +51,7 @@ public abstract class AbstractRunner implements Runner {
 	protected String currentMarket;
 	protected List<String> labelList = new ArrayList<String>();
 	protected List<JButton> buttonList = new ArrayList<JButton>();
-	
+
 	@Autowired
 	public HotSpotRepository hotSpotRepository;
 	@Autowired
@@ -156,7 +156,7 @@ public abstract class AbstractRunner implements Runner {
 			button.setBackground(UIManager.getColor("Button.background"));
 		}
 	}
-	
+
 	public void addSeparator(int length) {
 		secondTopPanel.addSeparator(length);
 	}
@@ -331,6 +331,30 @@ public abstract class AbstractRunner implements Runner {
 
 	@Override
 	public void keyPressed(int keyCode) {
+//		System.out.println(keyCode);
+		if (keyCode == 10) {
+			//PAD return 
+			mainPanel.zoom(true);
+		}
+		if (keyCode == 99) {
+			//3
+			topPanel.changeTimeRange(EnumTimeRange.S30);
+		}
+		if (keyCode == 101) {
+			//5
+			topPanel.changeTimeRange(EnumTimeRange.M5);
+		}
+		if (keyCode == 107) {
+			//+
+			shiftForwardBy(1);
+		}
+		if (keyCode == 109) {
+			// - 
+			shiftBackwardBy(1);
+		}
+		mainPanel.repaint();
+		topPanel.repaint();
+		mainPanel.reload();
 	}
 
 	@Override

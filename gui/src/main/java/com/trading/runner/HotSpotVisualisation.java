@@ -37,34 +37,70 @@ public class HotSpotVisualisation extends AbstractRunner {
 		//		addButton("Delete", () -> delete(),  Color.RED);
 		saveButton = addButton("Save", () -> saveHotSpot(),  Color.GREEN);
 
-		addLabel("BEARISH IMPULSE");
+		//		addLabel("BEARISH IMPULSE");
+		//
+		//		addSeparator(40);
+		//		addLabel("BREAK & GO");
+		//		addSeparator(40);
+		//		addLabel("BREAK & RETURN");
+		//		addLabel("BREAK & RANGE ON TOP");
+		//		addLabel("BREAK & RANGE IN OUT");
+		//		addLabel("BREAK & EXTEND");
+		//
+		//		addSeparator(40);
+		//
+		//		addLabel("PULL BACK IN > MID");
+		//		addLabel("PULL BACK IN < MID");
+		//
+		//		addSeparator(40);
+		//
+		//		addLabel("SPRING");
+		//		addLabel("INTERNAL SPRING");
+		//
+		//		addSeparator(40);
+		//		addLabel("END GO UP");
+		//		addLabel("END GO DOWN");
+
+
+
+		addLabel("TOUCH");
+		addLabel("BREAK < 1 ATR");
+		addLabel("BREAK < 20%");
+		addLabel("MEGA BREAK");
 
 		addSeparator(40);
-		addLabel("BREAK & GO");
-		addSeparator(40);
-		addLabel("BREAK & RETURN");
-		addLabel("BREAK & RANGE ON TOP");
-		addLabel("BREAK & RANGE IN OUT");
-		addLabel("BREAK & EXTEND");
+
+		addLabel("ONE BAR RETURN");
+		addLabel("QUICK RETURN");
+		addLabel("SLOW RETURN");
 
 		addSeparator(40);
 
-		addLabel("PULL BACK IN > MID");
-		addLabel("PULL BACK IN < MID");
+		addLabel("PULLBACK < RANGE");
+		addLabel("PULLBACK 5%");
+		addLabel("PULLBACK 10%");
+		addLabel("PULLBACK 15%");
+		addLabel("PULLBACK MIDDLE");
 
 		addSeparator(40);
 
-		addLabel("SPRING");
-		addLabel("INTERNAL SPRING");
+		addLabel("RANGE UNDER RANGE");
+		addLabel("RANGE ABOVE RANGE");
 
 		addSeparator(40);
-		addLabel("END GO UP");
-		addLabel("END GO DOWN");
+
+		addLabel("CHOCH");
+		addLabel("DOUBLE SPRING");
+
+		addSeparator(40);
+
+		addLabel("GO TO SPACE");
+		addLabel("GO BASEMENT");
 	}
 
 	private void saveHotSpot() {
 		HotSpot newHotspot = HotSpot.builder()
-				.code("RANGE_LABELED")
+				.code("TRADE_LABELED")
 				.market(hotspot.getMarket())
 				.creationDate(LocalDateTime.now())
 				.timeRange(data.getTimeRange())
@@ -76,6 +112,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 		//		hotSpotRepository.delete(hotspot);
 		topPanel.setTradeInfo("OK", Color.GREEN);
 		saveButton.setEnabled(false);
+		clearLabels();
 	}
 
 	//	private void saveHotSpot() {
@@ -114,6 +151,9 @@ public class HotSpotVisualisation extends AbstractRunner {
 	private void next() {
 		topPanel.setTradeInfo("", Color.GREEN);
 		if (index < hotSpots.size()-1) {
+			if (!labelList.isEmpty()) {
+				saveHotSpot();
+			}
 			index++;
 			loadElement();
 		}
@@ -122,7 +162,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("EURUSD", EnumTimeRange.M15);
-		String type = "RANGE_AUTO";
+		String type = "TRADE";
 		hotSpots = hotSpotRepository.findByCodeOrderByDateEnd(type);
 		if (hotSpots.isEmpty()) {
 			log.info("No HotSpot found for type " + type);
@@ -144,7 +184,11 @@ public class HotSpotVisualisation extends AbstractRunner {
 		if (hsData != null) {
 			data.setPricesToDraw(hsData.getLines());
 			if (hsData.getPoints() != null) {
-				data.setDatesToColor(hsData.getPoints().stream().collect(Collectors.toMap(s -> s.getDate(), s -> s.getColor())));
+				data.setDatesToColor(hsData.getPoints().stream()
+						.collect(Collectors.toMap(
+								s -> s.getDate(),
+								s -> s.getColor(),
+								(c1, _) -> c1)));
 			}
 		}
 		clearLabels();

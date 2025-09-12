@@ -132,6 +132,10 @@ public class TopPanel  extends AbstractPanel{
 		});
 	}
 	
+	public void changeTimeRange(EnumTimeRange timerange){
+		timeRangeComboBox.setSelectedItem(timerange);
+	}
+	
 	public void setTimeRange(EnumTimeRange timerange){
 		disableListener = true;
 		timeRangeComboBox.setSelectedItem(timerange);

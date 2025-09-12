@@ -18,18 +18,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.trading.dto.DatePoint;
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.HotSpotData;
 import com.trading.dto.Range;
-import com.trading.dto.Spring;
+import com.trading.dto.Trade;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
@@ -53,12 +51,12 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	private static final int MIN_RANGE_WIDTH = 30;
 	private static final Double MAX_RANGE_ATR_RATIO = 4.5d;
 	private static final Double MIN_RANGE_ATR_RATIO = 1d;
-	private static final String HOTSPOT_CODE = "RANGE_AUTO";
+	private static final String HOTSPOT_CODE = "TRADE";
 	private static final double BAND_RATIO = 0.2d;
 	private static final double MIN_MAX_ATR_RATIO = 2d;
 	private static final Integer NB_CANDLES_BEFORE = 50;
 	private static final double BREAK_DOWN_ATR_RATIO = 1;
-	private static final double RATION_SPRING_CONFIRMATION = 0.2;
+	private static final double RATION_SPRING_CONFIRMATION = 0.1;
 	private static final double BREAK_UP_ATR_RATIO = 0.5;
 	private static final double NB_BOTTOMS_REQUIRED = 2;
 
@@ -82,23 +80,23 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		Map<String, LocalDateTime> bigMap = Map.ofEntries(
 				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 
-//								entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-//								,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-//								entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				//								entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				//								,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//								entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 				);
 		bigMap.forEach((market, startDate) -> {
 
@@ -174,44 +172,90 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				if (!isConditionOnRangeValid(newRange, extremumsSwing, candles)) {
 					continue;
 				}
-				if (newRange.getSprings().isEmpty()) {
-					continue;
-				}
-				if (!newRange.getSprings().stream().anyMatch(sp -> sp.isConfirmed())) {
-					continue;
-				}
-				if (!newRange.getBreakFromTop()) {
-					continue;
-				}
+//				if (newRange.getSprings().isEmpty()) {
+//					continue;
+//				}
+//				if (newRange.getSprings().stream().anyMatch(sp -> sp.isConfirmed())) {
+//					continue;
+//				}
+				//				if (newRange.getBreakFromTop()) {
+				//					continue;
+				//				}
 				if (rangeAlreadyExists(newRange, rangeStartList)) {
 					continue;
 				}
 
+				Trade trade = processTrade(candles, newRange);
+				if (trade == null) {
+					continue;
+				}
 				increaseCount("_RANGE_OK");
 				//				System.out.println("New Range ok with end date" + newRange.getDateEnd());
-				checkHotSpotFound(newRange, candles, hotSpotsToFind);
+//				checkHotSpotFound(newRange, candles, hotSpotsToFind);
 				List<LocalDateTime> keyDates = new ArrayList<>();
 				keyDates.addAll(List.of(newRange.getDateStart(), newRange.getDateEnd()));
 				keyDates.addAll(newRange.getMaxList().stream().map(Candle::getDate).toList());
 				keyDates.addAll(newRange.getMinList().stream().map(Candle::getDate).toList());
-				List<DatePoint> points = newRange.getSprings().stream()
-						.map(sp -> DatePoint.builder().date(sp.getDateBreak()).color("#A9F527").build()).collect(Collectors.toList());
-//				points.add(DatePoint.builder().date(newRange.getDateDecisionRangeValid()).color("#8E8EE6").build());
-				points.add(DatePoint.builder().date(c.getDate()).color("#FFFFFF").build());
-				saveHotSpot(newRange.getDateStart(),
-						newRange.getDateEnd(), 
+//				List<DatePoint> points = newRange.getSprings().stream()
+//						.map(sp -> DatePoint.builder().date(sp.getDateBreak()).color("#A9F527").build()).collect(Collectors.toList());
+//				//				points.add(DatePoint.builder().date(newRange.getDateDecisionRangeValid()).color("#8E8EE6").build());
+//				points.add(DatePoint.builder().date(c.getDate()).color("#FFFFFF").build());
+//
+//				List<HorizontalLine> lines = List.of(HorizontalLine.builder()
+//						.color("#FFFFFF")
+//						.dateStart(newRange.getDateStart())
+//						.price(newRange.getSprings().get(0).getConfirmationPrice()).build()
+//
+//						,HorizontalLine.builder()
+//						.color("#FFFFFF")
+//						.dateStart(newRange.getDateStart())
+//						.price(newRange.getSprings().get(0).getP1()).build()
+//
+//						,HorizontalLine.builder()
+//						.color("#FFFFFF")
+//						.dateStart(newRange.getDateStart())
+//						.price(newRange.getSprings().get(0).getP2()).build()
+//
+//						,HorizontalLine.builder()
+//						.color("#68F527")
+//						.dateStart(newRange.getDateStart())
+//						.price(newRange.getSprings().get(0).getMin()).build()
+//
+//						,HorizontalLine.builder()
+//						.color("#F54927")
+//						.dateStart(newRange.getDateStart())
+//						.price(newRange.getSprings().get(0).getP3()).build()
+//						);
+
+//				saveHotSpot(newRange.getDateStart(),
+//						newRange.getDateEnd(), 
+//						keyDates,
+//						market,
+//						timeRange,
+//						HOTSPOT_CODE,
+//						HotSpotData.builder()
+//						.lines(lines)
+//						.points(points)
+//						.build());
+
+				
+				List<HorizontalLine> lines = List.of(
+						buildLine(newRange.getDateStart(), trade.getRangeMin(), "#00F53A"),
+						buildLine(newRange.getDateStart(), trade.getSpringBreakPrice(), "#FFFFFF"),
+						buildLine(newRange.getDateStart(), trade.getUnderRangeLimit(), "#F54927"),
+						buildLine(newRange.getDateStart(), trade.getAboveRange1(), "#FFFFFF"),
+						buildLine(newRange.getDateStart(), trade.getAboveRange2(), "#FFFFFF"),
+						buildLine(newRange.getDateStart(), trade.getAboveRange3(), "#FFFFFF")
+						);
+				saveHotSpot(trade.getStartDate(),
+						trade.getEndDate(), 
 						keyDates,
 						market,
-						timeRange,
+						EnumTimeRange.S30,
 						HOTSPOT_CODE,
 						HotSpotData.builder()
-						.lines(List.of(HorizontalLine.builder()
-								.color("#FFFFFF")
-								.dateStart(newRange.getDateStart())
-								.price(newRange.getSprings().get(0).getConfirmationPrice()).build()))
-						.points(points)
+						.lines(lines)
 						.build());
-
 				rangeStartList.add(newRange.getIndexStart());
 			} else {
 			}
@@ -219,6 +263,15 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		checkHotSpotNotFound(candles, hotSpotsToFind);
 		return hotSpotsToFind;
 	}
+
+
+	private HorizontalLine buildLine(LocalDateTime date, Double price, String color) {
+		return HorizontalLine.builder()
+				.color(color)
+				.dateStart(date)
+				.price(price).build();
+	}
+
 
 	private boolean rangeAlreadyExists(Range range, List<Integer> rangeStartList) {
 		return rangeStartList.stream()
@@ -264,7 +317,6 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 			}
 		}
 	}
-
 
 
 	private boolean isConditionOnRangeValid(Range range, List<Extremum> extremumsSwing, List<Candle> candles) {
@@ -327,7 +379,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 
 			double maxRangeHeight = averageATR*MAX_RANGE_ATR_RATIO;
 			debug("Looking at Extremum " + e.getDate());
-			
+
 			if (e.isMax()) {
 				//				if (c.isDate(25, 8) && c.isTime(13, 25, 0)) {
 				//					getClass();
@@ -343,12 +395,12 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 						}
 						if (!rescueTop) {
 							debug(c.getDate() + " new max out of bounds");
-//							if (isRangeValid(minList, maxList, actualIndex)) {
-//								debug(c.getDate() + " return valid range");
-////								return buildRange(candles, actualIndex, min, max, minList, maxList, extremumsReversed);
-//							} else {
-//								return null;
-//							}
+							//							if (isRangeValid(minList, maxList, actualIndex)) {
+							//								debug(c.getDate() + " return valid range");
+							////								return buildRange(candles, actualIndex, min, max, minList, maxList, extremumsReversed);
+							//							} else {
+							//								return null;
+							//							}
 							return null;
 						}
 					} else {
@@ -372,13 +424,13 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 						}
 						if (!rescueBottom) {
 							mapReason.put(actualIndex, "BREAK FROM BOTTOM");
-//							debug(c.getDate() + " new min out of bounds");
-//							if (isRangeValid(minList, maxList, actualIndex)) {
-//								return null;
-//								//						return buildRange(candles, endIndex, min, max, minList, maxList, extremumsReversed);
-//							} else {
-//								return null;
-//							}
+							//							debug(c.getDate() + " new min out of bounds");
+							//							if (isRangeValid(minList, maxList, actualIndex)) {
+							//								return null;
+							//								//						return buildRange(candles, endIndex, min, max, minList, maxList, extremumsReversed);
+							//							} else {
+							//								return null;
+							//							}
 							return null;
 						}
 					} else {
@@ -434,7 +486,8 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		int endIndex = -1;
 		Integer firstIndex = firstCandle.getIndex();
 		Boolean breakFromTop = null;
-
+		double height = max - min;
+		double bottomLimit = min + 0.3 * height;
 		//First index
 		int startIndex = -1;
 		for (int i = 1; i < firstIndex; i++) {
@@ -458,13 +511,13 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 			if (Math.abs(cTmp.getOpen() - cTmpPrevious.getClose()) > 2*cTmp.getAtr()) {
 				return null;				
 			}
-			if (cTmp.getMin() < min - BREAK_DOWN_ATR_RATIO * cTmp.getAtr()) {
-				endIndex = index -1;
+			if (cTmp.getLow() < bottomLimit) {
+				endIndex = index;
 				breakFromTop = false;
 				break;
 			}
 			if (cTmp.getMax() > max + BREAK_UP_ATR_RATIO * cTmp.getAtr()) {
-				endIndex = index -1;
+				endIndex = index;
 				breakFromTop = true;
 				break;
 			}
@@ -480,18 +533,18 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		if (startIndex >= endIndex) {
 			return null;
 		}
-		List<Spring> springs = processSprings(candles, startIndex, endIndex, toIndexList( minList), toIndexList(maxList));
+		
 		return Range.builder()
 				.indexEnd(endIndex)
 				.dateStart(candles.get(startIndex).getDate())
 				.dateEnd(candles.get(endIndex).getDate())
 				.indexStart(startIndex)
+				.indexRangeValidated(actualIndex)
 				.breakFromTop(breakFromTop)
 				.min(min)
 				.dateDecisionRangeValid(dateDecisionRangeValid)
 				.minList(minList)
 				.maxList(maxList)
-				.springs(springs)
 				.max(max)
 				.build();
 	}
@@ -500,61 +553,162 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		return list.stream().map(c -> c.getIndex()).toList();
 	}
 
-	private List<Spring> processSprings(List<Candle> candles, int startIndex, int endIndex, List<Integer> minList, List<Integer> maxList) {
+	private Trade processTrade(List<Candle> candlesHTF, Range range) {
+		List<Integer> minList = toIndexList(range.getMinList());
+		List<Integer> maxList = toIndexList(range.getMaxList());
+		Candle startCandleHTF = candlesHTF.get(range.getIndexStart());
+		Candle actualCandleHTF = candlesHTF.get(range.getIndexRangeValidated()+1);
+		Candle endCandleHTF = candlesHTF.get(candlesHTF.size()-1);
 		Integer firstMinIndex = minList.get(0);
-		Integer firstMaxIndex = maxList.get(0);
-		if (firstMinIndex > firstMaxIndex) {
-			return List.of();
+		Candle firstMaxCandle = candlesHTF.get(maxList.get(0));
+		if (firstMinIndex > firstMaxCandle.getIndex()) {
+			return null;
 		}
-		List<Spring> springs = new ArrayList<>();
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 		double height = 0;
-		Candle firstMax = null;
-		Spring spring = null;
-		for (int i = startIndex;  i <= endIndex; i++) {
-			Candle c = candles.get(i);
+		List<Candle> candlesS30 = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
+				startCandleHTF.getMarket(),
+				EnumTimeRange.S30,
+				startCandleHTF.getDate(),
+				candlesHTF.get(Math.min(range.getIndexStart() + 300, candlesHTF.size()-1)).getDate());
+		setIndex(candlesS30);
+		AtrCalculator.compute(candlesS30, 20);
+		boolean debug = false;
+		for (int i = 0;  i < candlesS30.size(); i++) {
+			Candle c = candlesS30.get(i);
+			if (c.isDate(11, 2) && c.isTime(3, 45, 0)) {
+//				System.out.println();
+				debug = true;
+			}
 			height = max - min;
-//			if (firstMax == null) {
-//				min = Math.min(min, c.getLow());
-//				max = Math.max(max, c.getMax());
-//				height = max - min;
-//				if (maxList.contains(i) && i != firstMinIndex) {
-//					double bottomBandPrice = min + height * BAND_RATIO;
-//					if (c.getMin() <= bottomBandPrice) {
-//						//Now second min, we can start looking for Spring
-//						firstMax = c;
-//					}
-//				}
-//			} else  {
-			if (i <= firstMaxIndex) {
+			//			if (firstMax == null) {
+			//				min = Math.min(min, c.getLow());
+			//				max = Math.max(max, c.getMax());
+			//				height = max - min;
+			//				if (maxList.contains(i) && i != firstMinIndex) {
+			//					double bottomBandPrice = min + height * BAND_RATIO;
+			//					if (c.getMin() <= bottomBandPrice) {
+			//						//Now second min, we can start looking for Spring
+			//						firstMax = c;
+			//					}
+			//				}
+			//			} else  {
+			if (c.getDate().isBefore(actualCandleHTF.getDate())) {
 				min = Math.min(min, c.getLow());
 				max = Math.max(max, c.getMax());
 				height = max - min;
-			} else	 {
+			} else {
+				if (debug) {
+//					System.out.println();
+				}
 				double springConfirmationPrice = min + RATION_SPRING_CONFIRMATION * height;
 				if (c.getLow() < min) {
-					if (spring == null) {
-						spring = new Spring();
-						spring.setDateBreak(c.getDate());
-						spring.setConfirmationPrice(springConfirmationPrice);
-						springs.add(spring);
-					}
-					if (c.getClose() < min && spring.getIndexBreak() == null) {
-						spring.setIndexBreak(i);
-					}
+//					System.out.println("New trade at " + range.getDateStart());
+					LocalDateTime indexStart = candlesS30.get(c.getIndex()-30).getDate();
+					LocalDateTime indexEnd = candlesS30.get(c.getIndex()+5).getDate();
+					return Trade.builder()
+							.startDate(indexStart)
+							.endDate(indexEnd)
+							.timeRange(EnumTimeRange.S30)
+							.rangeMin(min)
+							.springBreakPrice(min - c.getAtr())
+							.underRangeLimit(min - 0.1 * height)
+							.aboveRange1(min + 0.05 * height)
+							.aboveRange2(min + 0.1 * height)
+							.aboveRange3(min + 0.15 * height)
+							.build();
+							
 				}
-				if (spring != null && c.getClose() > springConfirmationPrice) {
-					if (spring.getIndexBreak() == null || (i - spring.getIndexBreak() < 5)) {
-						spring.setConfirmed(true);
-						spring = null;
-					}
+				if (c.getHigh() > max) {
+					return null;
 				}
+//				if (c.getLow() < min) {
+//					//					System.out.println(c.getDate());
+//					if (spring == null) {
+//						spring = new Spring();
+//						spring.setDateBreak(c.getDate());
+//						spring.setConfirmationPrice(springConfirmationPrice);
+//						spring.setP1(min + 0.1 * height);
+//						spring.setP2(min + 0.05 * height);
+//						spring.setMin(min);
+//						spring.setP3(min - 0.3 * height);
+//						springs.add(spring);
+//					}
+//					if (c.getClose() < min && spring.getIndexBreak() == null) {
+//						spring.setIndexBreak(i);
+//					}
+//				}
+//				if (spring != null && c.getClose() > springConfirmationPrice) {
+//					if (spring.getIndexBreak() == null || (i - spring.getIndexBreak() < 5)) {
+//						spring.setConfirmed(true);
+//						spring = null;
+//					}
+//				}
 			}
-
 		}
-		return springs;
+		return null;
 	}
+	//	private List<Spring> processSprings(List<Candle> candles, int startIndex, int endIndex, List<Integer> minList, List<Integer> maxList) {
+	//		Integer firstMinIndex = minList.get(0);
+	//		Integer firstMaxIndex = maxList.get(0);
+	//		if (firstMinIndex > firstMaxIndex) {
+	//			return List.of();
+	//		}
+	//		List<Spring> springs = new ArrayList<>();
+	//		double min = Double.MAX_VALUE;
+	//		double max = Double.MIN_VALUE;
+	//		double height = 0;
+	//		Candle firstMax = null;
+	//		Spring spring = null;
+	//		for (int i = startIndex;  i <= endIndex; i++) {
+	//			Candle c = candles.get(i);
+	//			height = max - min;
+	////			if (firstMax == null) {
+	////				min = Math.min(min, c.getLow());
+	////				max = Math.max(max, c.getMax());
+	////				height = max - min;
+	////				if (maxList.contains(i) && i != firstMinIndex) {
+	////					double bottomBandPrice = min + height * BAND_RATIO;
+	////					if (c.getMin() <= bottomBandPrice) {
+	////						//Now second min, we can start looking for Spring
+	////						firstMax = c;
+	////					}
+	////				}
+	////			} else  {
+	//			if (i <= firstMaxIndex) {
+	//				min = Math.min(min, c.getLow());
+	//				max = Math.max(max, c.getMax());
+	//				height = max - min;
+	//			} else	 {
+	//				double springConfirmationPrice = min + RATION_SPRING_CONFIRMATION * height;
+	//				if (c.getLow() < min) {
+	////					System.out.println(c.getDate());
+	//					if (spring == null) {
+	//						spring = new Spring();
+	//						spring.setDateBreak(c.getDate());
+	//						spring.setConfirmationPrice(springConfirmationPrice);
+	//						spring.setP1(min + 0.1 * height);
+	//						spring.setP2(min + 0.05 * height);
+	//						spring.setMin(min);
+	//						spring.setP3(min - 0.3 * height);
+	//						springs.add(spring);
+	//					}
+	//					if (c.getClose() < min && spring.getIndexBreak() == null) {
+	//						spring.setIndexBreak(i);
+	//					}
+	//				}
+	//				if (spring != null && c.getClose() > springConfirmationPrice) {
+	//					if (spring.getIndexBreak() == null || (i - spring.getIndexBreak() < 5)) {
+	//						spring.setConfirmed(true);
+	//						spring = null;
+	//					}
+	//				}
+	//			}
+	//
+	//		}
+	//		return springs;
+	//	}
 
 
 	private Candle getLastExtremum(List<Candle> minList, List<Candle> maxList) {

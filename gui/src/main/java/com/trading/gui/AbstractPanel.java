@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.trading.component.DistanceFeature;
 import com.trading.component.HorizontalLineFeature;
 import com.trading.component.IndicatorFeature;
-import com.trading.component.RiskRatioFeature;
+import com.trading.component.TradeFeature;
 import com.trading.component.VerticalLineFeature;
 import com.trading.component.ZoneSelectorFeature;
 import com.trading.dto.DataDTO;
@@ -40,7 +40,7 @@ public class AbstractPanel extends JPanel{
 	@Autowired
 	IndicatorFeature indicatorFeature;
 	@Autowired
-	RiskRatioFeature riskRatioFeature;
+	TradeFeature riskRatioFeature;
 	@Autowired
 	DistanceFeature distanceFeature;
 	

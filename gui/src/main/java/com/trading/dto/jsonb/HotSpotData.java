@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.trading.dto.DatePoint;
 import com.trading.dto.HorizontalLine;
+import com.trading.dto.TradeInfo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,4 +22,5 @@ public class HotSpotData {
 	List<HorizontalLine> lines;
 	List<String> labels;
 	List<DatePoint> points;
+	TradeInfo tradeInfo;
 }

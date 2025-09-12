@@ -21,6 +21,8 @@ public class Range {
 	public LocalDateTime dateEnd;
 	public Integer indexStart;
 	public Integer indexEnd;
+	public Integer indexRangeValidated;
+	
 	public Double high;
 	public Double low;
 	public Double height;
@@ -31,6 +33,7 @@ public class Range {
 	List<Candle> minList;
 	List<Candle> maxList;
 	List<Spring> springs;
+	Trade trade;
 	public Double maxHeight;
 	Candle swingHighBefore;
 	Candle firstAccumulationCandle;

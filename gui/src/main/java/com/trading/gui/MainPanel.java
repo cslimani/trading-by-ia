@@ -42,7 +42,7 @@ import com.trading.enums.EnumTimeRange;
 public class MainPanel extends AbstractPanel implements Scrollable, ActionListener, MouseListener, 
 MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
-	public static final int WINDOW_WIDTH = 1900;
+	public static final int WINDOW_WIDTH = 3440;
 	public static final int WINDOW_HEIGHT = 900;
 	public static final int EXTRA_GHOST_candleS = 10;
 	static final String LOCK = "LOCK";
@@ -386,9 +386,9 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		riskRatioFeature.keyPressed(e.getKeyCode());
 		distanceFeature.keyPressed(e.getKeyCode());
 		//touche - du pav num
-		if (e.getKeyCode() == 109) {
-			unzoomMaximum();
-		}
+//		if (e.getKeyCode() == 109) {
+//			unzoomMaximum();
+//		}
 		repaint();
 	}
 

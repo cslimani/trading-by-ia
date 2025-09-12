@@ -7,12 +7,16 @@ import com.trading.dto.DataDTO;
 import com.trading.gui.LeftPanel;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
+import com.trading.repository.HotSpotRepository;
 
 import lombok.Getter;
 import lombok.Setter;
 
 public abstract class AbstractFeature {
 
+	@Autowired
+	HotSpotRepository hotSpotRepository;
+	
 	@Autowired
 	public DataDTO data;
 	@Autowired
@@ -27,4 +31,5 @@ public abstract class AbstractFeature {
 	@Getter
 	@Setter
 	public boolean enabled;
+	
 }

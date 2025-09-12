@@ -11,4 +11,9 @@ public class Spring {
 	LocalDateTime dateBreak;
 	boolean confirmed;
 	Double confirmationPrice;
+	
+	Double p1;
+	Double p2;
+	Double min;
+	Double p3;
 }
