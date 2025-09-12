@@ -95,12 +95,12 @@ public class AbstractService {
 		mapCountInteger.entrySet().stream()
 		.map(e -> e.getKey() + " : " + e.getValue())
 		.sorted()
-		.forEach(v -> System.out.println(StringUtils.substringAfter(v, "_")));
+		.forEach(v -> System.out.println(v.contains("_") ? StringUtils.substringAfter(v, "_") : v));
 
 		mapCountFloat.entrySet().stream()
 		.map(e -> e.getKey() + " : " + e.getValue())
 		.sorted()
-		.forEach(v -> System.out.println(StringUtils.substringAfter(v, "_")));
+		.forEach(v -> System.out.println(v.contains("_") ? StringUtils.substringAfter(v, "_") : v));
 	}
 
 	public String format(LocalDateTime dateTime) {

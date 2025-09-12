@@ -19,6 +19,7 @@ public class Trade {
 	EnumTimeRange timeRange;
 	Double springBreakPrice;
 	Double rangeMin;
+	Double rangeMax;
 	Double underRangeLimit;
 	Double aboveRange1;
 	Double aboveRange2;

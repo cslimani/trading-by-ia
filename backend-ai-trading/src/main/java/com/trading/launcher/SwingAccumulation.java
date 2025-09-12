@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import com.trading.indicator.extremum.HybridMinMaxAnalyzer;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
 import com.trading.service.FeatureWriterSpring;
+import com.trading.service.Utils;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +69,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 
 	EnumTimeRange timeRange = EnumTimeRange.M5;
 
-	ExecutorService executor = Executors.newFixedThreadPool(15);
+	ExecutorService executor = Executors.newFixedThreadPool(1);
 
 	@Override
 	@Transactional
@@ -80,23 +82,23 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		Map<String, LocalDateTime> bigMap = Map.ofEntries(
 				entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 
-				//								entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-				//								,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
-				//								entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				//												entry("GOLD",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("US100",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				//												,entry("SILVER",   LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("EURUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("BRENT",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("COPPER", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("USDJPY", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("DAX30",  LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("ETHUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("BTCUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("GBPUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("US500", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("US30", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("AUDUSD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("USDCHF", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("WTI", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)),
+				//												entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 				);
 		bigMap.forEach((market, startDate) -> {
 
@@ -172,12 +174,12 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				if (!isConditionOnRangeValid(newRange, extremumsSwing, candles)) {
 					continue;
 				}
-//				if (newRange.getSprings().isEmpty()) {
-//					continue;
-//				}
-//				if (newRange.getSprings().stream().anyMatch(sp -> sp.isConfirmed())) {
-//					continue;
-//				}
+				//				if (newRange.getSprings().isEmpty()) {
+				//					continue;
+				//				}
+				//				if (newRange.getSprings().stream().anyMatch(sp -> sp.isConfirmed())) {
+				//					continue;
+				//				}
 				//				if (newRange.getBreakFromTop()) {
 				//					continue;
 				//				}
@@ -191,54 +193,54 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				}
 				increaseCount("_RANGE_OK");
 				//				System.out.println("New Range ok with end date" + newRange.getDateEnd());
-//				checkHotSpotFound(newRange, candles, hotSpotsToFind);
+				//				checkHotSpotFound(newRange, candles, hotSpotsToFind);
 				List<LocalDateTime> keyDates = new ArrayList<>();
 				keyDates.addAll(List.of(newRange.getDateStart(), newRange.getDateEnd()));
 				keyDates.addAll(newRange.getMaxList().stream().map(Candle::getDate).toList());
 				keyDates.addAll(newRange.getMinList().stream().map(Candle::getDate).toList());
-//				List<DatePoint> points = newRange.getSprings().stream()
-//						.map(sp -> DatePoint.builder().date(sp.getDateBreak()).color("#A9F527").build()).collect(Collectors.toList());
-//				//				points.add(DatePoint.builder().date(newRange.getDateDecisionRangeValid()).color("#8E8EE6").build());
-//				points.add(DatePoint.builder().date(c.getDate()).color("#FFFFFF").build());
-//
-//				List<HorizontalLine> lines = List.of(HorizontalLine.builder()
-//						.color("#FFFFFF")
-//						.dateStart(newRange.getDateStart())
-//						.price(newRange.getSprings().get(0).getConfirmationPrice()).build()
-//
-//						,HorizontalLine.builder()
-//						.color("#FFFFFF")
-//						.dateStart(newRange.getDateStart())
-//						.price(newRange.getSprings().get(0).getP1()).build()
-//
-//						,HorizontalLine.builder()
-//						.color("#FFFFFF")
-//						.dateStart(newRange.getDateStart())
-//						.price(newRange.getSprings().get(0).getP2()).build()
-//
-//						,HorizontalLine.builder()
-//						.color("#68F527")
-//						.dateStart(newRange.getDateStart())
-//						.price(newRange.getSprings().get(0).getMin()).build()
-//
-//						,HorizontalLine.builder()
-//						.color("#F54927")
-//						.dateStart(newRange.getDateStart())
-//						.price(newRange.getSprings().get(0).getP3()).build()
-//						);
+				//				List<DatePoint> points = newRange.getSprings().stream()
+				//						.map(sp -> DatePoint.builder().date(sp.getDateBreak()).color("#A9F527").build()).collect(Collectors.toList());
+				//				//				points.add(DatePoint.builder().date(newRange.getDateDecisionRangeValid()).color("#8E8EE6").build());
+				//				points.add(DatePoint.builder().date(c.getDate()).color("#FFFFFF").build());
+				//
+				//				List<HorizontalLine> lines = List.of(HorizontalLine.builder()
+				//						.color("#FFFFFF")
+				//						.dateStart(newRange.getDateStart())
+				//						.price(newRange.getSprings().get(0).getConfirmationPrice()).build()
+				//
+				//						,HorizontalLine.builder()
+				//						.color("#FFFFFF")
+				//						.dateStart(newRange.getDateStart())
+				//						.price(newRange.getSprings().get(0).getP1()).build()
+				//
+				//						,HorizontalLine.builder()
+				//						.color("#FFFFFF")
+				//						.dateStart(newRange.getDateStart())
+				//						.price(newRange.getSprings().get(0).getP2()).build()
+				//
+				//						,HorizontalLine.builder()
+				//						.color("#68F527")
+				//						.dateStart(newRange.getDateStart())
+				//						.price(newRange.getSprings().get(0).getMin()).build()
+				//
+				//						,HorizontalLine.builder()
+				//						.color("#F54927")
+				//						.dateStart(newRange.getDateStart())
+				//						.price(newRange.getSprings().get(0).getP3()).build()
+				//						);
 
-//				saveHotSpot(newRange.getDateStart(),
-//						newRange.getDateEnd(), 
-//						keyDates,
-//						market,
-//						timeRange,
-//						HOTSPOT_CODE,
-//						HotSpotData.builder()
-//						.lines(lines)
-//						.points(points)
-//						.build());
+				//				saveHotSpot(newRange.getDateStart(),
+				//						newRange.getDateEnd(), 
+				//						keyDates,
+				//						market,
+				//						timeRange,
+				//						HOTSPOT_CODE,
+				//						HotSpotData.builder()
+				//						.lines(lines)
+				//						.points(points)
+				//						.build());
 
-				
+
 				List<HorizontalLine> lines = List.of(
 						buildLine(newRange.getDateStart(), trade.getRangeMin(), "#00F53A"),
 						buildLine(newRange.getDateStart(), trade.getSpringBreakPrice(), "#FFFFFF"),
@@ -533,7 +535,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		if (startIndex >= endIndex) {
 			return null;
 		}
-		
+
 		return Range.builder()
 				.indexEnd(endIndex)
 				.dateStart(candles.get(startIndex).getDate())
@@ -557,7 +559,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		List<Integer> minList = toIndexList(range.getMinList());
 		List<Integer> maxList = toIndexList(range.getMaxList());
 		Candle startCandleHTF = candlesHTF.get(range.getIndexStart());
-		Candle actualCandleHTF = candlesHTF.get(range.getIndexRangeValidated()+1);
+		Candle actualCandleHTF = candlesHTF.get(Math.min(candlesHTF.size()-1, range.getIndexRangeValidated()+1));
 		Candle endCandleHTF = candlesHTF.get(candlesHTF.size()-1);
 		Integer firstMinIndex = minList.get(0);
 		Candle firstMaxCandle = candlesHTF.get(maxList.get(0));
@@ -575,80 +577,93 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		setIndex(candlesS30);
 		AtrCalculator.compute(candlesS30, 20);
 		boolean debug = false;
+		Candle candleBreak = null;
+		Double sl = min;
 		for (int i = 0;  i < candlesS30.size(); i++) {
 			Candle c = candlesS30.get(i);
 			if (c.isDate(11, 2) && c.isTime(3, 45, 0)) {
-//				System.out.println();
 				debug = true;
 			}
 			height = max - min;
-			//			if (firstMax == null) {
-			//				min = Math.min(min, c.getLow());
-			//				max = Math.max(max, c.getMax());
-			//				height = max - min;
-			//				if (maxList.contains(i) && i != firstMinIndex) {
-			//					double bottomBandPrice = min + height * BAND_RATIO;
-			//					if (c.getMin() <= bottomBandPrice) {
-			//						//Now second min, we can start looking for Spring
-			//						firstMax = c;
-			//					}
-			//				}
-			//			} else  {
 			if (c.getDate().isBefore(actualCandleHTF.getDate())) {
 				min = Math.min(min, c.getLow());
 				max = Math.max(max, c.getMax());
 				height = max - min;
 			} else {
-				if (debug) {
-//					System.out.println();
+				sl = Math.min(sl, c.getLow());
+				if (candleBreak == null && c.getLow() < min - 0.5*c.getAtr()) {
+					candleBreak = c;
 				}
-				double springConfirmationPrice = min + RATION_SPRING_CONFIRMATION * height;
-				if (c.getLow() < min) {
-//					System.out.println("New trade at " + range.getDateStart());
+				if (candleBreak != null && c.getClose() > min + 0.5*c.getAtr()) {
 					LocalDateTime indexStart = candlesS30.get(c.getIndex()-30).getDate();
-					LocalDateTime indexEnd = candlesS30.get(c.getIndex()+5).getDate();
-					return Trade.builder()
+					LocalDateTime indexEnd = candlesS30.get(Math.min(c.getIndex()+5, candlesS30.size()-1)).getDate();
+
+					Trade trade = Trade.builder()
 							.startDate(indexStart)
 							.endDate(indexEnd)
 							.timeRange(EnumTimeRange.S30)
 							.rangeMin(min)
+							.rangeMax(max)
+							.sl(sl)
+							.tp(min + height/2)
 							.springBreakPrice(min - c.getAtr())
 							.underRangeLimit(min - 0.1 * height)
 							.aboveRange1(min + 0.05 * height)
 							.aboveRange2(min + 0.1 * height)
 							.aboveRange3(min + 0.15 * height)
 							.build();
-							
+					addFeature(candlesS30, c, trade);
+					return trade;
 				}
 				if (c.getHigh() > max) {
 					return null;
 				}
-//				if (c.getLow() < min) {
-//					//					System.out.println(c.getDate());
-//					if (spring == null) {
-//						spring = new Spring();
-//						spring.setDateBreak(c.getDate());
-//						spring.setConfirmationPrice(springConfirmationPrice);
-//						spring.setP1(min + 0.1 * height);
-//						spring.setP2(min + 0.05 * height);
-//						spring.setMin(min);
-//						spring.setP3(min - 0.3 * height);
-//						springs.add(spring);
-//					}
-//					if (c.getClose() < min && spring.getIndexBreak() == null) {
-//						spring.setIndexBreak(i);
-//					}
-//				}
-//				if (spring != null && c.getClose() > springConfirmationPrice) {
-//					if (spring.getIndexBreak() == null || (i - spring.getIndexBreak() < 5)) {
-//						spring.setConfirmed(true);
-//						spring = null;
-//					}
-//				}
 			}
 		}
 		return null;
 	}
+
+	private void addFeature(List<Candle> candlesS30, Candle cStart, Trade trade) {
+		boolean isTP = false;
+		for (int i = cStart.getIndex(); i < candlesS30.size(); i++) {
+			Candle c = candlesS30.get(i);
+			if (c.getHigh() >= trade.getTp()) {
+				isTP = true;
+				increaseCount("TP");
+				break;
+			}
+			if (c.getLow() <= trade.getSl()) {
+				isTP = false;
+				increaseCount("SL");
+				break;
+			}
+		}
+		Map<String, Object> mapFeature = new HashMap<String, Object>();
+		mapFeature.put("timestamp", Utils.getTimestamp(cStart.getDate()));
+		mapFeature.put("f_time_since_break", 0);
+		mapFeature.put("y", isTP ? 1d : 0d);
+		listMapFeatures.add(mapFeature);
+
+	}
+
+
+	//	double springConfirmationPrice = min + RATION_SPRING_CONFIRMATION * height;
+	//	System.out.println("New trade at " + range.getDateStart());
+	//	LocalDateTime indexStart = candlesS30.get(c.getIndex()-30).getDate();
+	//	LocalDateTime indexEnd = candlesS30.get(Math.min(c.getIndex()+5, candlesS30.size()-1)).getDate();
+	//	return Trade.builder()
+	//			.startDate(indexStart)
+	//			.endDate(indexEnd)
+	//			.timeRange(EnumTimeRange.S30)
+	//			.rangeMin(min)
+	//			.springBreakPrice(min - c.getAtr())
+	//			.underRangeLimit(min - 0.1 * height)
+	//			.aboveRange1(min + 0.05 * height)
+	//			.aboveRange2(min + 0.1 * height)
+	//			.aboveRange3(min + 0.15 * height)
+	//			.build();
+
+
 	//	private List<Spring> processSprings(List<Candle> candles, int startIndex, int endIndex, List<Integer> minList, List<Integer> maxList) {
 	//		Integer firstMinIndex = minList.get(0);
 	//		Integer firstMaxIndex = maxList.get(0);
