@@ -45,7 +45,7 @@ public class RangeFinder extends AbstractService {
 		boolean topsAreOk = nbTopsInsideBand >= NB_BOTTOMS_REQUIRED;
 		double bottomBandLimit = min + BOTTOM_BAND_RATIO * rangeHeight;
 		List<Candle> bottomsInsideBand = sortedBottomsList.stream()
-				.filter(c -> c.getMin() <= bottomBandLimit)
+				.filter(c -> c.getLow() <= bottomBandLimit)
 				.toList();
 		bottomsInsideBand = filterExtremums(bottomsInsideBand, 5);
 		boolean isCHOCH = isCHOCH(minList, currentCandle);

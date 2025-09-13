@@ -184,12 +184,13 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 					continue;
 				}
 				rangeStartList.add(newRange.getIndexStart());
-				Trade trade = processTrade(candles, newRange);
-				if (trade == null) {
-					continue;
-				}
-				
-//				increaseCount("_RANGE_OK");
+								increaseCount("_RANGE_OK");
+								saveHotSpotRange(newRange, market);
+//				Trade trade = processTrade(candles, newRange);
+				//				if (trade == null) {
+				//					continue;
+				//				}
+
 				//				System.out.println("New Range ok with end date" + newRange.getDateEnd());
 				//								checkHotSpotFound(newRange, candles, hotSpotsToFind);
 
@@ -223,23 +224,6 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				//						.dateStart(newRange.getDateStart())
 				//						.price(newRange.getSprings().get(0).getP3()).build()
 				//						);
-				List<LocalDateTime> keyDates = new ArrayList<>();
-				//				keyDates.addAll(List.of(newRange.getDateStart(), newRange.getDateEnd()));
-				//				keyDates.addAll(newRange.getMaxList().stream().map(Candle::getDate).toList());
-				//				keyDates.addAll(newRange.getMinList().stream().map(Candle::getDate).toList());
-				//				saveHotSpot(newRange.getDateStart(),
-				//						newRange.getDateEnd(), 
-				//						keyDates,
-				//						market,
-				//						timeRange,
-				//						HOTSPOT_CODE,
-				//						HotSpotData.builder()
-				//						//										.lines(lines)
-				//						.points(List.of(
-				//								DatePoint.builder().date(newRange.getDateStart()).color("#FFFFFF").build(),
-				//								DatePoint.builder().date(newRange.getDateEnd()).color("#FFFFFF").build()
-				//								))
-				//						.build());
 
 
 				//				List<HorizontalLine> lines = List.of(
@@ -265,6 +249,28 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		}
 		checkHotSpotNotFound(candles, hotSpotsToFind);
 		return hotSpotsToFind;
+	}
+
+
+	private void saveHotSpotRange(Range range, String market) {
+		List<LocalDateTime> keyDates = new ArrayList<>();
+		keyDates.addAll(List.of(range.getDateStart(), range.getDateEnd()));
+		keyDates.addAll(range.getMaxList().stream().map(Candle::getDate).toList());
+		keyDates.addAll(range.getMinList().stream().map(Candle::getDate).toList());
+		saveHotSpot(range.getDateStart(),
+				range.getDateEnd(), 
+				keyDates,
+				market,
+				timeRange,
+				HOTSPOT_CODE,
+				HotSpotData.builder()
+				//										.lines(lines)
+				.points(List.of(
+						DatePoint.builder().date(range.getDateStart()).color("#FFFFFF").build(),
+						DatePoint.builder().date(range.getDateEnd()).color("#FFFFFF").build()
+						))
+				.build());
+
 	}
 
 
@@ -437,7 +443,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 							.nbBottoms(calculateNbBottoms(candlesHTF, startCandleHTF, candleBreak, minList, min, max))
 							.height(height)
 							.build();
-//					addFeature(candlesS30, candleBreak, cTradeStart, trade, range);
+					//					addFeature(candlesS30, candleBreak, cTradeStart, trade, range);
 					return trade;
 				}
 				if (c.getHigh() > max) {
