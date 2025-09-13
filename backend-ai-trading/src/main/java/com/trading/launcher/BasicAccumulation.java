@@ -28,7 +28,7 @@ import com.trading.indicator.MedianCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
-import com.trading.service.FeatureWriterSpring;
+import com.trading.service.old.FeatureWriterSpring;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;

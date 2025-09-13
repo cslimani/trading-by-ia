@@ -25,11 +25,11 @@ public class HotSpotRecorder extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("US100", EnumTimeRange.H1);
-		dateEnd = LocalDateTime.of(2025, 6, 30, 0, 0);
-		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndDesc(HOTSPOT_CODE)
-				.stream()
-				.map(hs -> hs.getDateStart())
-				.toList());
+		dateEnd = LocalDateTime.of(2025, 1, 3, 0, 0);
+//		dates.addAll(hotSpotRepository.findByCodeOrderByDateEndDesc(HOTSPOT_CODE)
+//				.stream()
+//				.map(hs -> hs.getDateStart())
+//				.toList());
 	}
 
 	@Override

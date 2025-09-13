@@ -1,4 +1,4 @@
-package com.trading.service;
+package com.trading.service.old;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -22,6 +22,7 @@ import com.trading.indicator.MacdCalculator;
 import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SwingExtremaFinder;
+import com.trading.service.AbstractService;
 
 @Component
 @Profile("impulse-htf")

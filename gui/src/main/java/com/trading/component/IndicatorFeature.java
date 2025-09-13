@@ -27,7 +27,7 @@ public class IndicatorFeature extends AbstractFeature{
 		if (c != null) {
 			Double atr = atrCalculator.getATR(c.getIndex());
 			if (atr != null) {
-				sb.append("    ATR = " + atr.intValue());
+				sb.append("    ATR = " + String.format("%.1f",  atr));
 			}
 			Double slopeLR = slopeLRCalculator.getSlopeLR(c.getIndex());
 			if (slopeLR != null) {

@@ -173,7 +173,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 
 	public void loadElement(){
 		hotspot = hotSpots.get(index);
-
+		topPanel.setDateAndPrice(hotspot.getDateEnd(), 0d);
 		log.info("Loading HotSpot with id {}", hotspot.getId());
 		dateStart = hotspot.getDateStart();
 		dateEnd =  hotspot.getDateEnd();
@@ -217,7 +217,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 				"RANGE_LABELED", hotspot.getMarket(),
 				hotspot.getTimeRange(), hotspot.getDateStart());
 		if (labeledHotSpot != null) {
-			topPanel.setTradeInfo("ALREADY FLAGED", Color.GREEN);
+//			topPanel.setTradeInfo("ALREADY FLAGED", Color.GREEN);
 			saveButton.setEnabled(false);
 		} else {
 			topPanel.setTradeInfo("", Color.WHITE);

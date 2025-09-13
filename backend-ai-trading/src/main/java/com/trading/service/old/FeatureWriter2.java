@@ -1,4 +1,4 @@
-package com.trading.service;
+package com.trading.service.old;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -14,6 +14,8 @@ import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.enums.ExtremumType;
 import com.trading.indicator.extremum.Extremum;
+import com.trading.service.AbstractService;
+import com.trading.service.Utils;
 
 @Component
 public class FeatureWriter2 extends AbstractService{

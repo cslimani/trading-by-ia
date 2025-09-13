@@ -39,7 +39,7 @@ public final class AtrCalculator {
         if (candles.size() < period) {
             // Pas assez de barres pour initialiser l'ATR : on met NaN pour ATR et ATR%.
             for (Candle c : candles) {
-                c.atr = Double.NaN;
+                c.atr = c.tr;
                 c.atr_ratio = Double.NaN;
             }
             return;
@@ -49,7 +49,7 @@ public final class AtrCalculator {
         for (int i = 0; i < period; i++) {
             sumTR += candles.get(i).tr;
             // ATR non défini pour les barres < period-1
-            candles.get(i).atr = Double.NaN;
+            candles.get(i).atr = candles.get(i).tr;
             candles.get(i).atr_ratio = Double.NaN;
         }
         double atr = sumTR / period;

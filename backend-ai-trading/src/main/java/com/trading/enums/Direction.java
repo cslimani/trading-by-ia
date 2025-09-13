@@ -1,4 +1,4 @@
-package com.trading.service;
+package com.trading.enums;
 
 public enum Direction {
 	BULLISH, BEARISH

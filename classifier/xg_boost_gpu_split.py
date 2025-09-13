@@ -115,7 +115,10 @@ def main():
     df_test  = load_df(TEST_CSV_PATH)
 
     # features définies depuis le TRAIN uniquement
+    # FEATURES= ['f_timestamp']
     FEATURES = [c for c in df_trval.columns if c.startswith("f_")]
+    # FEATURES = [c for c in df_trval.columns if c.startswith("o_")]
+    # FEATURES += [c for c in df_trval.columns if c.startswith("c_")]
     # FEATURES = ['f_timestamp']
     check_columns(df_trval, FEATURES)
 
@@ -159,7 +162,7 @@ def main():
         Xcore_pre = Xcore_pre.toarray()
     Xcore_pre = Xcore_pre.astype(np.float32, copy=False)
 
-    dcore = xgb.DMatrix(Xcore_pre, label=y_core)
+    dcore = xgb.DMatrix(Xcore_pre, label=y_core, missing=np.nan)
 
     base = gpu_params(monotonic=None)
 
@@ -201,7 +204,7 @@ def main():
     if hasattr(Xcal_pre, "toarray"):
         Xcal_pre = Xcal_pre.toarray()
     Xcal_pre = Xcal_pre.astype(np.float32, copy=False)
-    dcal = xgb.DMatrix(Xcal_pre)
+    dcal = xgb.DMatrix(Xcal_pre, missing=np.nan)
     proba_calfit = booster.predict(dcal)
     iso = IsotonicRegression(out_of_bounds="clip").fit(proba_calfit, y_cal)
 
@@ -210,9 +213,14 @@ def main():
     if hasattr(Xte_pre, "toarray"):
         Xte_pre = Xte_pre.toarray()
     Xte_pre = Xte_pre.astype(np.float32, copy=False)
-    dtest = xgb.DMatrix(Xte_pre)
+    dtest = xgb.DMatrix(Xte_pre, missing=np.nan)
     proba = booster.predict(dtest)
     proba_cal = iso.transform(proba)
+
+    # R = df_test['f_rr'].astype(float).values
+    # R = np.clip(R, 1e-6, None)
+    # thr = 1.0 / (R + 1.0)
+    # y_pred = (proba_cal >= thr).astype(int)
     y_pred = (proba_cal >= 0.5).astype(int)
 
     print("\n=== OOS (TEST) ===")
@@ -240,7 +248,7 @@ def main():
     print(f"\nModèle sauvegardé -> {MODEL_OUT}")
     print(f"Booster JSON -> {BOOSTER_JSON_OUT}")
 
-    out = df_test[[TIME_COL]].copy()
+    out = df_test[[TIME_COL ,'id']].copy()
     out["y_true"] = y_test
     out["proba_tp"] = proba_cal
     out["pred"] = y_pred

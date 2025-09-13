@@ -23,6 +23,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.trading.dto.HotSpotData;
 import com.trading.dto.Range;
+import com.trading.dto.Trade;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
@@ -33,7 +34,7 @@ import com.trading.repository.HotSpotRepository;
 
 public class AbstractService {
 
-	private static final Integer NB_MAX_PRICE = 50;
+	private static final Integer NB_MAX_PRICE = 20;
 	public String sourcePath = "/data/trading_ml/classifier_";
 	public String targetFolder = "/data/trading_ml/backup";
 	public List<Map<String, Object>> listMapFeatures = new CopyOnWriteArrayList<Map<String,Object>>();
@@ -181,7 +182,7 @@ public class AbstractService {
 	}
 
 	public Double normalize(double price, Range range) {
-		return (price - range.getMin()) / range.getMaxHeight();
+		return (price - range.getMin()) / range.getHeight();
 	}
 
 	public boolean isInvalid(List<Double> list) {
@@ -200,6 +201,29 @@ public class AbstractService {
 			mapFeature.put("l_" + index, normalize(c.getLow(), range));
 			mapFeature.put("v_" + index, normalize(c.getVolume(), range));
 		}
+	}
+
+	public void addPriceFeature(Map<String, Object> mapFeature, List<Candle> candles, Integer startIndex, Integer endIndex, Trade trade) {
+		int index = 0;
+		for(int i = startIndex ; i <= Math.min(endIndex, startIndex + NB_MAX_PRICE - 1); i++) {
+			Candle c = candles.get(i);
+			mapFeature.put("o_" + index, normalize(c.getOpen(), trade));
+//			mapFeature.put("h_" + index, normalize(c.getHigh(), range));
+			mapFeature.put("c_" + index, normalize(c.getClose(), trade));
+//			mapFeature.put("l_" + index, normalize(c.getLow(), range));
+//			mapFeature.put("v_" + index, normalize(c.getVolume(), range));
+			index++;
+		}
+		while (index < NB_MAX_PRICE) {
+			mapFeature.put("o_" + index, Double.NaN);
+			mapFeature.put("c_" + index, Double.NaN);
+			index++;
+		}
+//		System.out.println(mapFeature.size());
+	}
+	
+	public Double normalize(double price, Trade trade) {
+		return (price - trade.getRangeMin()) / trade.getHeight();
 	}
 
 	public boolean isTradeToTPBuy(Candle cStart, List<Candle> candles, double tp, double sl) {
@@ -251,6 +275,19 @@ public class AbstractService {
 		});
 	}
 
+	public Candle getMinOfBottoms(List<Candle> minList) {
+		return minList.stream()
+				.filter(c -> !c.isRescued())
+				.sorted(Comparator.comparingDouble(Candle::getMin)).findFirst().get();
+	}
+
+
+	public Candle getMaxOfTops(List<Candle> maxList) {
+		return maxList.stream()
+				.filter(c -> !c.isRescued())
+				.sorted(Comparator.comparingDouble(Candle::getMax).reversed()).findFirst().get();
+	}
+	
 	public double getRangeSwingHighRatio(Range range) {
 		Double priceSwingHigh = range.getSwingHighBefore().getHigh();
 		Double priceRangeTop = range.getMax();
