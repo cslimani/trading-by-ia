@@ -37,40 +37,55 @@ public class RangeFinder extends AbstractService {
 		double min = sortedBottomsList.get(0).getMin();
 		double rangeHeight = max - min;
 		if (rangeHeight < maxCandle.getAtr() * MIN_RANGE_ATR_RATIO) {
+			DebugHolder.eliminated();
 			return false;
 		}
-		
+
 		// tops validation
 		double topBandLimit = max - rangeHeight*TOP_BAND_RATIO;
 		long nbTopsInsideBand = maxList.stream()
 				.filter(c -> c.getMax() > topBandLimit)
 				.count(); 
 		boolean topsAreOk = nbTopsInsideBand >= NB_BOTTOMS_REQUIRED;
-		
+
 		// At least one very top between bottoms
-		if (sortedBottomsList.size() >= 2 && sortedTopsList.size() >=2) {
-			boolean isOK1 = isBetweenIndexes(sortedTopsList.get(0).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
-			boolean isOK2 = isBetweenIndexes(sortedTopsList.get(1).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
-			if (!isOK1 && !isOK2) {
-				return false;
-			}
+		double middle = min + rangeHeight/2;
+		boolean isTopsRepartitionOK = sortedTopsList.stream()
+		.filter(top -> top.getMax() > middle)
+		.anyMatch(c -> isBetweenIndexes(c.getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex()));
+		if (!isTopsRepartitionOK) {
+			DebugHolder.eliminated();
+			return false;
 		}
-		
+//		if (sortedBottomsList.size() >= 2 && sortedTopsList.size() >=2) {
+//			boolean isOK1 = ;
+//			boolean isOK2 = isBetweenIndexes(sortedTopsList.get(1).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
+//			if (!isOK1 && !isOK2) {
+//				DebugHolder.eliminated();
+//				return false;
+//			}
+//		}
+
 		// Bottoms validation
 		double bottomBandLimit = min + BOTTOM_BAND_RATIO * rangeHeight;
 		List<Candle> bottomsInsideBand = sortedBottomsList.stream()
 				.filter(c -> c.getLow() <= bottomBandLimit)
 				.toList();
 		bottomsInsideBand = filterExtremums(bottomsInsideBand, 5);
-		
+
 		//CHOCH validation
 		boolean isCHOCH = isCHOCH(maxList, minList, currentCandle);
 		if (isCHOCH) {
+			DebugHolder.eliminated();
 			return false;
 		}
-		
+
 		boolean bottomsAreOk = bottomsInsideBand.size() >= NB_BOTTOMS_REQUIRED;
-		return  bottomsAreOk && topsAreOk;
+		boolean valid = bottomsAreOk && topsAreOk;
+		if (!valid) {
+			DebugHolder.eliminated();
+		}
+		return valid;
 	}
 
 	private boolean isBetweenIndexes(Integer index, Integer index1, Integer index2) {
@@ -131,12 +146,12 @@ public class RangeFinder extends AbstractService {
 		List<Candle> minList = new ArrayList<Candle>();
 		List<Candle> maxList = new ArrayList<Candle>();
 		Candle tmp = candles.get(actualIndex);
-		
-//		if (tmp.isDate(27, 5) && tmp.isTime(9, 5, 0)) {
-//			debug = true;
-//		} else {
-//			debug = false;
-//		}
+
+		//		if (tmp.isDate(27, 5) && tmp.isTime(9, 5, 0)) {
+		//			debug = true;
+		//		} else {
+		//			debug = false;
+		//		}
 		for (Extremum e :extremumsReversed) {
 			DebugHolder.message("Looking at Extremum " + e.getDate());
 			DebugHolder.info();
