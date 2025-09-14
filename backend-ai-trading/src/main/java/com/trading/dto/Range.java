@@ -28,6 +28,8 @@ public class Range {
 	public Double height;
 	public Double max;
 	public Double min;
+	public Double minWithLow;
+	public Double maxWithHigh;
 	public Candle candleMin;
 	public Candle candleMax;
 	List<Candle> minList;

@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.UIManager;
@@ -50,8 +52,9 @@ public abstract class AbstractRunner implements Runner {
 	protected List<Candle> points = new ArrayList<Candle>();
 	protected String currentMarket;
 	protected List<String> labelList = new ArrayList<String>();
-	protected List<JButton> buttonList = new ArrayList<JButton>();
-
+	protected Map<JButton, String> buttonMap = new HashMap<>();
+	
+	protected static final String COLOR_RED = "#C70000";
 	@Autowired
 	public HotSpotRepository hotSpotRepository;
 	@Autowired
@@ -133,27 +136,56 @@ public abstract class AbstractRunner implements Runner {
 		return button;
 	}
 
+	public JButton addLabel(String name, String color) {
+		return addLabel(name, color, null);
+	}
+	
 	public JButton addLabel(String name) {
+		return addLabel(name, null, null);
+	}
+
+	public JButton addLabel(String name, String colorString, Runnable runnable) {
 		JButton button = new JButton(name);
+		setColor(button, colorString);
 		button.addActionListener(_ -> {
 			if (labelList.contains(name)) {
-				button.setBackground(UIManager.getColor("Button.background"));
+				setColor(button, colorString);
 				labelList.remove(name);
 			} else {
-				button.setBackground(Color.GREEN);
+				button.setBackground(Color.decode("#8AD2FF"));
 				labelList.add(name);
+				if (runnable != null) {
+					runnable.run();
+					mainPanel.repaint();
+					mainPanel.reload();
+				}
 			}
 		});
 		secondTopPanel.addLabel(button);
 		addSeparator(5);
-		buttonList.add(button);
+		buttonMap.put(button, colorString);
 		return button;
+	}
+
+	private void setColor(JButton button, String colorString) {
+		button.setBackground(getColor(colorString));
+		if (colorString != null && colorString.equals(COLOR_RED)) {
+			button.setForeground(Color.WHITE);
+		}
+	}
+
+	private Color getColor(String colorString) {
+		if (colorString == null) {
+			return  UIManager.getColor("Button.background");
+		} else {
+			return Color.decode(colorString);
+		}
 	}
 
 	public void clearLabels() {
 		labelList.clear();
-		for (JButton button : buttonList) {
-			button.setBackground(UIManager.getColor("Button.background"));
+		for (JButton button : buttonMap.keySet()) {
+			setColor(button, buttonMap.get(button));
 		}
 	}
 
@@ -331,10 +363,10 @@ public abstract class AbstractRunner implements Runner {
 
 	@Override
 	public void keyPressed(int keyCode) {
-//		System.out.println(keyCode);
+		//		System.out.println(keyCode);
 		if (keyCode == 10) {
 			//PAD return 
-			mainPanel.zoom(true);
+			stretchZone(30);
 		}
 		if (keyCode == 99) {
 			//3

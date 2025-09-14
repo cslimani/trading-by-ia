@@ -38,7 +38,7 @@ public class AbstractService {
 	public String sourcePath = "/data/trading_ml/classifier_";
 	public String targetFolder = "/data/trading_ml/backup";
 	public List<Map<String, Object>> listMapFeatures = new CopyOnWriteArrayList<Map<String,Object>>();
-	public boolean debug;
+//	public boolean debug;
 	
 	@Autowired
 	public CandleRepository candleRepository;
@@ -62,11 +62,6 @@ public class AbstractService {
 		return mapCountFloat.get(key).doubleValue();
 	}
 
-	public void debug(String message) {
-		if (debug) {
-			System.out.println(message);
-		}
-	}
 	
 	public void increaseCount(String key) {
 		if (mapCountInteger.containsKey(key)) {

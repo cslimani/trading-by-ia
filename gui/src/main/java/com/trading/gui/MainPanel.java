@@ -43,7 +43,7 @@ public class MainPanel extends AbstractPanel implements Scrollable, ActionListen
 MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 
 	public static final int WINDOW_WIDTH = 3440;
-	public static final int WINDOW_HEIGHT = 900;
+	public static final int WINDOW_HEIGHT = 1200;
 	public static final int EXTRA_GHOST_candleS = 10;
 	static final String LOCK = "LOCK";
 

@@ -62,45 +62,69 @@ public class HotSpotVisualisation extends AbstractRunner {
 		//		addLabel("END GO DOWN");
 
 
+		addLabelAndNext("SPRING WIN", "#98FF8A");
+		addLabelAndNext("SPRING BE", "#FFCC87");
+		addLabelAndNext("SPRING FAIL", COLOR_RED);
+		
+		addSeparator(50);
+		
+		addLabelAndNext("DOUBLE SPRING OK", "#98FF8A");
+		addLabelAndNext("DOUBLE SPRING FAIL", COLOR_RED);
+		
+		addSeparator(50);
+		
+		addLabelAndNext("INTERNAL SPRING OK", "#98FF8A");
+		addLabelAndNext("INTERNAL SPRING FAIL", COLOR_RED);
+		
+		addSeparator(50);
+		addLabel("TOUCH AND GO UP");
+		
+		addSeparator(50);
+		addLabelAndNext("GO UP", "#98FF8A");
+		addLabelAndNext("INVALID RANGE", "#FFCC87");
+		addLabelAndNext("GO DOWN", COLOR_RED);
+//		addLabel("TOUCH");
+//		addLabel("BREAK < 1 ATR");
+//		addLabel("BREAK < 20%");
+//		addLabel("MEGA BREAK");
+//
+//		addSeparator(40);
+//
+//		addLabel("ONE BAR RETURN");
+//		addLabel("QUICK RETURN");
+//		addLabel("SLOW RETURN");
+//
+//		addSeparator(40);
+//
+//		addLabel("PULLBACK < RANGE");
+//		addLabel("PULLBACK 5%");
+//		addLabel("PULLBACK 10%");
+//		addLabel("PULLBACK 15%");
+//		addLabel("PULLBACK MIDDLE");
+//
+//		addSeparator(40);
+//
+//		addLabel("RANGE UNDER RANGE");
+//		addLabel("RANGE ABOVE RANGE");
+//
+//		addSeparator(40);
+//
+//		addLabel("CHOCH");
+//		addLabel("DOUBLE SPRING");
+//
+//		addSeparator(40);
+//
+//		addLabel("GO TO SPACE");
+//		addLabel("GO BASEMENT");
+	}
 
-		addLabel("TOUCH");
-		addLabel("BREAK < 1 ATR");
-		addLabel("BREAK < 20%");
-		addLabel("MEGA BREAK");
-
-		addSeparator(40);
-
-		addLabel("ONE BAR RETURN");
-		addLabel("QUICK RETURN");
-		addLabel("SLOW RETURN");
-
-		addSeparator(40);
-
-		addLabel("PULLBACK < RANGE");
-		addLabel("PULLBACK 5%");
-		addLabel("PULLBACK 10%");
-		addLabel("PULLBACK 15%");
-		addLabel("PULLBACK MIDDLE");
-
-		addSeparator(40);
-
-		addLabel("RANGE UNDER RANGE");
-		addLabel("RANGE ABOVE RANGE");
-
-		addSeparator(40);
-
-		addLabel("CHOCH");
-		addLabel("DOUBLE SPRING");
-
-		addSeparator(40);
-
-		addLabel("GO TO SPACE");
-		addLabel("GO BASEMENT");
+	private void addLabelAndNext(String label, String color) {
+		addLabel(label, color, () -> next());
 	}
 
 	private void saveHotSpot() {
 		HotSpot newHotspot = HotSpot.builder()
-				.code("TRADE_LABELED")
+				.code("RANGE_LABEL")
 				.market(hotspot.getMarket())
 				.creationDate(LocalDateTime.now())
 				.timeRange(data.getTimeRange())

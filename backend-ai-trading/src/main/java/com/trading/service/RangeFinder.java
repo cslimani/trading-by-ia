@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
@@ -38,36 +39,54 @@ public class RangeFinder extends AbstractService {
 		if (rangeHeight < maxCandle.getAtr() * MIN_RANGE_ATR_RATIO) {
 			return false;
 		}
+		
+		// tops validation
 		double topBandLimit = max - rangeHeight*TOP_BAND_RATIO;
 		long nbTopsInsideBand = maxList.stream()
 				.filter(c -> c.getMax() > topBandLimit)
 				.count(); 
 		boolean topsAreOk = nbTopsInsideBand >= NB_BOTTOMS_REQUIRED;
+		
+		// At least one very top between bottoms
+		if (sortedBottomsList.size() >= 2 && sortedTopsList.size() >=2) {
+			boolean isOK1 = isBetweenIndexes(sortedTopsList.get(0).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
+			boolean isOK2 = isBetweenIndexes(sortedTopsList.get(1).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
+			if (!isOK1 && !isOK2) {
+				return false;
+			}
+		}
+		
+		// Bottoms validation
 		double bottomBandLimit = min + BOTTOM_BAND_RATIO * rangeHeight;
 		List<Candle> bottomsInsideBand = sortedBottomsList.stream()
 				.filter(c -> c.getLow() <= bottomBandLimit)
 				.toList();
 		bottomsInsideBand = filterExtremums(bottomsInsideBand, 5);
-		boolean isCHOCH = isCHOCH(minList, currentCandle);
-		boolean bottomsAreOk = bottomsInsideBand.size() >= NB_BOTTOMS_REQUIRED;
+		
+		//CHOCH validation
+		boolean isCHOCH = isCHOCH(maxList, minList, currentCandle);
 		if (isCHOCH) {
 			return false;
 		}
+		
+		boolean bottomsAreOk = bottomsInsideBand.size() >= NB_BOTTOMS_REQUIRED;
 		return  bottomsAreOk && topsAreOk;
+	}
+
+	private boolean isBetweenIndexes(Integer index, Integer index1, Integer index2) {
+		return (index > index1 && index < index2) || (index > index2 && index <index1);
 	}
 
 	public static List<Candle> filterExtremums(List<Candle> points, int minDistance) {
 		List<Candle> result = new ArrayList<>();
 		if (points.isEmpty()) return result;
 
-		// On prend le premier point
 		Candle last = points.get(0);
 		result.add(last);
 
-		// On parcourt la liste
 		for (int i = 1; i < points.size(); i++) {
 			Candle current = points.get(i);
-			if (current.getIndex() - last.getIndex() >= minDistance) {
+			if (Math.abs(current.getIndex() - last.getIndex()) >= minDistance) {
 				result.add(current);
 				last = current;
 			}
@@ -75,20 +94,29 @@ public class RangeFinder extends AbstractService {
 		return result;
 	}
 
-	private boolean isCHOCH(List<Candle> minList, Candle currentCandle) {
+	private boolean isCHOCH(List<Candle> maxList, List<Candle> minList, Candle currentCandle) {
 		minList.sort(Comparator.comparing(Candle::getIndex));
+		maxList.sort(Comparator.comparing(Candle::getIndex));
 		if (minList.size() < 2) {
 			return false;
 		}
 		for (int i = 1; i < minList.size(); i++) {
-			if (minList.get(i).getMin() < minList.get(i-1).getMin() || currentCandle.getLow() < minList.get(i).getMin()) {
+			Candle min = minList.get(i);
+			Candle minMinus1 = minList.get(i-1);
+			Optional<Candle> maxBetween = maxList.stream().filter(m -> m.getIndex() > minMinus1.getIndex() && m.getIndex() < min.getIndex()).findFirst();
+			if (maxBetween.isPresent()) {
+				double height = maxBetween.get().getMax() - minMinus1.getMin();
+				if (min.getMin() < minMinus1.getMin() + height*0.4 || currentCandle.getLow() < min.getMin()) {
+					return false;
+				}
+			} else if (min.getMin() < minMinus1.getMin() || currentCandle.getLow() < min.getMin()) {
 				return false;
 			}
 		}
 		return true;
 	}
-	
-	public Range getLargestRangeFast(List<Candle> candles, int actualIndex, List<Extremum> extremumsSwing) {
+
+	public Range getLargestRangeFast(List<Candle> candles, int actualIndex, List<Extremum> extremumsSwing, Double atr) {
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 		if (extremumsSwing.isEmpty()) {
@@ -103,29 +131,24 @@ public class RangeFinder extends AbstractService {
 		List<Candle> minList = new ArrayList<Candle>();
 		List<Candle> maxList = new ArrayList<Candle>();
 		Candle tmp = candles.get(actualIndex);
-		//		if (tmp.isDate(14, 7) && tmp.isTime(7, 40, 0)) {
-		//			debug = true;
-		//		}
+		
+//		if (tmp.isDate(27, 5) && tmp.isTime(9, 5, 0)) {
+//			debug = true;
+//		} else {
+//			debug = false;
+//		}
 		for (Extremum e :extremumsReversed) {
-			debug("Looking at Extremum " + e.getDate());
-			if (debug) {
-				getClass();
-			}
+			DebugHolder.message("Looking at Extremum " + e.getDate());
+			DebugHolder.info();
 			Candle c = e.getCandle();
 			if (isRangeValid(minList, maxList, candles.get(actualIndex))) {
-				debug(c.getDate() + " return valid range");
+				DebugHolder.info();
 				return buildRange(candles, actualIndex, min, max, minList, maxList, extremumsReversed, c.getDate());
 			}
 
-			Double averageATR = null;
-			if (e.getIndex() == lastExtremum.getIndex()) {
-				averageATR = e.getCandle().getAtr();
-			} else {
-				averageATR = getAverageATR(candles, e.getIndex(), lastExtremum.getIndex());
-			}
 			//			double medianATR = getMedianATR(candles, e.getIndex(), actualIndex);
 
-			double maxRangeHeight = averageATR*MAX_RANGE_ATR_RATIO;
+			double maxRangeHeight = atr*MAX_RANGE_ATR_RATIO;
 
 			if (e.isMax()) {
 				//				if (c.isDate(25, 8) && c.isTime(13, 25, 0)) {
@@ -144,11 +167,12 @@ public class RangeFinder extends AbstractService {
 							}
 						}
 						if (!rescueTop) {
-							debug(c.getDate() + " new max out of bounds");
+							DebugHolder.message(c.getDate() + " new max out of bounds");
+							DebugHolder.eliminated();
 							return null;
 						}
 					} else {
-						debug(c.getDate() + " is valid max");
+						DebugHolder.message(c.getDate() + " is valid max");
 					}
 				}
 				maxList.add(e.getCandle());
@@ -170,10 +194,11 @@ public class RangeFinder extends AbstractService {
 							}
 						}
 						if (!rescueBottom) {
+							DebugHolder.eliminated();
 							return null;
 						}
 					} else {
-						debug(c.getDate() + " is valid min");
+						DebugHolder.message(c.getDate() + " is valid min");
 					}
 				}
 				minList.add(e.getCandle());
@@ -182,18 +207,18 @@ public class RangeFinder extends AbstractService {
 				}
 			}
 		}
-		debug(" return no range");
+		DebugHolder.eliminated();
 		return null;
 	}
 
-	private Candle getLastExtremum(List<Candle> minList, List<Candle> maxList) {
+	public Candle getLastExtremum(List<Candle> minList, List<Candle> maxList) {
 		List<Candle> extremumList = new ArrayList<>(minList);
 		extremumList.addAll(maxList);
 		return extremumList.stream()
 				.sorted(Comparator.comparingInt(Candle::getIndex).reversed()).findFirst().get();
 	}
 
-	private double getAverageATR(List<Candle> candles, Integer startIndex, int endIndex) {
+	public double getAverageATR(List<Candle> candles, Integer startIndex, int endIndex) {
 		double average = 0;
 		for (int i = startIndex; i <= endIndex; i++) {
 			average += candles.get(i).getAtr();
@@ -201,14 +226,14 @@ public class RangeFinder extends AbstractService {
 		return average/(endIndex - startIndex + 1);
 	}
 
-	private Candle getFirstExtremum(List<Candle> minList, List<Candle> maxList) {
+	public Candle getFirstExtremum(List<Candle> minList, List<Candle> maxList) {
 		List<Candle> extremumList = new ArrayList<>(minList);
 		extremumList.addAll(maxList);
 		return extremumList.stream()
 				.sorted(Comparator.comparingInt(Candle::getIndex)).findFirst().get();
 	}
-	
-	private Range buildRange(List<Candle> candles, int actualIndex, double min, double max,
+
+	public Range buildRange(List<Candle> candles, int actualIndex, double min, double max,
 			List<Candle> minList, List<Candle> maxList, List<Extremum> extremumsReversed, LocalDateTime dateDecisionRangeValid) {
 		Candle firstCandle = getFirstExtremum(minList, maxList);
 
@@ -252,11 +277,29 @@ public class RangeFinder extends AbstractService {
 				.indexRangeValidated(actualIndex)
 				.breakFromTop(breakFromTop)
 				.min(min)
+				.minWithLow(getMinWithLow(candles, startIndex, endIndex))
+				.maxWithHigh(getMaxWithHigh(candles, startIndex, endIndex))
 				.width(endIndex - startIndex)
 				.dateDecisionRangeValid(dateDecisionRangeValid)
 				.minList(minList)
 				.maxList(maxList)
 				.max(max)
 				.build();
+	}
+
+	private Double getMaxWithHigh(List<Candle> candles, int startIndex, int endIndex) {
+		Double max = Double.MIN_VALUE;
+		for (int i = startIndex; i < endIndex; i++) {
+			max = Math.max(candles.get(i).getHigh(), max);
+		}
+		return max;
+	}
+
+	Double getMinWithLow(List<Candle> candles, int startIndex, int endIndex){
+		Double min = Double.MAX_VALUE;
+		for (int i = startIndex; i < endIndex; i++) {
+			min = Math.min(candles.get(i).getLow(), min);
+		}
+		return min;
 	}
 }

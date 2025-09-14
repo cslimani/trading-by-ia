@@ -41,5 +41,8 @@ public class SecondTopPanel  extends AbstractPanel{
 		toolBar.addSeparator(new Dimension(length, 1));
 	}
 
+	public void clear() {
+		toolBar.removeAll();		
+	}
 
 }

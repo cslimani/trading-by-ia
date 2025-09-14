@@ -3,10 +3,13 @@ package com.trading.launcher;
 import static java.util.Map.entry;
 
 import java.io.IOException;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -39,6 +43,7 @@ import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.HybridMinMaxAnalyzer;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
+import com.trading.service.DebugHolder;
 import com.trading.service.RangeFinder;
 import com.trading.service.old.FeatureWriterSpring;
 
@@ -65,7 +70,8 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	EnumTimeRange timeRange = EnumTimeRange.M5;
 	Random random = new Random();
 	ExecutorService executor = Executors.newFixedThreadPool(1);
-
+	Map<String, Double> mapATR = new HashMap<String, Double>();
+	
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
@@ -150,6 +156,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		Range range = null;
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
+			DebugHolder.activate(c.getDate());
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate) ) {
 				continue;
 			}
@@ -161,7 +168,8 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				//					continue;
 				//				}
 
-				Range newRange = rangeFinder.getLargestRangeFast(candles, i, extremumsSwing);
+				Double atr = getDayBeforeAverageATR(candles, c);
+				Range newRange = rangeFinder.getLargestRangeFast(candles, i, extremumsSwing, atr);
 				if (newRange == null) {
 					continue;
 				}
@@ -184,9 +192,9 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 					continue;
 				}
 				rangeStartList.add(newRange.getIndexStart());
-								increaseCount("_RANGE_OK");
-								saveHotSpotRange(newRange, market);
-//				Trade trade = processTrade(candles, newRange);
+				increaseCount("_RANGE_OK");
+				saveHotSpotRange(newRange, market);
+				//				Trade trade = processTrade(candles, newRange);
 				//				if (trade == null) {
 				//					continue;
 				//				}
@@ -252,7 +260,33 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 	}
 
 
+	private Double getDayBeforeAverageATR(List<Candle> candles, Candle c) {
+		LocalDateTime firstDayOfWeek = c.getDate()
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                .withHour(0).withMinute(0).withSecond(0).withNano(0);
+		String key = firstDayOfWeek + c.getMarket();
+		if (mapATR.containsKey(key)) {
+			return mapATR.get(key);
+		}
+		List<Candle> lastWeekCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
+				c.getMarket(),
+				c.getTimeRange(),
+				firstDayOfWeek.minusWeeks(1),
+				firstDayOfWeek);
+		if (lastWeekCandles.isEmpty()) {
+			mapATR.put(key, c.atr);
+			return c.atr;
+		}
+		double atr = rangeFinder.getAverageATR(candles, 0, lastWeekCandles.size()-1);
+		mapATR.put(key, atr);
+		return atr;
+	}
+
+
 	private void saveHotSpotRange(Range range, String market) {
+		List<HorizontalLine> lines = List.of(
+				buildLine(range.getDateStart(), range.getMinWithLow(), "#FFFFFF")
+				);
 		List<LocalDateTime> keyDates = new ArrayList<>();
 		keyDates.addAll(List.of(range.getDateStart(), range.getDateEnd()));
 		keyDates.addAll(range.getMaxList().stream().map(Candle::getDate).toList());
@@ -264,7 +298,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 				timeRange,
 				HOTSPOT_CODE,
 				HotSpotData.builder()
-				//										.lines(lines)
+				.lines(lines)
 				.points(List.of(
 						DatePoint.builder().date(range.getDateStart()).color("#FFFFFF").build(),
 						DatePoint.builder().date(range.getDateEnd()).color("#FFFFFF").build()
@@ -329,33 +363,84 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 
 
 	private boolean isConditionOnRangeValid(Range range, List<Extremum> extremumsSwing, List<Candle> candles) {
-		if (debug) {
-			getClass();
-		}
+		DebugHolder.info();
 		double median = MedianCalculator.median(candles.subList(range.indexStart, range.indexEnd));
 		Optional<Extremum> maxbeforeOpt = getFirstExtremumBefore(candles.get(range.getIndexStart()), extremumsSwing, ExtremumType.MAX, false);
 		if (maxbeforeOpt.isEmpty()) {
+			DebugHolder.eliminated();
 			return false;
 		}
 		for (int i = range.getIndexStart() - NB_CANDLES_BEFORE; i < maxbeforeOpt.get().getIndex() ; i++) {
 			if (i < 0 ) {
+				DebugHolder.eliminated();
 				return false;
 			}
 			if (candles.get(i).getLow() < median) {
 				mapReason.put(range.getIndexEnd(), "CANDLES BEFORE");
+				DebugHolder.eliminated();
 				return false;
 			}
 		}
+		
 		int width = range.getIndexEnd() - range.getIndexStart();
 		if (width < MIN_RANGE_WIDTH) {
+			DebugHolder.eliminated();
 			mapReason.put(range.getIndexEnd(), "WIDTH < 30");
 			return false;
 		}
-		if (width > 150) {
-			mapReason.put(range.getIndexEnd(), "WIDTH > 150");
+		if (width > 100) {
+			DebugHolder.eliminated();
+			mapReason.put(range.getIndexEnd(), "WIDTH > 100");
+			return false;
+		}
+		if (!isRepartitionBalanced(range, candles)) {
+			DebugHolder.eliminated();
 			return false;
 		}
 		return true;
+	}
+
+	private boolean isRepartitionBalanced(Range range, List<Candle> candles) {
+		Integer startIndex = range.getIndexStart();
+		Candle candleStart = candles.get(startIndex);
+		Integer endIndex = range.getIndexEnd();
+		int indexMiddle = (startIndex + endIndex)/2;
+		Double min = range.getMinWithLow();
+		Double max = range.getMaxWithHigh();
+		Double middlePrice = (min + max)/2;
+		Double height = max - min;
+		double lowBand = middlePrice - height*0.1;
+		double highBand = middlePrice + height*0.1;
+		Map<Integer, AtomicInteger> map = Map.of(0, new AtomicInteger(0),
+				1, new AtomicInteger(0),
+				2, new AtomicInteger(0),
+				3, new AtomicInteger(0));
+		for (int i = startIndex; i <= endIndex; i++) {
+			Candle c = candles.get(i);
+			if (i < indexMiddle && c.getHigh() >= highBand) {
+				map.get(0).incrementAndGet();
+			}
+			if (i < indexMiddle && c.getLow() <= lowBand) {
+				map.get(1).incrementAndGet();
+			}
+			if (i >= indexMiddle && c.getHigh() >= highBand) {
+				map.get(2).incrementAndGet();
+			}
+			if (i >= indexMiddle && c.getLow() <= lowBand) {
+				map.get(3).incrementAndGet();
+			}
+		}
+		int total = endIndex - startIndex;
+//		int total = map.values().stream().mapToInt(v -> v.get()).sum();
+		boolean isInvalid = map.values().stream().anyMatch(count -> count.get()*1d/total*1d < 0.15);
+//		if (candleStart.isDate(27, 4) && candleStart.isTime(8, 35, 0)) {
+//			getClass();
+//		}
+		if (isInvalid) {
+			DebugHolder.eliminated();
+			increaseCount("REPARTITION NOT VALID");
+		}
+		return !isInvalid;
 	}
 
 	List<Integer> toIndexList(List<Candle> list){
@@ -370,6 +455,7 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 		Integer firstMinIndex = minList.get(0);
 		Candle firstMaxCandle = candlesHTF.get(maxList.get(0));
 		if (firstMinIndex > firstMaxCandle.getIndex()) {
+			DebugHolder.eliminated();
 			return null;
 		}
 		double min = Double.MAX_VALUE;
@@ -447,9 +533,11 @@ public class SwingAccumulation extends AbstractService implements CommandLineRun
 					return trade;
 				}
 				if (c.getHigh() > max) {
+					DebugHolder.eliminated();
 					return null;
 				}
 				if (c.getLow() < min - height*0.3) {
+					DebugHolder.eliminated();
 					return null;
 				}
 			}
