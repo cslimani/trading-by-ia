@@ -42,7 +42,7 @@ public class InsertCandlesInDatabase extends AbstractService implements CommandL
 	@Override
 	public void run(String... args) throws Exception {
 		long starTime = System.currentTimeMillis();
-		List.of("GOLD").forEach(market -> {
+		List.of("BTCUSD", "ETHUSD").forEach(market -> {
 			System.out.println("Processing " + market);
 			File file = new File(String.format("/data/tickdata/%s.7z", market));
 			if (!file.exists()) {

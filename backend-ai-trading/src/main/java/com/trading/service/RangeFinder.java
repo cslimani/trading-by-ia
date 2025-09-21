@@ -16,13 +16,13 @@ import com.trading.indicator.extremum.Extremum;
 @Component
 public class RangeFinder extends AbstractService {
 
-	private static final Double MAX_RANGE_ATR_RATIO = 4.5d;
-	private static final Double MIN_RANGE_ATR_RATIO = 1d;
-	private static final double BOTTOM_BAND_RATIO = 0.2d;
-	private static final double TOP_BAND_RATIO = 0.35d;
-	private static final double BREAK_DOWN_ATR_RATIO = 1;
-	private static final double BREAK_UP_ATR_RATIO = 0.5;
-	private static final double NB_BOTTOMS_REQUIRED = 2;
+	public static final Double MAX_RANGE_ATR_RATIO = 4.5d;
+	public static final Double MIN_RANGE_ATR_RATIO = 1d;
+	public static final double BOTTOM_BAND_RATIO = 0.3d;
+	public static final double TOP_BAND_RATIO = 0.35d;
+	public static final double BREAK_DOWN_ATR_RATIO = 1;
+	public static final double BREAK_UP_ATR_RATIO = 0.5;
+	public static final double NB_BOTTOMS_REQUIRED = 2;
 
 	private boolean isRangeValid(List<Candle> minList, List<Candle> maxList, Candle currentCandle) {
 		if (minList.size() < 2 || maxList.size() < 2) {
@@ -37,7 +37,7 @@ public class RangeFinder extends AbstractService {
 		double min = sortedBottomsList.get(0).getMin();
 		double rangeHeight = max - min;
 		if (rangeHeight < maxCandle.getAtr() * MIN_RANGE_ATR_RATIO) {
-			DebugHolder.eliminated();
+			DebugHolder.eliminated("Range height is too high");
 			return false;
 		}
 
@@ -51,20 +51,20 @@ public class RangeFinder extends AbstractService {
 		// At least one very top between bottoms
 		double middle = min + rangeHeight/2;
 		boolean isTopsRepartitionOK = sortedTopsList.stream()
-		.filter(top -> top.getMax() > middle)
-		.anyMatch(c -> isBetweenIndexes(c.getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex()));
+				.filter(top -> top.getMax() > middle)
+				.anyMatch(c -> isBetweenIndexes(c.getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex()));
 		if (!isTopsRepartitionOK) {
-			DebugHolder.eliminated();
+			DebugHolder.eliminated("Tops repartition is not OK");
 			return false;
 		}
-//		if (sortedBottomsList.size() >= 2 && sortedTopsList.size() >=2) {
-//			boolean isOK1 = ;
-//			boolean isOK2 = isBetweenIndexes(sortedTopsList.get(1).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
-//			if (!isOK1 && !isOK2) {
-//				DebugHolder.eliminated();
-//				return false;
-//			}
-//		}
+		//		if (sortedBottomsList.size() >= 2 && sortedTopsList.size() >=2) {
+		//			boolean isOK1 = ;
+		//			boolean isOK2 = isBetweenIndexes(sortedTopsList.get(1).getIndex(), sortedBottomsList.get(0).getIndex(), sortedBottomsList.get(1).getIndex());
+		//			if (!isOK1 && !isOK2) {
+		//				DebugHolder.eliminated();
+		//				return false;
+		//			}
+		//		}
 
 		// Bottoms validation
 		double bottomBandLimit = min + BOTTOM_BAND_RATIO * rangeHeight;
@@ -76,14 +76,14 @@ public class RangeFinder extends AbstractService {
 		//CHOCH validation
 		boolean isCHOCH = isCHOCH(maxList, minList, currentCandle);
 		if (isCHOCH) {
-			DebugHolder.eliminated();
+			DebugHolder.eliminated("Bearish CHOCH detected");
 			return false;
 		}
 
 		boolean bottomsAreOk = bottomsInsideBand.size() >= NB_BOTTOMS_REQUIRED;
 		boolean valid = bottomsAreOk && topsAreOk;
 		if (!valid) {
-			DebugHolder.eliminated();
+			DebugHolder.eliminated("Bottoms and top are not valid");
 		}
 		return valid;
 	}
@@ -147,11 +147,7 @@ public class RangeFinder extends AbstractService {
 		List<Candle> maxList = new ArrayList<Candle>();
 		Candle tmp = candles.get(actualIndex);
 
-		//		if (tmp.isDate(27, 5) && tmp.isTime(9, 5, 0)) {
-		//			debug = true;
-		//		} else {
-		//			debug = false;
-		//		}
+		DebugHolder.info();
 		for (Extremum e :extremumsReversed) {
 			DebugHolder.message("Looking at Extremum " + e.getDate());
 			DebugHolder.info();
@@ -183,7 +179,7 @@ public class RangeFinder extends AbstractService {
 						}
 						if (!rescueTop) {
 							DebugHolder.message(c.getDate() + " new max out of bounds");
-							DebugHolder.eliminated();
+							DebugHolder.eliminated("Max out of limits");
 							return null;
 						}
 					} else {
@@ -209,7 +205,7 @@ public class RangeFinder extends AbstractService {
 							}
 						}
 						if (!rescueBottom) {
-							DebugHolder.eliminated();
+							DebugHolder.eliminated("Min out of limits");
 							return null;
 						}
 					} else {
@@ -222,7 +218,7 @@ public class RangeFinder extends AbstractService {
 				}
 			}
 		}
-		DebugHolder.eliminated();
+		DebugHolder.eliminated("No range found");
 		return null;
 	}
 
@@ -250,6 +246,7 @@ public class RangeFinder extends AbstractService {
 
 	public Range buildRange(List<Candle> candles, int actualIndex, double min, double max,
 			List<Candle> minList, List<Candle> maxList, List<Extremum> extremumsReversed, LocalDateTime dateDecisionRangeValid) {
+		DebugHolder.info();
 		Candle firstCandle = getFirstExtremum(minList, maxList);
 
 		Integer firstIndex = firstCandle.getIndex();
@@ -258,6 +255,7 @@ public class RangeFinder extends AbstractService {
 		for (int i = 1; i < firstIndex; i++) {
 			Candle cTmp = candles.get(firstIndex - i);
 			if (cTmp.getMin() < min) {
+				DebugHolder.eliminated("Range comes from top");
 				return null;
 			}
 			if (cTmp.getMax() > max + BREAK_UP_ATR_RATIO * cTmp.getAtr()) {

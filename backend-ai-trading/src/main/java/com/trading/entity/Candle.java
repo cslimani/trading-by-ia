@@ -88,11 +88,13 @@ public class Candle {
 
 	@Transient
 	public double getMax() {
-		return Math.max(close, open);
+//		return Math.max(close, open);
+		return high;
 	}
 	@Transient
 	public double getMin() {
-		return Math.min(close, open);
+//		return Math.min(close, open);
+		return low;
 	}
 
 	public boolean isTime(int hour, int minute, int sec) {

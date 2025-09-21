@@ -77,7 +77,7 @@ public class HybridMinMaxAnalyzer {
 			}
 			if (lastMin == null 
 					&& potentialMin.getDate().isBefore(candle.getDate())
-					&& isConditionForMax(candle)) {
+					&& isConditionForMin(candle)) {
 				addMin(candle);
 			}
 			if ( lastMax == null

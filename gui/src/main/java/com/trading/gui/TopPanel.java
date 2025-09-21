@@ -145,7 +145,6 @@ public class TopPanel  extends AbstractPanel{
 	public void setDateAndPrice(LocalDateTime date, Double price) {
 		if (date != null && price != null) {
 			positionTextArea.setText(date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + "	Price = " + String.format("%.1f", price));	
-//			System.out.println(price);
 		}
 	}
 

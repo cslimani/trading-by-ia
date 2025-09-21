@@ -20,4 +20,6 @@ public interface HotSpotRepository extends JpaRepository<HotSpot, String> {
 
 	HotSpot findByCodeAndMarketAndTimeRangeAndDateStart(String code, String market, EnumTimeRange timeRange, LocalDateTime dateStart);
 
+	List<HotSpot> findByCodeAndMarketOrderByDateEnd(String type, String string);
+
 }

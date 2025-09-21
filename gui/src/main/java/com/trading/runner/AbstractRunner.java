@@ -53,8 +53,8 @@ public abstract class AbstractRunner implements Runner {
 	protected String currentMarket;
 	protected List<String> labelList = new ArrayList<String>();
 	protected Map<JButton, String> buttonMap = new HashMap<>();
-	
-	protected static final String COLOR_RED = "#C70000";
+
+	protected static final String COLOR_RED = "#D14141";
 	@Autowired
 	public HotSpotRepository hotSpotRepository;
 	@Autowired
@@ -139,7 +139,7 @@ public abstract class AbstractRunner implements Runner {
 	public JButton addLabel(String name, String color) {
 		return addLabel(name, color, null);
 	}
-	
+
 	public JButton addLabel(String name) {
 		return addLabel(name, null, null);
 	}
@@ -168,9 +168,11 @@ public abstract class AbstractRunner implements Runner {
 	}
 
 	private void setColor(JButton button, String colorString) {
-		button.setBackground(getColor(colorString));
-		if (colorString != null && colorString.equals(COLOR_RED)) {
-			button.setForeground(Color.WHITE);
+		if (colorString != null) {
+			button.setBackground(getColor(colorString));
+			if (colorString != null && colorString.equals(COLOR_RED)) {
+				button.setForeground(Color.WHITE);
+			}
 		}
 	}
 
@@ -319,7 +321,7 @@ public abstract class AbstractRunner implements Runner {
 	}
 
 	public void stretchZone(int value, boolean unzoom) {
-		log.info("Stretch zone of {} candles", value);
+		log.debug("Stretch zone of {} candles", value);
 		EnumTimeRange timeRange = data.getTimeRange();
 		PeriodOfTime period = getPeriodOfTime();
 		Pageable page = PageRequest.of(0, value);
