@@ -7,7 +7,7 @@ import com.trading.entity.Candle;
 
 public class MedianCalculator {
 
-	public static double median(List<Candle> candles) {
+	public static double quantile(List<Candle> candles, double quantile) {
 		if (candles == null || candles.isEmpty()) {
 			throw new IllegalArgumentException("Liste de candles vide !");
 		}
@@ -17,7 +17,11 @@ public class MedianCalculator {
 				.sorted()
 				.collect(Collectors.toList());
 
-		return closes.get(closes.size() / 2);
+		return closes.get(Double.valueOf(closes.size()*quantile).intValue());
+	}
+	
+	public static double median(List<Candle> candles) {
+		return quantile(candles, 0.5d);
 	}
 	
 	public static double medianPrices(List<Double> prices) {

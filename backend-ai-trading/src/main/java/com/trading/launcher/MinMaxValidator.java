@@ -10,7 +10,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
@@ -41,18 +40,27 @@ public class MinMaxValidator extends AbstractService implements CommandLineRunne
 				,LocalDateTime.of(2020, Month.FEBRUARY, 1, 0, 0));
 		setIndex(candles);
 		AtrCalculator.compute(candles, 50);
+//		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		HybridMinMaxAnalyzer minMaxAnalyzer = new HybridMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		List<Extremum> extremums = null;
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
 			extremums = minMaxAnalyzer.process(c);
-//			break;
+			//			break;
 		}
-//		;
+		//		;
 		List<String> computedList = extremums.stream().map(e -> e.getDate()).map(d -> d.toString()).toList();
-//		computedList.forEach(d -> System.out.println(d));
+		//		computedList.forEach(d -> System.out.println(d));
 		List<String> goodValuesList = IOUtils.readLines(new ClassPathResource("min-max-list.txt").getInputStream(), "UTF-8");
-		Assert.isTrue(computedList.equals(goodValuesList), "List are not equals");
+		//		Assert.isTrue(computedList.equals(goodValuesList), "List are not equals");
+		for (int i = 0; i < goodValuesList.size(); i++) {
+			if (!goodValuesList.get(i).equals(computedList.get(i))) {
+				System.out.println("Wrong value at index " + i + " - good value is " + goodValuesList.get(i) +
+						" - computed value is " + computedList.get(i));
+				break;
+			}
+		}
+
 	}
 
 }

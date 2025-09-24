@@ -107,9 +107,12 @@ public class HybridMinMaxAnalyzer {
 				(candle.getIndex() - potentialMin.getIndex() > k));
 	}
 
-	private boolean isConditionForMax(Candle candle) {
-		return potentialMax != null && ((candle.getMin() < potentialMax.getMax()  - ratioATR * atr) ||
-				(candle.getIndex() - potentialMax.getIndex() > k));
+	private boolean isConditionForMax(Candle c) {
+		if (potentialMax.isDate(2, 1) && potentialMax.isTime(4, 45, 0)) {
+			getClass();
+		}
+		return potentialMax != null && ((c.getMin() < potentialMax.getMax()  - ratioATR * atr) ||
+				(c.getIndex() - potentialMax.getIndex() > k));
 	}
 
 	private void addMin(Candle candle) {

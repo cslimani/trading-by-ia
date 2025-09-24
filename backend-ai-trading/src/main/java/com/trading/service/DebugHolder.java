@@ -1,16 +1,21 @@
 package com.trading.service;
 
 import java.time.LocalDateTime;
-import java.time.Month;
+
+import com.trading.dto.Range;
+import com.trading.entity.Candle;
 
 public class DebugHolder {
 
 	private static boolean debug;
-	private static LocalDateTime date = LocalDateTime.of(2023, Month.AUGUST, 3, 5, 0);
-	
-	public static void activate(LocalDateTime d){
-		if (d.isEqual(date)) {
-			debug = true;
+//	private static LocalDateTime date = LocalDateTime.of(2023, 9, 12, 2, 30);
+	private static LocalDateTime date = LocalDateTime.of(2022, 8, 22, 0, 0);
+	private static Candle candleDate = null;
+			
+	public static void activate(Candle c){
+		if (c.getDate().isEqual(date)) {
+//			candleDate = c;
+//			debug = true;
 		}
 	}
 
@@ -32,7 +37,10 @@ public class DebugHolder {
 		}
 	}
 
-	public static void accepted() {
+	public static void accepted(Range range) {
+		if (candleDate != null && Math.abs(range.getIndexStart() - candleDate.getIndex()) < 20) {
+			System.out.println("Range found starting at " + range.getDateStart());
+		}
 		if (debug) {
 			date.getClass();
 		}
