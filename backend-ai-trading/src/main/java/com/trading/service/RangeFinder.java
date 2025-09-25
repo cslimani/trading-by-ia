@@ -209,7 +209,7 @@ public class RangeFinder extends AbstractService {
 						if (maxList.isEmpty()) {
 							DebugHolder.message(c.getDate() + " is valid max");
 						} else {
-							if (currentRangeHeight == null || potentialRangeHeight >= 2*currentRangeHeight ) {
+							if (currentRangeHeight == null || potentialRangeHeight >= 1.5*currentRangeHeight ) {
 								DebugHolder.message(c.getDate() + " new max out of bounds");
 								return getRange(minList, maxList, candles.get(actualIndex), candles,
 										min, max, extremumsReversed, c.getDate());
@@ -237,7 +237,7 @@ public class RangeFinder extends AbstractService {
 						if (minList.isEmpty()) {
 							DebugHolder.message(c.getDate() + " is valid min");
 						} else {
-							if (currentRangeHeight == null || potentialRangeHeight >= 2*currentRangeHeight ) {
+							if (currentRangeHeight == null || potentialRangeHeight >= 1.5*currentRangeHeight ) {
 								DebugHolder.eliminated("Min out of limits so range comes from bottom");
 								return null;
 							} else {

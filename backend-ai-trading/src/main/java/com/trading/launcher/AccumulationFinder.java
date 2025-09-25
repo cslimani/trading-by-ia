@@ -167,7 +167,7 @@ public class AccumulationFinder extends AbstractService implements CommandLineRu
 		Range range = null;
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
-			DebugHolder.activate(c.getDate());
+//			DebugHolder.activate(c.getDate());
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate)) {
 				continue;
 			}

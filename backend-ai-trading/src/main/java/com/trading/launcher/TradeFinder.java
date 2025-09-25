@@ -64,7 +64,9 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	@Autowired
 	FeatureWriterSpring featureWriter;
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
-	EnumTimeRange timeRange = EnumTimeRange.M10;
+//	EnumTimeRange timeRange = EnumTimeRange.M5;
+//	EnumTimeRange timeRange = EnumTimeRange.M10;
+	EnumTimeRange timeRange = EnumTimeRange.M15;
 	Random random = new Random();
 	ExecutorService executor = Executors.newFixedThreadPool(1);
 	Map<String, Double> mapATR = new HashMap<String, Double>();
