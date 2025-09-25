@@ -12,7 +12,7 @@ import com.trading.enums.EnumTimeRange;
 
 public interface CandleRepository extends JpaRepository<Candle, String> {
 
-	List<Candle> findByMarketAndTimeRangeAndDateBetweenOrderByDate(String string, EnumTimeRange tr,
+	List<Candle> findByMarketAndTimeRangeAndDateBetweenOrderByDate(String market, EnumTimeRange tr,
 			LocalDateTime startDate, LocalDateTime endDate);
 
 	@Query(

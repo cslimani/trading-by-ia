@@ -2,7 +2,6 @@ package com.trading.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Iterables;
 import com.trading.dto.Range;
 import com.trading.entity.Candle;
 import com.trading.enums.ExtremumType;
@@ -29,8 +27,9 @@ public class RangeFinder extends AbstractService {
 	public static final double BREAK_DOWN_ATR_RATIO = 1;
 	public static final double BREAK_UP_ATR_RATIO = 0.5;
 	public static final double NB_BOTTOMS_REQUIRED = 2;
-	private static final int MIN_RANGE_WIDTH = 25;
-	private static final Integer NB_CANDLES_BEFORE = 45;
+	public static final int MIN_RANGE_WIDTH = 25;
+	public static final Integer NB_CANDLES_BEFORE = 45;
+	public static final int MAX_RANGE_WIDTH = 100;
 
 	private boolean isPrevalidated(List<Candle> minList, List<Candle> maxList, Candle currentCandle) {
 		if (minList.size() < 2 || maxList.size() < 2) {
@@ -296,7 +295,7 @@ public class RangeFinder extends AbstractService {
 			DebugHolder.eliminated("Range too narrow");
 			return false;
 		}
-		if (width > 100) {
+		if (width > MAX_RANGE_WIDTH) {
 			DebugHolder.eliminated("Range too wide");
 			return false;
 		}
@@ -357,6 +356,7 @@ public class RangeFinder extends AbstractService {
 			Range range = buildRange(candles, currentCandle.getIndex(), min, max, minList, maxList, dateDecisionRangeValid);
 			if (range != null) {
 				if (isConditionOnRangeValid(range, extremumsReversed, candles)) {
+					DebugHolder.stopHere();
 					return range;
 				} else {
 					Candle maxRemoved = maxList.removeLast();
@@ -451,7 +451,8 @@ public class RangeFinder extends AbstractService {
 		if (startIndex >= endIndex) {
 			return null;
 		}
-
+		min = getMinWithLow(candles, startIndex, endIndex);
+		max = getMaxWithHigh(candles, startIndex, endIndex);
 		return Range.builder()
 				.indexEnd(endIndex)
 				.dateStart(candles.get(startIndex).getDate())

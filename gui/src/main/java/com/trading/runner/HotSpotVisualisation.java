@@ -233,7 +233,8 @@ public class HotSpotVisualisation extends AbstractRunner {
 	@Override
 	protected void runnerInit() {
 		setup("EURUSD", EnumTimeRange.M15);
-		String type = "SPRING_LABEL";
+//		String type = "SPRING_LABEL";
+		String type = "RANGE_TO_FIX";
 //		String type = "RANGE_LABEL";
 		hotSpots = hotSpotRepository.findByCodeAndMarketOrderByDateEnd(type, "US100");
 		hotSpots = hotSpots.stream()

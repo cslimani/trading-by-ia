@@ -17,11 +17,9 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -36,7 +34,6 @@ import com.trading.dto.Trade;
 import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
-import com.trading.enums.ExtremumType;
 import com.trading.indicator.AtrCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SimpleMinMaxAnalyzer;
@@ -54,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TradeFinder extends AbstractService implements CommandLineRunner {
 
-	
+
 	private static final String HOTSPOT_CODE = "RANGE_AUTO";
 	private static final double MIN_MAX_ATR_RATIO = 2.5d;
 
@@ -64,10 +61,10 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	@Autowired
 	FeatureWriterSpring featureWriter;
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
-	EnumTimeRange timeRange = EnumTimeRange.M5;
-//	EnumTimeRange timeRange = EnumTimeRange.M10;
-//	EnumTimeRange timeRange = EnumTimeRange.M15;
-//	EnumTimeRange timeRange = EnumTimeRange.M30;
+//	EnumTimeRange timeRange = EnumTimeRange.M5;
+//		EnumTimeRange timeRange = EnumTimeRange.M10;
+//		EnumTimeRange timeRange = EnumTimeRange.M15;
+		EnumTimeRange timeRange = EnumTimeRange.M30;
 	Random random = new Random();
 	ExecutorService executor = Executors.newFixedThreadPool(1);
 	Map<String, Double> mapATR = new HashMap<String, Double>();
@@ -78,16 +75,18 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 		System.out.println("Accumulation Break starting");
 		backupHotSpots();
-		hotSpotRepository.deleteByCode(HOTSPOT_CODE);
+//		hotSpotRepository.deleteByCode(HOTSPOT_CODE);
+		hotSpotRepository.deleteByCode("RANGE_TO_FIX");
+		
 		//		hotspotsToProcess = hotSpotRepository.findByCodeOrderByDateEnd("RANGE_LABEL")
 		//				.stream()
 		//				.filter(hs -> hs.getData().getLabels().contains("SPRING WIN"))
 		//				.collect(Collectors.toList());
-		List<HotSpot> hotSpotsToFind = new CopyOnWriteArrayList<HotSpot>();
+		//		List<HotSpot> hotSpotsToFind = new CopyOnWriteArrayList<HotSpot>();
 		long startProcess = System.currentTimeMillis();
 		Map<String, LocalDateTime> marketDateMap = Map
-//				.ofEntries(entry("US100", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
-				.ofEntries(entry("GOLD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				.ofEntries(entry("US100", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+						//				.ofEntries(entry("US100", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 
 						// entry("GOLD", LocalDateTime.of(2010, Month.JANUARY, 1, 0, 0)),
 						// entry("US100", LocalDateTime.of(2018, Month.MAY, 1, 0, 0))
@@ -114,7 +113,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				final LocalDateTime startDateFinal = startDate;
 				executor.submit(() -> {
 					try {
-						hotSpotsToFind.addAll(process(market, startDateFinal, startDateFinal.plusMonths(1)));
+						process(market, startDateFinal, startDateFinal.plusMonths(1));
 					} catch (Exception e) {
 						log.error("Error processing {}", startDateFinal, e);
 					}
@@ -133,7 +132,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 
 	}
 
-	private List<HotSpot> process(String market, LocalDateTime startDate, LocalDateTime endDate) throws IOException {
+	private void process(String market, LocalDateTime startDate, LocalDateTime endDate) throws IOException {
 		List<HotSpot> hotSpotsToFind = hotSpotRepository.findByCodeAndTimeRangeAndMarketAndDateEndBetween(
 				"SPRING_LABEL", timeRange, market, startDate, endDate);
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, timeRange,
@@ -155,6 +154,10 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			if (range == null) {
 				continue;
 			}
+			boolean isSpringBeforeLimit = isSpringBeforeLimit(range, candles, market);
+			if (!isSpringBeforeLimit) {
+				continue;
+			}
 			Optional<Integer> existingRangeIndex = getRangeAlreadyExists(range, rangeStartMap);
 			if (existingRangeIndex.isPresent()) {
 				Range existingRange = rangeStartMap.get(existingRangeIndex.get());
@@ -163,19 +166,69 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			}
 			DebugHolder.accepted(range);
 			rangeStartMap.put(range.getIndexStart(), range);
-			for (Iterator<HotSpot> it = hotSpotsToFind.iterator(); it.hasNext();) {
-				HotSpot hs = it.next();
-				if ( hs.getDateStart().equals(range.getDateStart())) {
-					increaseCount("HS FOUND!!");
-					it.remove();
-				} 
+
+//			if (!hotSpotsToFind.stream().anyMatch(hs -> hs.getDateStart().equals(range.getDateStart()))) {
+//				System.out.println("Following range should not be found at " + range.getDateStart().format(formatter));
+//				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart()), market, timeRange, "RANGE_TO_AVOID", null);
+//				System.exit(0);
+//			}
+
+			removeFromHotSpotToFind(range, hotSpotsToFind);
+
+		}
+		stopIfNotEmpty(hotSpotsToFind);
+	}
+
+	private boolean isSpringBeforeLimit(Range range, List<Candle> candles, String market) {
+		List<Candle> candlesExtra = new ArrayList<>();
+		candlesExtra.addAll(candles);
+		if (candles.size() - range.getIndexEnd() < 100) {
+			Candle lastCandle = candles.getLast();
+			Integer lastCandleIndex = lastCandle.getIndex();
+			List<Candle> moreCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
+					market, timeRange, lastCandle.getDate().plusSeconds(1), lastCandle.getDate().plusWeeks(1));
+			candlesExtra.addAll(moreCandles);
+			setIndex(candlesExtra);
+			if (moreCandles.getFirst().getIndex() != lastCandleIndex + 1) {
+				throw new RuntimeException("Something very weird");
 			}
 		}
+		for(int i = range.getIndexEnd(); i < candlesExtra.size(); i++) {
+			Candle c = candlesExtra.get(i);
+			if (c.getHigh() > range.getMax() + range.getHeight()) {
+				DebugHolder.eliminated("Range is going to high");
+				return false;
+			}
+			if (c.getIndex() - range.getIndexStart() > RangeFinder.MAX_RANGE_WIDTH) {
+				DebugHolder.eliminated("Range not reaching bottom before limit");
+				return false;
+			}
+			if (c.getLow() < range.getMin()) {
+				range.setDateEnd(c.getDate());
+				range.setIndexEnd(c.getIndex());
+				return true;
+			}
+		}
+		throw new RuntimeException("Range is going exceeding the current period, it starts at " + range.getDateStart().format(formatter));
+	}
+
+	private void stopIfNotEmpty(List<HotSpot> hotSpotsToFind) {
 		if (!hotSpotsToFind.isEmpty()) {
-			System.out.println("Failed to find SPRING_LABEL starting at " + hotSpotsToFind.get(0).getDateStart().format(formatter));
+			HotSpot hs = hotSpotsToFind.get(0);
+			saveHotSpot(hs.getDateStart(), hs.getDateEnd(), List.of(hs.getDateStart()), hs.getMarket(), timeRange, "RANGE_TO_FIX", null);
+			System.out.println("Failed to find SPRING_LABEL starting at " + hs.getDateStart().format(formatter));
 			System.exit(0);
 		}
-		return hotSpotsToFind;
+	}
+
+	private void removeFromHotSpotToFind(Range range, List<HotSpot> hotSpotsToFind) {
+		for (Iterator<HotSpot> it = hotSpotsToFind.iterator(); it.hasNext();) {
+			HotSpot hs = it.next();
+			if ( hs.getDateStart().equals(range.getDateStart()) && hs.getDateEnd().equals(range.getDateEnd())) {
+				increaseCount("HS FOUND!!");
+				it.remove();
+			} 
+		}
 	}
 
 	private Double getDayBeforeAverageATR(List<Candle> candles, Candle c) {
@@ -257,9 +310,9 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		}
 	}
 
-	
 
-	
+
+
 
 	List<Integer> toIndexList(List<Candle> list) {
 		return list.stream().map(c -> c.getIndex()).toList();
