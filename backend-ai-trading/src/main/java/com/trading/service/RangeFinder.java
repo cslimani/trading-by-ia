@@ -22,7 +22,7 @@ import com.trading.indicator.extremum.Extremum;
 public class RangeFinder extends AbstractService {
 
 	public static final Double MAX_RANGE_ATR_RATIO_LOW = 5d;
-	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 6d;
+	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 7d;
 	public static final Double MIN_RANGE_ATR_RATIO = 1d;
 	public static final double BOTTOM_BAND_RATIO = 0.3d;
 	public static final double TOP_BAND_RATIO = 0.5d;
@@ -30,7 +30,7 @@ public class RangeFinder extends AbstractService {
 	public static final double BREAK_UP_ATR_RATIO = 0.5;
 	public static final double NB_BOTTOMS_REQUIRED = 2;
 	private static final int MIN_RANGE_WIDTH = 25;
-	private static final Integer NB_CANDLES_BEFORE = 50;
+	private static final Integer NB_CANDLES_BEFORE = 45;
 
 	private boolean isPrevalidated(List<Candle> minList, List<Candle> maxList, Candle currentCandle) {
 		if (minList.size() < 2 || maxList.size() < 2) {
@@ -269,7 +269,14 @@ public class RangeFinder extends AbstractService {
 			DebugHolder.eliminated("No max before range");
 			return false;
 		}
-		for (int i = range.getIndexStart() - NB_CANDLES_BEFORE; i < maxbeforeOpt.get().getIndex(); i++) {
+		int startIndexCountCandlesBefore = range.getIndexStart();
+		for (int i = range.getIndexStart(); i < range.getIndexEnd(); i++) {
+			if (candles.get(i).getLow() <= median ) {
+				startIndexCountCandlesBefore = i;
+				break;
+			}
+		}
+		for (int i = startIndexCountCandlesBefore - NB_CANDLES_BEFORE; i < maxbeforeOpt.get().getIndex(); i++) {
 			if (i < 0) {
 				DebugHolder.eliminated("Not enought candles before range");
 				return false;
@@ -339,15 +346,17 @@ public class RangeFinder extends AbstractService {
 	}
 	private Range getRange(List<Candle> minList, List<Candle> maxList, Candle currentCandle, List<Candle> candles,
 			double min, double max, List<Extremum> extremumsReversed, LocalDateTime dateDecisionRangeValid) {
+//		minList.sort(Comparator.comparing(Candle::getIndex));
+//		maxList.sort(Comparator.comparing(Candle::getIndex));
 		while (isPrevalidated(minList, maxList, currentCandle)) {
 			DebugHolder.info();
-			Range range = buildRange(candles, currentCandle.getIndex(), min, max, minList, maxList, extremumsReversed, dateDecisionRangeValid);
+			Range range = buildRange(candles, currentCandle.getIndex(), min, max, minList, maxList, dateDecisionRangeValid);
 			if (range != null) {
 				if (isConditionOnRangeValid(range, extremumsReversed, candles)) {
 					return range;
 				} else {
-					minList.removeLast();
-					maxList.removeLast();
+					Candle maxRemoved = maxList.removeLast();
+					minList = minList.stream().filter(c -> c.getIndex() > maxRemoved.getIndex()).toList();
 					continue;
 				}
 			}
@@ -380,7 +389,7 @@ public class RangeFinder extends AbstractService {
 	}
 
 	public Range buildRange(List<Candle> candles, int endIndex, double min, double max,
-			List<Candle> minList, List<Candle> maxList, List<Extremum> extremumsReversed, LocalDateTime dateDecisionRangeValid) {
+			List<Candle> minList, List<Candle> maxList, LocalDateTime dateDecisionRangeValid) {
 		DebugHolder.info();
 		Candle endCandle = candles.get(endIndex);
 		double height = max - min;

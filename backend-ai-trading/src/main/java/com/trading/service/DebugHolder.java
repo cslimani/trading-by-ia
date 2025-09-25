@@ -9,7 +9,7 @@ public class DebugHolder {
 
 	private static boolean debug;
 //	private static LocalDateTime date = LocalDateTime.of(2023, 9, 12, 2, 30);
-	private static LocalDateTime date = LocalDateTime.of(2023, 7, 17, 5, 30);
+	private static LocalDateTime date = LocalDateTime.of(2021, 5, 27, 13, 30);
 	private static Candle candleDate = null;
 			
 	public static void activate(Candle c){
@@ -39,7 +39,7 @@ public class DebugHolder {
 	}
 
 	public static void accepted(Range range) {
-//		System.out.println("Range found starting at " + range.getDateStart());
+//		System.out.println("Range found starting at " + range.getDateStart().format(AbstractService.formatter));
 //		if (candleDate != null && Math.abs(range.getIndexStart() - candleDate.getIndex()) < 20) {
 //			System.out.println("Range found starting at " + range.getDateStart());
 //		}

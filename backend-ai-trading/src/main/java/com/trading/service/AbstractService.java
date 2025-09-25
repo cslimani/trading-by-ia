@@ -34,7 +34,7 @@ import com.trading.repository.HotSpotRepository;
 
 public class AbstractService {
 
-	protected DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+	protected static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 	private static final Integer NB_MAX_PRICE = 20;
 	public String sourcePath = "/data/trading_ml/classifier_";
 	public String targetFolder = "/data/trading_ml/backup";
