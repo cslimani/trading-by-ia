@@ -64,8 +64,8 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	@Autowired
 	FeatureWriterSpring featureWriter;
 	SwingExtremaFinder analyzer = new SwingExtremaFinder();
-//	EnumTimeRange timeRange = EnumTimeRange.M5;
-	EnumTimeRange timeRange = EnumTimeRange.M10;
+	EnumTimeRange timeRange = EnumTimeRange.M5;
+//	EnumTimeRange timeRange = EnumTimeRange.M10;
 //	EnumTimeRange timeRange = EnumTimeRange.M15;
 //	EnumTimeRange timeRange = EnumTimeRange.M30;
 	Random random = new Random();
@@ -86,7 +86,8 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		List<HotSpot> hotSpotsToFind = new CopyOnWriteArrayList<HotSpot>();
 		long startProcess = System.currentTimeMillis();
 		Map<String, LocalDateTime> marketDateMap = Map
-				.ofEntries(entry("US100", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+//				.ofEntries(entry("US100", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
+				.ofEntries(entry("GOLD", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 
 						// entry("GOLD", LocalDateTime.of(2010, Month.JANUARY, 1, 0, 0)),
 						// entry("US100", LocalDateTime.of(2018, Month.MAY, 1, 0, 0))

@@ -201,7 +201,11 @@ public class RangeFinder extends AbstractService {
 				//				if (c.isDate(25, 8) && c.isTime(13, 25, 0)) {
 				//					getClass();
 				//				}
-				if (!minList.isEmpty()) {
+				if (maxList.size() >= 5) {
+					DebugHolder.message(c.getDate() + " enough tops and bottoms");
+					return getRange(minList, maxList, candles.get(actualIndex), candles,
+							min, max, extremumsReversed, c.getDate());
+				} else	if (!minList.isEmpty()) {
 					double potentialRangeHeight = c.getMax() - min;
 					if (potentialRangeHeight <= maxRangeHeightLow) {
 						DebugHolder.message(c.getDate() + " is valid max");
