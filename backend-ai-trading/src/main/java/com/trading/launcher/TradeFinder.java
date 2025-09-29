@@ -184,6 +184,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			}
 
 			DebugHolder.accepted(range);
+			System.out.println(range.getDateStart());
 			rangeList.add(range);
 			//			increaseCount("RANGE");
 //			int indexCandlePreviousHTF = mapCandlesHTF.get(range.getDateEnd().truncatedTo(ChronoUnit.HOURS)).getIndex()-1;
