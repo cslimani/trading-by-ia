@@ -29,6 +29,7 @@ public class AtrCalculator {
 			tr = Math.max(hMinusL, Math.max(hMinusPrevC, lMinusPrevC));
 		}
 		c.tr = tr;
+		
 		// on initialisera atr/atr_ratio après
 		prevClose = c.close;
 
@@ -37,19 +38,20 @@ public class AtrCalculator {
 			sumTR += c.tr;
 			c.atr = c.tr;
 			c.atr_ratio = Double.NaN;
-		}
-		double atr = sumTR / period;
-
-		// On pose l'ATR à t = period-1 (barre n-1, en 0-based)
-		if (c.index == period - 1) {
+		} else {
+			double atr = sumTR / period;
+			
+			// On pose l'ATR à t = period-1 (barre n-1, en 0-based)
+			if (c.index == period - 1) {
+				c.atr = atr;
+				c.atr_ratio = safeDivide(atr, c.close);
+			}
+			
+			// 3) Lissage de Wilder pour les barres suivantes
+			atr = ((period - 1) * atr + c.tr) / period;  // RMA / Wilder
 			c.atr = atr;
 			c.atr_ratio = safeDivide(atr, c.close);
 		}
-
-		// 3) Lissage de Wilder pour les barres suivantes
-		atr = ((period - 1) * atr + c.tr) / period;  // RMA / Wilder
-		c.atr = atr;
-		c.atr_ratio = safeDivide(atr, c.close);
 	}
 
 	private static double safeDivide(double num, double den) {
