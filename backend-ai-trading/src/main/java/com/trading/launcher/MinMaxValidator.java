@@ -46,6 +46,7 @@ public class MinMaxValidator extends AbstractService implements CommandLineRunne
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
 			atrCalculator.compute(c);
+			System.out.println(c.atr);
 			extremums = minMaxAnalyzer.process(c);
 			//			break;
 		}
