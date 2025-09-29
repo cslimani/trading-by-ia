@@ -436,10 +436,15 @@ public class RangeFinder extends AbstractService {
 				break;
 			}
 		}
+		try {
+			
 		double median = MedianCalculator.median(candles.subList(startIndex, endIndex));
 		if (endCandle.getClose() >= median) {
 			DebugHolder.eliminated("Last candle should be below median");
 			return null;
+		}
+		} catch (Exception e) {
+			getClass();
 		}
 		
 		

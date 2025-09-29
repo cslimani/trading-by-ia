@@ -144,7 +144,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				"SPRING_LABEL", timeRange, market, startDate, endDate);
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, timeRange,
 				startDate.minusDays(50), endDate.plusDays(7));
-		PriceEmbargo priceEmbargo = new PriceEmbargo(candles);
+		PriceEmbargo priceEmbargo = new PriceEmbargo(candles, List.of(), true);
 
 //		List<Candle> candlesHTF = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, EnumTimeRange.H1,
 //				startDate.minusDays(100), endDate.plusDays(10));
@@ -155,13 +155,14 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		
 //		RsiCalculator.computeRSI(candles, 14);
 		List<Range> rangeList = new ArrayList<Range>();
-		AtrCalculator atrCalculator = new AtrCalculator(20);
+		
 		
 		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
 			DebugHolder.activate(c);
-			atrCalculator.compute(c);
+			
+			priceEmbargo.goForward();
 //			System.out.println(c.atr);
 			List<Extremum> extremumsSwing = minMaxAnalyzer.process(c);
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate)) {
@@ -173,11 +174,10 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			if (range == null) {
 				continue;
 			}
-			boolean isSpringBeforeLimit = isSpringBeforeLimit(range, candles, market);
+			boolean isSpringBeforeLimit = isSpringBeforeLimit(range, priceEmbargo.clone(), market);
 			if (!isSpringBeforeLimit) {
 				continue;
 			}
-
 
 			Optional<Range> existingRange = getRangeAlreadyExists(range, rangeList);
 			if (existingRange.isPresent()) {
@@ -283,22 +283,22 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		return false;
 	}
 
-	private boolean isSpringBeforeLimit(Range range, List<Candle> candles, String market) {
-		List<Candle> candlesExtra = new ArrayList<>();
-		candlesExtra.addAll(candles);
-		if (candles.size() - range.getIndexEnd() < 100) {
-			Candle lastCandle = candles.getLast();
-			Integer lastCandleIndex = lastCandle.getIndex();
-			List<Candle> moreCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
-					market, timeRange, lastCandle.getDate().plusSeconds(1), lastCandle.getDate().plusWeeks(1));
-			candlesExtra.addAll(moreCandles);
-			setIndex(candlesExtra);
-			if (moreCandles.getFirst().getIndex() != lastCandleIndex + 1) {
-				throw new RuntimeException("Something very weird");
-			}
-		}
-		for(int i = range.getIndexEnd(); i < candlesExtra.size(); i++) {
-			Candle c = candlesExtra.get(i);
+	private boolean isSpringBeforeLimit(Range range, PriceEmbargo priceEmbargo, String market) {
+//		List<Candle> candlesExtra = new ArrayList<>();
+//		candlesExtra.addAll(candles);
+//		if (candles.size() - range.getIndexEnd() < 100) {
+//			Candle lastCandle = candles.getLast();
+//			Integer lastCandleIndex = lastCandle.getIndex();
+//			List<Candle> moreCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
+//					market, timeRange, lastCandle.getDate().plusSeconds(1), lastCandle.getDate().plusWeeks(1));
+//			candlesExtra.addAll(moreCandles);
+//			setIndex(candlesExtra);
+//			if (moreCandles.getFirst().getIndex() != lastCandleIndex + 1) {
+//				throw new RuntimeException("Something very weird");
+//			}
+//		}
+		while(priceEmbargo.hasNext()) {
+			Candle c = priceEmbargo.goForward();
 			if (c.getHigh() > range.getMax() + range.getHeight()) {
 				DebugHolder.eliminated("Range is going to high");
 				return false;

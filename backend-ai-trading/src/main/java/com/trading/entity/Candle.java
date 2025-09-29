@@ -31,10 +31,10 @@ public class Candle {
 	private Long id;
 
 	public LocalDateTime date;
-	public double open;
-	public double high;
-	public double low;
-	public double close;
+	public Double open;
+	public Double high;
+	public Double low;
+	public Double close;
 	public double volume;
 	@Enumerated(EnumType.STRING)
 	EnumTimeRange timeRange;
@@ -55,11 +55,11 @@ public class Candle {
 	@Transient
 	public Instant dateInstant;
 	@Transient
-	public double tr;
+	public Double tr;
 	@Transient
-	public double atr;
+	public Double atr;
 	@Transient
-	public double atr_ratio;
+	public Double atr_ratio;
 	@Transient
 	public Integer index;
 	@Transient
