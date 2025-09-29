@@ -160,6 +160,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
+			System.out.println(c.atr);
 			DebugHolder.activate(c);
 			atrCalculator.compute(c);
 			List<Extremum> extremumsSwing = minMaxAnalyzer.process(c);
