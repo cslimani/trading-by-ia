@@ -9,14 +9,14 @@ public class DebugHolder {
 
 	private static boolean debug;
 //	private static LocalDateTime date = LocalDateTime.of(2023, 9, 12, 2, 30);
-	private static LocalDateTime date = LocalDateTime.of(2020, 1, 16, 16, 30);
+	private static LocalDateTime date = LocalDateTime.of(2020, 3, 18, 6, 0);
 	private static Candle candleDate = null;
 			
 	public static void activate(Candle c){
 //		System.out.println(c.getDate());
 		if (c.getDate().isEqual(date)) {
-//			candleDate = c;
-//			debug = true;
+			candleDate = c;
+			debug = true;
 		}
 	}
 

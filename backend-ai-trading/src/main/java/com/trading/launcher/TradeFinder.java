@@ -200,12 +200,15 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			if (isGoingDown(range, candles)) {
 				increaseCount("GOING DOWN");
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "DOWN_RANGE", data);
+				System.out.println("GOING DOWN " + range.getDateEnd());
 			} else if (isWinner(range, candles)) {
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "WIN_RANGE", data);
 				increaseCount("WIN");
+				System.out.println("WIN " + range.getDateEnd());
 			} else {
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "LOST_RANGE", data);
 				increaseCount("LOST");
+				System.out.println("LOST " + range.getDateEnd());
 			}
 		}
 
