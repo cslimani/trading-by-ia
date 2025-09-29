@@ -9,7 +9,7 @@ public class DebugHolder {
 
 	private static boolean debug;
 //	private static LocalDateTime date = LocalDateTime.of(2023, 9, 12, 2, 30);
-	private static LocalDateTime date = LocalDateTime.of(2020, 3, 18, 6, 0);
+	private static LocalDateTime date = LocalDateTime.of(2020, 3, 18, 16, 0);
 	private static Candle candleDate = null;
 			
 	public static void activate(Candle c){
