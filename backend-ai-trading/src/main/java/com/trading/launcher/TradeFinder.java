@@ -162,7 +162,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			Candle c = candles.get(i);
 			DebugHolder.activate(c);
 			atrCalculator.compute(c);
-//			System.out.println(c.atr);
+			System.out.println(c.atr);
 			List<Extremum> extremumsSwing = minMaxAnalyzer.process(c);
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate)) {
 				continue;
