@@ -12,7 +12,8 @@ public class AtrCalculator {
 	Double prevClose = null;
 	double sumTR = 0.0;
 	private final Integer period;
-	
+	private double atr;
+
 	public void compute(Candle c) {
 		if (period <= 0) throw new IllegalArgumentException("period must be > 0");
 
@@ -29,7 +30,7 @@ public class AtrCalculator {
 			tr = Math.max(hMinusL, Math.max(hMinusPrevC, lMinusPrevC));
 		}
 		c.tr = tr;
-		
+
 		// on initialisera atr/atr_ratio après
 		prevClose = c.close;
 
@@ -38,15 +39,15 @@ public class AtrCalculator {
 			sumTR += c.tr;
 			c.atr = c.tr;
 			c.atr_ratio = Double.NaN;
-		} else {
-			double atr = sumTR / period;
-			
-			// On pose l'ATR à t = period-1 (barre n-1, en 0-based)
-			if (c.index == period - 1) {
-				c.atr = atr;
-				c.atr_ratio = safeDivide(atr, c.close);
-			}
-			
+		} 
+		
+
+		// On pose l'ATR à t = period-1 (barre n-1, en 0-based)
+		if (c.index == period - 1) {
+			atr = sumTR / period;
+			c.atr = atr;
+			c.atr_ratio = safeDivide(atr, c.close);
+		} else if (c.index >= period){
 			// 3) Lissage de Wilder pour les barres suivantes
 			atr = ((period - 1) * atr + c.tr) / period;  // RMA / Wilder
 			c.atr = atr;
