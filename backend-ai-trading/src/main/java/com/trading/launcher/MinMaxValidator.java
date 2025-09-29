@@ -39,7 +39,7 @@ public class MinMaxValidator extends AbstractService implements CommandLineRunne
 				, LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0)
 				,LocalDateTime.of(2020, Month.FEBRUARY, 1, 0, 0));
 		setIndex(candles);
-		AtrCalculator.compute(candles, 50);
+		AtrCalculator.compute(candles, 20);
 		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 //		HybridMinMaxAnalyzer minMaxAnalyzer = new HybridMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		List<Extremum> extremums = null;

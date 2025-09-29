@@ -126,7 +126,7 @@ public class SimpleMinMaxAnalyzer {
 
 		if (isMaxAfterCount(potentialMax, c) || isMaxAtr(potentialMax, c)) {
 			extremumList.add(new Extremum(potentialMax, potentialMax.getDate(), potentialMax.getMax(), ExtremumType.MAX, null));
-			System.out.println(c.getDate() + "  : new max at "  + potentialMax.getDate());
+//			System.out.println(c.getDate() + "  : new max at "  + potentialMax.getDate());
 			potentialMax = null;
 		}
 	}
@@ -142,7 +142,7 @@ public class SimpleMinMaxAnalyzer {
 		}
 		if (isMinAfterCount(potentialMin, c) || isMinAtr(potentialMin, c)) {
 			extremumList.add(new Extremum(potentialMin, potentialMin.getDate(), potentialMin.getMin(), ExtremumType.MIN, null));
-			System.out.println(c.getDate() + "  : new min at "  + potentialMin.getDate());
+//			System.out.println(c.getDate() + "  : new min at "  + potentialMin.getDate());
 			potentialMin = null;
 		}
 	}
