@@ -241,7 +241,7 @@ public class HotSpotVisualisation extends AbstractRunner {
 //		String type = "DOWN_RANGE";
 		
 		
-		hotSpots = hotSpotRepository.findByCodeAndMarketOrderByDateEnd(type, "BTCUSD");
+		hotSpots = hotSpotRepository.findByCodeAndMarketOrderByDateEnd(type, "GOLD");
 		hotSpots = hotSpots.stream()
 //				.filter(hs -> hs.getData().getLabels().contains("SPRING WIN"))
 //				.filter(hs -> hs.getData().getLabels().contains("SPRING FAIL"))

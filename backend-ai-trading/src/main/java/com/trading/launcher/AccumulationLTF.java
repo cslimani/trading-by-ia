@@ -15,7 +15,6 @@ import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
 import com.trading.enums.ExtremumType;
 import com.trading.indicator.AtrCalculator;
-import com.trading.indicator.EmaCalculator;
 import com.trading.indicator.MacdCalculator;
 import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.extremum.Extremum;
@@ -49,7 +48,6 @@ public class AccumulationLTF extends AbstractService implements CommandLineRunne
 				endDate);
 		setIndex(candles);
 		computeHigherLowRunsNaive(candles);
-		EmaCalculator.computeEMA(candles, 20);
 		RsiCalculator.computeRSI(candles, 14);
 		MacdCalculator.computeMacd(candles);
 		AtrCalculator.compute(candles, 10);
