@@ -32,10 +32,12 @@ public class Range {
 	public Double maxWithHigh;
 	public Candle candleMin;
 	public Candle candleMax;
+	public LocalDateTime dateStartTrade;
 	List<Candle> minList;
 	List<Candle> maxList;
 	List<Spring> springs;
 	Trade trade;
+	Integer sellingClimaxIndex;
 	public Double maxHeight;
 	Candle swingHighBefore;
 	Candle firstAccumulationCandle;

@@ -1,0 +1,21 @@
+Playbook H4 → M15
+
+H4 (biais) : Close > EMA200, EMA50↑, au moins 1 BOS haussier + HL tenu.
+
+M15 (setup) : cassure du range local avec volume puis retest (LPS).
+
+Stop : sous le HL M15 (ou sous le bas du test).
+
+Taille : risque fixe, stop ≈ 0.8–1.2× ATR(14) M15.
+
+TP : partiel à 2–3R, runner vers l’objectif H4 (hauteur du range / zone HTF).
+
+Playbook H1 → M5
+
+H1 (biais) : HH/HL + Close > EMA200.
+
+M5 (setup) : BOS M5 puis pullback au-dessus de l’ancien sommet (flip S→R), ou spring/test validé.
+
+Stop : sous le dernier HL M5 ; largeur ≈ 0.8× ATR(14) M5.
+
+TP : partiel 2R, sortie finale sur zone H1 (nœud de volume, sommet H1).

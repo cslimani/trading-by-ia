@@ -45,6 +45,7 @@ public interface CandleRepository extends CrudRepository<Candle, Long>{
 			nativeQuery = true)
 	Candle findNthCandleBeforeDate(@Param("market") String market, @Param("timeRange") String timeRange,
 			@Param("date") LocalDateTime date, @Param("nbCandle") int nbCandle);
+	
 }
 
 

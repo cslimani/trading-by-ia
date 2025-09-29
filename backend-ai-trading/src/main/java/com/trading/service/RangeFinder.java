@@ -20,7 +20,7 @@ import com.trading.indicator.extremum.Extremum;
 public class RangeFinder extends AbstractService {
 
 	public static final Double MAX_RANGE_ATR_RATIO_LOW = 5d;
-	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 7d;
+	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 6d;
 	public static final Double MIN_RANGE_ATR_RATIO = 1d;
 	public static final double BOTTOM_BAND_RATIO = 0.3d;
 	public static final double TOP_BAND_RATIO = 0.5d;
@@ -28,8 +28,9 @@ public class RangeFinder extends AbstractService {
 	public static final double BREAK_UP_ATR_RATIO = 0.5;
 	public static final double NB_BOTTOMS_REQUIRED = 2;
 	public static final int MIN_RANGE_WIDTH = 25;
-	public static final Integer NB_CANDLES_BEFORE = 45;
+	public static final Integer NB_CANDLES_BEFORE = 30;
 	public static final int MAX_RANGE_WIDTH = 100;
+	private static final Double RSI_LIMIT = 50d;
 
 	private boolean isPrevalidated(List<Candle> minList, List<Candle> maxList, Candle currentCandle) {
 		if (minList.size() < 2 || maxList.size() < 2) {
@@ -265,7 +266,7 @@ public class RangeFinder extends AbstractService {
 
 	private boolean isConditionOnRangeValid(Range range, List<Extremum> extremumsSwing, List<Candle> candles) {
 		DebugHolder.info();
-		double median = range.getMin() + range.getHeight()*0.2d;
+		double median = range.getMin() + range.getHeight()*0.5d;
 		Optional<Extremum> maxbeforeOpt = getFirstExtremumBefore(candles.get(range.getIndexStart()), extremumsSwing,
 				ExtremumType.MAX, false);
 		if (maxbeforeOpt.isEmpty()) {
@@ -279,6 +280,7 @@ public class RangeFinder extends AbstractService {
 				break;
 			}
 		}
+		
 		for (int i = startIndexCountCandlesBefore - NB_CANDLES_BEFORE; i < maxbeforeOpt.get().getIndex(); i++) {
 			if (i < 0) {
 				DebugHolder.eliminated("Not enought candles before range");
@@ -289,7 +291,18 @@ public class RangeFinder extends AbstractService {
 				return false;
 			}
 		}
-
+		boolean rsiOK = false;
+		for (int i = maxbeforeOpt.get().getIndex();  i <= range.getSellingClimaxIndex(); i++) {
+			if (candles.get(i).getRsi() <= RSI_LIMIT) {
+				rsiOK = true;
+			}
+		}
+		if (!rsiOK) {
+			DebugHolder.eliminated("RSI NOT OK on first leg");
+			return false;
+		}
+		
+		DebugHolder.stopHere();
 		int width = range.getIndexEnd() - range.getIndexStart();
 		if (width < MIN_RANGE_WIDTH) {
 			DebugHolder.eliminated("Range too narrow");
@@ -356,7 +369,6 @@ public class RangeFinder extends AbstractService {
 			Range range = buildRange(candles, currentCandle.getIndex(), min, max, minList, maxList, dateDecisionRangeValid);
 			if (range != null) {
 				if (isConditionOnRangeValid(range, extremumsReversed, candles)) {
-					DebugHolder.stopHere();
 					return range;
 				} else {
 					Candle maxRemoved = maxList.removeLast();
@@ -398,14 +410,14 @@ public class RangeFinder extends AbstractService {
 		Candle endCandle = candles.get(endIndex);
 		double height = max - min;
 		double bottomBand = min + height*0.2;
-		Optional<Candle> startIndexOpt = minList.stream()
+		Optional<Candle> firstMinNearBottom = minList.stream()
 				.filter(c -> c.getMin() < bottomBand)
 				.sorted(Comparator.comparingInt(Candle::getIndex))
 				.findFirst();
-		if (startIndexOpt.isEmpty()) {
+		if (firstMinNearBottom.isEmpty()) {
 			return null;
 		}
-		Integer startIndex = startIndexOpt.get().getIndex();
+		Integer startIndex = firstMinNearBottom.get().getIndex();
 		max = getMaxWithHigh(candles, startIndex + 1, endIndex);
 
 		//		Candle firstCandle = getFirstExtremum(minList, maxList);
@@ -428,6 +440,8 @@ public class RangeFinder extends AbstractService {
 			DebugHolder.eliminated("Last candle should be below median");
 			return null;
 		}
+		
+		
 		//		for (int i = startIndex; i < endIndex; i++) {
 		//			if (candles.get(i).getMin() < median) {
 		//				startIndex = i;
@@ -451,8 +465,17 @@ public class RangeFinder extends AbstractService {
 		if (startIndex >= endIndex) {
 			return null;
 		}
-		min = getMinWithLow(candles, startIndex, endIndex);
-		max = getMaxWithHigh(candles, startIndex, endIndex);
+		Candle lastExtremum = getLastExtremum(minList, maxList);
+		min = getMinWithLow(candles, startIndex, lastExtremum.getIndex());
+		max = getMaxWithHigh(candles, startIndex, lastExtremum.getIndex());
+		
+		DebugHolder.stopHere();
+		int nbCandlesUnderMin =  countCandlesUnderMin(candles, min, startIndex, endIndex);
+		if (nbCandlesUnderMin > 1) {
+			// Why ? if price goes many times under min but is not a min yet
+			DebugHolder.eliminated("Too many candles under min");
+			return null;
+		}
 		return Range.builder()
 				.indexEnd(endIndex)
 				.dateStart(candles.get(startIndex).getDate())
@@ -460,6 +483,7 @@ public class RangeFinder extends AbstractService {
 				.indexStart(startIndex)
 				.indexRangeValidated(endIndex)
 				.min(min)
+				.sellingClimaxIndex(firstMinNearBottom.get().getIndex())
 				.height(max - min)
 				.minWithLow(getMinWithLow(candles, startIndex, endIndex))
 				.maxWithHigh(getMaxWithHigh(candles, startIndex, endIndex))
@@ -469,6 +493,16 @@ public class RangeFinder extends AbstractService {
 				.maxList(maxList)
 				.max(max)
 				.build();
+	}
+
+	private int countCandlesUnderMin(List<Candle> candles, double min, Integer startIndex, int endIndex) {
+		int count = 0;
+		for (int i = startIndex; i <= endIndex; i++) {
+			if (candles.get(i).getMin() < min) {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	private Double getMaxWithHigh(List<Candle> candles, int startIndex, int endIndex) {

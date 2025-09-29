@@ -234,9 +234,14 @@ public class HotSpotVisualisation extends AbstractRunner {
 	protected void runnerInit() {
 		setup("EURUSD", EnumTimeRange.M15);
 //		String type = "SPRING_LABEL";
-		String type = "RANGE_TO_FIX";
+//		String type = "RANGE_TO_AVOID";
 //		String type = "RANGE_LABEL";
-		hotSpots = hotSpotRepository.findByCodeAndMarketOrderByDateEnd(type, "US100");
+		String type = "WIN_RANGE";
+//		String type = "LOST_RANGE";
+//		String type = "DOWN_RANGE";
+		
+		
+		hotSpots = hotSpotRepository.findByCodeAndMarketOrderByDateEnd(type, "BTCUSD");
 		hotSpots = hotSpots.stream()
 //				.filter(hs -> hs.getData().getLabels().contains("SPRING WIN"))
 //				.filter(hs -> hs.getData().getLabels().contains("SPRING FAIL"))

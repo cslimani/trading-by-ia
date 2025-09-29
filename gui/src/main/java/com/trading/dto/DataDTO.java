@@ -8,13 +8,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.checkerframework.checker.units.qual.K;
 import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
 import com.trading.entity.Market;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.AtrCalculator;
+import com.trading.indicator.EmaCalculator;
+import com.trading.indicator.RsiCalculator;
 
 import lombok.Data;
 
@@ -58,6 +59,8 @@ public class DataDTO {
 	Map<String, Market> mapMarkets = new ConcurrentHashMap<String, Market>();
 	List<VerticalLine> verticalLines = new ArrayList<VerticalLine>();
 	AtrCalculator atrCalculator;
+	RsiCalculator rsiCalculator;
+	EmaCalculator emaCalculator;
 	
 	public void init(int candleWidth, int spaceBetweenCandles) {
 		this.candleWidth = candleWidth;

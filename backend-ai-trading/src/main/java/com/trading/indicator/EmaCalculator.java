@@ -1,12 +1,19 @@
 package com.trading.indicator;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.trading.entity.Candle;
 
 public class EmaCalculator {
 
-	public static void computeEMA(List<Candle> candles, int period) {
+	private Map<LocalDateTime, Double> mapDateEma = new HashMap<>();
+	
+	public EmaCalculator(List<Candle> candles, int period) {
+//		System.out.println("First date of EMA is " + candles.get(0).getDate());
 		if (candles == null || candles.size() < period) {
 			return;
 		}
@@ -30,11 +37,15 @@ public class EmaCalculator {
 			double emaPrev = prev.ema;
 			double ema = (cur.close * k) + (emaPrev * (1 - k));
 			cur.ema = ema;
-
+			mapDateEma.put(candles.get(i).getDate(), ema);
 			// pente = EMA_t - EMA_{t-1}
 			cur.emaSlope = ema - emaPrev;
 		}
-
+//		System.out.println("Build EMA until " + candles.get(candles.size()-1).getDate());
 	}
 
+	
+	public Double get(LocalDateTime date) {
+		return mapDateEma.get(date.truncatedTo(ChronoUnit.HOURS));
+	}
 }

@@ -6,8 +6,10 @@ import org.springframework.stereotype.Component;
 
 import com.trading.entity.Candle;
 import com.trading.indicator.AtrCalculator;
+import com.trading.indicator.EmaCalculator;
 import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.SlopeLRCalculator;
+import com.trading.repository.CandleRepository;
 
 @Component
 public class IndicatorFeature extends AbstractFeature{
@@ -46,6 +48,8 @@ public class IndicatorFeature extends AbstractFeature{
 		atrCalculator = new AtrCalculator(data.getCandles());
 		slopeLRCalculator = new SlopeLRCalculator(data.getCandles());
 		data.setAtrCalculator(atrCalculator);
+		EmaCalculator emaCalculator = new EmaCalculator(candleRepository, data.getCandles().getLast(), 200);
+		data.setEmaCalculator(emaCalculator);
 	}
 
 }

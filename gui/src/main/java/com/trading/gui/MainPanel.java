@@ -17,6 +17,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Ellipse2D;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -37,6 +38,7 @@ import com.trading.dto.HorizontalLine;
 import com.trading.dto.PricePointDTO;
 import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
+import com.trading.indicator.EmaCalculator;
 
 @Component("MainPanel")
 public class MainPanel extends AbstractPanel implements Scrollable, ActionListener, MouseListener, 
@@ -237,7 +239,20 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 				yLineStart = y  + height;
 				yLineEnd = y + height + priceToPixel(candle.getMin() - candle.getLow());
 				g2d.drawLine(xLine, yLineStart, xLine, yLineEnd);
+
+				drawIndicators(candle, xLine);
 			}
+		}
+	}
+
+	private void drawIndicators(Candle c, int x) {
+		EmaCalculator emaCalculator = data.getEmaCalculator();
+		if (emaCalculator != null && emaCalculator.get(c.getDate()) != null) {
+			Double ema = emaCalculator.get(c.getDate());
+			g2d.setColor(Color.ORANGE);
+			java.awt.geom.Ellipse2D.Double cirle = new Ellipse2D.Double(x - 2, priceToYPixel(ema), 4, 4);
+			g2d.draw(cirle);
+			g2d.fill(cirle);
 		}
 	}
 
@@ -386,9 +401,9 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 		riskRatioFeature.keyPressed(e.getKeyCode());
 		distanceFeature.keyPressed(e.getKeyCode());
 		//touche - du pav num
-//		if (e.getKeyCode() == 109) {
-//			unzoomMaximum();
-//		}
+		//		if (e.getKeyCode() == 109) {
+		//			unzoomMaximum();
+		//		}
 		repaint();
 	}
 
@@ -484,10 +499,10 @@ MouseMotionListener, MouseWheelListener, KeyListener, ChangeListener  {
 	public void setSecondTopPanel(SecondTopPanel secondTopPanel) {
 		this.secondTopPanel = secondTopPanel;
 	}
-	
+
 	@Override
 	public void mousePressed(MouseEvent e) {
-		
+
 	}
 
 	public void reload() {

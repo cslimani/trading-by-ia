@@ -7,6 +7,7 @@ import com.trading.dto.DataDTO;
 import com.trading.gui.LeftPanel;
 import com.trading.gui.MainPanel;
 import com.trading.gui.TopPanel;
+import com.trading.repository.CandleRepository;
 import com.trading.repository.HotSpotRepository;
 
 import lombok.Getter;
@@ -16,7 +17,8 @@ public abstract class AbstractFeature {
 
 	@Autowired
 	HotSpotRepository hotSpotRepository;
-	
+	@Autowired
+	CandleRepository candleRepository;
 	@Autowired
 	public DataDTO data;
 	@Autowired

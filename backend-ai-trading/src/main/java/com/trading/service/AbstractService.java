@@ -112,7 +112,8 @@ public class AbstractService {
 			LocalDateTime dateEnd,
 			List<LocalDateTime> keyDates,
 			String market, 
-			EnumTimeRange timeRange, String code,
+			EnumTimeRange timeRange,
+			String code,
 			HotSpotData data) {
 		hotSpotRepository.save(HotSpot.builder()
 				.market(market)
