@@ -292,15 +292,16 @@ public class RangeFinder extends AbstractService {
 			}
 		}
 		boolean rsiOK = false;
-		for (int i = maxbeforeOpt.get().getIndex();  i <= range.getSellingClimaxIndex(); i++) {
-			if (candles.get(i).getRsi() <= RSI_LIMIT) {
-				rsiOK = true;
-			}
-		}
-		if (!rsiOK) {
-			DebugHolder.eliminated("RSI NOT OK on first leg");
-			return false;
-		}
+//		for (int i = maxbeforeOpt.get().getIndex();  i <= range.getSellingClimaxIndex(); i++) {
+//			if (candles.get(i).getRsi() <= RSI_LIMIT) {
+//				rsiOK = true;
+//		        break;
+//			}
+//		}
+//		if (!rsiOK) {
+//			DebugHolder.eliminated("RSI NOT OK on first leg");
+//			return false;
+//		}
 		
 		DebugHolder.stopHere();
 		int width = range.getIndexEnd() - range.getIndexStart();

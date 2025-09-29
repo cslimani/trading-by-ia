@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -35,13 +34,13 @@ import com.trading.entity.Candle;
 import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.AtrCalculator;
-import com.trading.indicator.EmaCalculator;
 import com.trading.indicator.RsiCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SimpleMinMaxAnalyzer;
 import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
 import com.trading.service.DebugHolder;
+import com.trading.service.PriceEmbargo;
 import com.trading.service.RangeFinder;
 import com.trading.service.old.FeatureWriterSpring;
 
@@ -145,22 +144,24 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				"SPRING_LABEL", timeRange, market, startDate, endDate);
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, timeRange,
 				startDate.minusDays(50), endDate.plusDays(7));
+		PriceEmbargo priceEmbargo = new PriceEmbargo(candles);
 
-		List<Candle> candlesHTF = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, EnumTimeRange.H1,
-				startDate.minusDays(100), endDate.plusDays(10));
-		setIndex(candlesHTF);
-		Map<LocalDateTime, Candle> mapCandlesHTF = candlesHTF.stream().collect(Collectors.toMap(c -> c.getDate(), c -> c));
-		EmaCalculator emaCalculator =  new EmaCalculator(new ArrayList<>(candlesHTF), 200);
+//		List<Candle> candlesHTF = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, EnumTimeRange.H1,
+//				startDate.minusDays(100), endDate.plusDays(10));
+//		setIndex(candlesHTF);
+//		Map<LocalDateTime, Candle> mapCandlesHTF = candlesHTF.stream().collect(Collectors.toMap(c -> c.getDate(), c -> c));
+//		EmaCalculator emaCalculator =  new EmaCalculator(new ArrayList<>(candlesHTF), 200);
 
-		setIndex(candles);
-		AtrCalculator.compute(candles, 20);
-		RsiCalculator.computeRSI(candles, 14);
+		
+//		RsiCalculator.computeRSI(candles, 14);
 		List<Range> rangeList = new ArrayList<Range>();
+		AtrCalculator atrCalculator = new AtrCalculator(20);
 		
 		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
 			DebugHolder.activate(c);
+			atrCalculator.compute(c);
 			List<Extremum> extremumsSwing = minMaxAnalyzer.process(c);
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate)) {
 				continue;
