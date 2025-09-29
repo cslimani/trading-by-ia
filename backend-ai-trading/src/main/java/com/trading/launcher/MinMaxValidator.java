@@ -15,7 +15,7 @@ import com.trading.entity.Candle;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.AtrCalculator;
 import com.trading.indicator.extremum.Extremum;
-import com.trading.indicator.extremum.HybridMinMaxAnalyzer;
+import com.trading.indicator.extremum.SimpleMinMaxAnalyzer;
 import com.trading.repository.CandleRepository;
 import com.trading.service.AbstractService;
 
@@ -40,8 +40,8 @@ public class MinMaxValidator extends AbstractService implements CommandLineRunne
 				,LocalDateTime.of(2020, Month.FEBRUARY, 1, 0, 0));
 		setIndex(candles);
 		AtrCalculator.compute(candles, 50);
-//		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
-		HybridMinMaxAnalyzer minMaxAnalyzer = new HybridMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
+		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
+//		HybridMinMaxAnalyzer minMaxAnalyzer = new HybridMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
 		List<Extremum> extremums = null;
 		for (int i = 0; i < candles.size(); i++) {
 			Candle c = candles.get(i);
