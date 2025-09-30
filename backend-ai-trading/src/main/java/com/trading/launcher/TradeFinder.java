@@ -186,7 +186,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			}
 
 			DebugHolder.accepted(range);
-			increaseCount("isSpringBeforeLimit");
+//			increaseCount("isSpringBeforeLimit");
 			rangeList.add(range);
 			//			increaseCount("RANGE");
 //			int indexCandlePreviousHTF = mapCandlesHTF.get(range.getDateEnd().truncatedTo(ChronoUnit.HOURS)).getIndex()-1;
@@ -196,22 +196,22 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 ////								continue;
 //			}
 
-//			List<HorizontalLine> lines = List.of(buildLine(range.getDateStart(), range.getMin(), "#FFFFFF"),
-//					buildLine(range.getDateStart(), range.getMin() + range.getHeight()/2, "#FFFFFF"));
-//			HotSpotData data = HotSpotData.builder().lines(lines).build();
-//			if (isGoingDown(range, candles)) {
-//				increaseCount("GOING DOWN");
-//				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "DOWN_RANGE", data);
-////				System.out.println("GOING DOWN " + range.getDateEnd());
-//			} else if (isWinner(range, candles)) {
-//				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "WIN_RANGE", data);
-//				increaseCount("WIN");
-////				System.out.println("WIN " + range.getDateEnd());
-//			} else {
-//				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "LOST_RANGE", data);
-//				increaseCount("LOST");
-////				System.out.println("LOST " + range.getDateEnd());
-//			}
+			List<HorizontalLine> lines = List.of(buildLine(range.getDateStart(), range.getMin(), "#FFFFFF"),
+					buildLine(range.getDateStart(), range.getMin() + range.getHeight()/2, "#FFFFFF"));
+			HotSpotData data = HotSpotData.builder().lines(lines).build();
+			if (isGoingDown(range, candles)) {
+				increaseCount("GOING DOWN");
+				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "DOWN_RANGE", data);
+//				System.out.println("GOING DOWN " + range.getDateEnd());
+			} else if (isWinner(range, candles)) {
+				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "WIN_RANGE", data);
+				increaseCount("WIN");
+//				System.out.println("WIN " + range.getDateEnd());
+			} else {
+				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "LOST_RANGE", data);
+				increaseCount("LOST");
+//				System.out.println("LOST " + range.getDateEnd());
+			}
 		}
 
 		//			if (!hotSpotsToFind.stream().anyMatch(hs -> hs.getDateStart().equals(range.getDateStart()))) {
