@@ -184,7 +184,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			}
 
 			DebugHolder.accepted(range);
-			System.out.println(range.getDateStart());
+//			System.out.println(range.getDateStart());
 			rangeList.add(range);
 			//			increaseCount("RANGE");
 //			int indexCandlePreviousHTF = mapCandlesHTF.get(range.getDateEnd().truncatedTo(ChronoUnit.HOURS)).getIndex()-1;
@@ -200,15 +200,15 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			if (isGoingDown(range, candles)) {
 				increaseCount("GOING DOWN");
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "DOWN_RANGE", data);
-				System.out.println("GOING DOWN " + range.getDateEnd());
+//				System.out.println("GOING DOWN " + range.getDateEnd());
 			} else if (isWinner(range, candles)) {
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "WIN_RANGE", data);
 				increaseCount("WIN");
-				System.out.println("WIN " + range.getDateEnd());
+//				System.out.println("WIN " + range.getDateEnd());
 			} else {
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "LOST_RANGE", data);
 				increaseCount("LOST");
-				System.out.println("LOST " + range.getDateEnd());
+//				System.out.println("LOST " + range.getDateEnd());
 			}
 		}
 

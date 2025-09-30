@@ -15,8 +15,8 @@ public class DebugHolder {
 	public static void activate(Candle c){
 //		System.out.println(c.getDate());
 		if (c.getDate().isEqual(date)) {
-			candleDate = c;
-			debug = true;
+//			candleDate = c;
+//			debug = true;
 		}
 	}
 
