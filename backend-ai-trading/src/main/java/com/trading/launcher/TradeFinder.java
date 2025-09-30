@@ -283,21 +283,21 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	}
 
 	private boolean isSpringBeforeLimit(Range range, List<Candle> candles, String market) {
-		List<Candle> candlesExtra = new ArrayList<>();
-		candlesExtra.addAll(candles);
-		if (candles.size() - range.getIndexEnd() < 100) {
-			Candle lastCandle = candles.getLast();
-			Integer lastCandleIndex = lastCandle.getIndex();
-			List<Candle> moreCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
-					market, timeRange, lastCandle.getDate().plusSeconds(1), lastCandle.getDate().plusWeeks(1));
-			candlesExtra.addAll(moreCandles);
-			setIndex(candlesExtra);
-			if (moreCandles.getFirst().getIndex() != lastCandleIndex + 1) {
-				throw new RuntimeException("Something very weird");
-			}
-		}
-		for(int i = range.getIndexEnd(); i < candlesExtra.size(); i++) {
-			Candle c = candlesExtra.get(i);
+//		List<Candle> candlesExtra = new ArrayList<>();
+//		candlesExtra.addAll(candles);
+//		if (candles.size() - range.getIndexEnd() < 100) {
+//			Candle lastCandle = candles.getLast();
+//			Integer lastCandleIndex = lastCandle.getIndex();
+//			List<Candle> moreCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
+//					market, timeRange, lastCandle.getDate().plusSeconds(1), lastCandle.getDate().plusWeeks(1));
+//			candlesExtra.addAll(moreCandles);
+//			setIndex(candlesExtra);
+//			if (moreCandles.getFirst().getIndex() != lastCandleIndex + 1) {
+//				throw new RuntimeException("Something very weird");
+//			}
+//		}
+		for(int i = range.getIndexEnd(); i < candles.size(); i++) {
+			Candle c = candles.get(i);
 			if (c.getHigh() > range.getMax() + range.getHeight()) {
 				DebugHolder.eliminated("Range is going to high");
 				return false;
