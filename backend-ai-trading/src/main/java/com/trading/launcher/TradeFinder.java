@@ -169,8 +169,8 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				continue;
 			}
 
-			Double atr = getDayBeforeAverageATR(candles, c);
-			Range range = rangeFinder.getLargestRangeFast(candles, i, extremumsSwing, atr);
+//			Double atr = getDayBeforeAverageATR(candles, c);
+			Range range = rangeFinder.getLargestRangeFast(candles, i, extremumsSwing);
 			if (range == null) {
 				continue;
 			}

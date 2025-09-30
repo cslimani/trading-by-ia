@@ -157,7 +157,7 @@ public class RangeFinder extends AbstractService {
 		return true;
 	}
 
-	public Range getLargestRangeFast(List<Candle> candles, int actualIndex, List<Extremum> extremumsSwing, Double atr) {
+	public Range getLargestRangeFast(List<Candle> candles, int actualIndex, List<Extremum> extremumsSwing) {
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 		Double currentRangeHeight = null;
