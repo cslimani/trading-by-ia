@@ -26,6 +26,10 @@ public class PriceEmbargo {
 		}
 	}
 	
+	public Candle current() {
+		return availableCandles.getLast();
+	}
+	
 	public Candle goForward() {
 		Candle c = allCandles.removeFirst();
 		atrCalculator.compute(c);

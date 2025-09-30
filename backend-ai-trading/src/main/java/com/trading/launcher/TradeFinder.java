@@ -297,8 +297,8 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 //				throw new RuntimeException("Something very weird");
 //			}
 //		}
-		while(priceEmbargo.hasNext()) {
-			Candle c = priceEmbargo.goForward();
+		Candle c = priceEmbargo.current();
+		while(true) {
 			if (c.getHigh() > range.getMax() + range.getHeight()) {
 				DebugHolder.eliminated("Range is going to high");
 				return false;
@@ -312,6 +312,10 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				range.setIndexEnd(c.getIndex());
 				return true;
 			}
+			if (!priceEmbargo.hasNext()) {
+				break;
+			}
+			c = priceEmbargo.goForward();
 		}
 		throw new RuntimeException("Range is going exceeding the current period, it starts at " + range.getDateStart().format(formatter));
 	}
