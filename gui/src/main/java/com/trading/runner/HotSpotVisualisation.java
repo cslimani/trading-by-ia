@@ -236,8 +236,8 @@ public class HotSpotVisualisation extends AbstractRunner {
 //		String type = "SPRING_LABEL";
 //		String type = "RANGE_TO_AVOID";
 //		String type = "RANGE_LABEL";
-//		String type = "WIN_RANGE";
-		String type = "LOST_RANGE";
+		String type = "WIN_RANGE";
+//		String type = "LOST_RANGE";
 //		String type = "DOWN_RANGE";
 		
 		

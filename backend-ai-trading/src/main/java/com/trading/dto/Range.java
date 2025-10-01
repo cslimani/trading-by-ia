@@ -36,6 +36,7 @@ public class Range {
 	List<Candle> minList;
 	List<Candle> maxList;
 	List<Spring> springs;
+	public Double riskRatio;
 	Trade trade;
 	Integer sellingClimaxIndex;
 	public Double maxHeight;

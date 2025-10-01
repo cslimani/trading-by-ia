@@ -15,9 +15,9 @@ import com.trading.entity.Candle;
 import com.trading.enums.ExtremumType;
 import com.trading.indicator.MedianCalculator;
 import com.trading.indicator.extremum.Extremum;
+import com.trading.strategy.AbstractStrategy;
 
-@Component
-public class RangeFinder extends AbstractService {
+public class RangeFinderStrategy extends AbstractStrategy {
 
 	public static final Double MAX_RANGE_ATR_RATIO_LOW = 5d;
 	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 6d;
@@ -157,11 +157,11 @@ public class RangeFinder extends AbstractService {
 		return true;
 	}
 
-	public Range getLargestRangeFast(List<Candle> candles, int actualIndex, List<Extremum> extremumsSwing) {
+	public Range getLargestRangeFast(List<Candle> candles, Candle currentCandle, List<Extremum> extremumsSwing) {
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 		Double currentRangeHeight = null;
-		
+		int actualIndex = currentCandle.getIndex();
 		double averageATR = getAverageATR(candles, actualIndex - 50, actualIndex);
 		double maxRangeHeightLow = averageATR*MAX_RANGE_ATR_RATIO_LOW;
 		double maxRangeHeightHigh = averageATR*MAX_RANGE_ATR_RATIO_HIGH;

@@ -11,38 +11,39 @@ import lombok.NonNull;
 public class PriceEmbargo {
 
 	@NonNull
-	List<Candle> allCandles;
-	List<Candle> availableCandles = new ArrayList<>();
+	List<Candle> forwardCandles;
+	List<Candle> pastCandles = new ArrayList<>();
 	AtrCalculator atrCalculator = new AtrCalculator(20);
 	
-	public PriceEmbargo(List<Candle> allCandles, List<Candle> availableCandles, boolean isSetIndex) {
-		this.allCandles = new ArrayList<>(allCandles);
-		this.availableCandles = new ArrayList<>(availableCandles);
-		for (int i = 0; i < availableCandles.size(); i++) {
-			atrCalculator.compute(availableCandles.get(i));
+	public PriceEmbargo(List<Candle> forwardCandles, List<Candle> pastCandles, boolean isSetIndex) {
+		this.forwardCandles = new ArrayList<>(forwardCandles);
+		this.pastCandles = new ArrayList<>(pastCandles);
+		for (int i = 0; i < pastCandles.size(); i++) {
+			atrCalculator.compute(pastCandles.get(i));
 		}
 		if (isSetIndex) {
-			setIndex(allCandles);
+			setIndex(forwardCandles);
 		}
 	}
 	
 	public Candle current() {
-		return availableCandles.getLast();
+		return pastCandles.getLast();
 	}
 	
+	
 	public Candle goForward() {
-		Candle c = allCandles.removeFirst();
+		Candle c = forwardCandles.removeFirst();
 		atrCalculator.compute(c);
-		availableCandles.add(c);
+		pastCandles.add(c);
 		return c;
 	}
 	
 	public boolean hasNext() {
-		return 	!allCandles.isEmpty();
+		return 	!forwardCandles.isEmpty();
 	}
 	
 	public int size() {
-		return availableCandles.size();
+		return pastCandles.size();
 	}
 	
 	public void setIndex(List<Candle> candles) {
@@ -52,7 +53,17 @@ public class PriceEmbargo {
 	}
 	
 	public PriceEmbargo clone() {
-		return new PriceEmbargo(allCandles, availableCandles, false);
+		return new PriceEmbargo(forwardCandles, pastCandles, false);
+	}
+
+	public Candle get(int i) {
+		return pastCandles.get(i);
+	}
+	
+	public List<Candle> getAllCandles() {
+		List<Candle> all = new ArrayList<>(pastCandles);
+		all.addAll(forwardCandles);
+		return all;
 	}
 	
 }
