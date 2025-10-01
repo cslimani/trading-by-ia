@@ -143,12 +143,6 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				startDate.minusDays(50), endDate.plusDays(7));
 		PriceEmbargo priceEmbargo = new PriceEmbargo(candles, List.of(), true);
 
-//		List<Candle> candlesHTF = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, EnumTimeRange.H1,
-//				startDate.minusDays(100), endDate.plusDays(10));
-//		setIndex(candlesHTF);
-//		Map<LocalDateTime, Candle> mapCandlesHTF = candlesHTF.stream().collect(Collectors.toMap(c -> c.getDate(), c -> c));
-//		EmaCalculator emaCalculator =  new EmaCalculator(new ArrayList<>(candlesHTF), 200);
-
 		
 //		RsiCalculator.computeRSI(candles, 14);
 		List<Range> rangeList = new ArrayList<Range>();
@@ -182,13 +176,6 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 //			increaseCount("RANGE");
 			DebugHolder.accepted(range);
 			rangeList.add(range);
-			//			increaseCount("RANGE");
-//			int indexCandlePreviousHTF = mapCandlesHTF.get(range.getDateEnd().truncatedTo(ChronoUnit.HOURS)).getIndex()-1;
-//			Candle candlePreviousHTF = candlesHTF.get(indexCandlePreviousHTF);
-//			Double emaHTF = emaCalculator.get(candlePreviousHTF.getDate());
-//			if (candlePreviousHTF.getMax() < emaHTF) {
-////								continue;
-//			}
 			
 			List<HorizontalLine> lines = List.of(buildLine(range.getDateStart(), range.getMin(), "#FFFFFF"),
 					buildLine(range.getDateStart(), range.getMin() + range.getHeight()/2, "#FFFFFF"));
@@ -288,19 +275,6 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	}
 
 	private boolean isSpringBeforeLimit(Range range, PriceEmbargo priceEmbargo, String market) {
-//		List<Candle> candlesExtra = new ArrayList<>();
-//		candlesExtra.addAll(candles);
-//		if (candles.size() - range.getIndexEnd() < 100) {
-//			Candle lastCandle = candles.getLast();
-//			Integer lastCandleIndex = lastCandle.getIndex();
-//			List<Candle> moreCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(
-//					market, timeRange, lastCandle.getDate().plusSeconds(1), lastCandle.getDate().plusWeeks(1));
-//			candlesExtra.addAll(moreCandles);
-//			setIndex(candlesExtra);
-//			if (moreCandles.getFirst().getIndex() != lastCandleIndex + 1) {
-//				throw new RuntimeException("Something very weird");
-//			}
-//		}
 		Candle c = priceEmbargo.current();
 		while(true) {
 			if (c.getHigh() > range.getMax() + range.getHeight()) {
