@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.springframework.stereotype.Component;
-
 import com.trading.dto.Range;
 import com.trading.entity.Candle;
 import com.trading.enums.ExtremumType;
@@ -157,12 +155,12 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		return true;
 	}
 
-	public Range getLargestRangeFast(List<Candle> candles, Candle currentCandle, List<Extremum> extremumsSwing) {
+	public Range getLargestRangeFast(PriceEmbargo priceEmbargo, Candle currentCandle, List<Extremum> extremumsSwing) {
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 		Double currentRangeHeight = null;
 		int actualIndex = currentCandle.getIndex();
-		double averageATR = getAverageATR(candles, actualIndex - 50, actualIndex);
+		double averageATR = getAverageATR(priceEmbargo, actualIndex - 50, actualIndex);
 		double maxRangeHeightLow = averageATR*MAX_RANGE_ATR_RATIO_LOW;
 		double maxRangeHeightHigh = averageATR*MAX_RANGE_ATR_RATIO_HIGH;
 		
@@ -184,26 +182,15 @@ public class RangeFinderStrategy extends AbstractStrategy {
 			DebugHolder.message("Looking at Extremum " + e.getDate());
 			DebugHolder.info();
 			Candle c = e.getCandle();
-			//			if (lastExtremum != null 
-			//					&& lastExtremum.isMin()
-			//					&& isRangeValid(minList, maxList, candles.get(actualIndex))) {
-			//				DebugHolder.info();
-			//				return buildRange(candles, actualIndex, min, max, minList, maxList, extremumsReversed, c.getDate());
-			//			}
-
-			//			double medianATR = getMedianATR(candles, e.getIndex(), actualIndex);
 
 			if (!maxList.isEmpty() && !minList.isEmpty()) {
 				currentRangeHeight = getMaxOfTops(maxList).getMax() - getMinOfBottoms(minList).getMin();
 			}
 
 			if (e.isMax()) {
-				//				if (c.isDate(25, 8) && c.isTime(13, 25, 0)) {
-				//					getClass();
-				//				}
 				if (maxList.size() >= 5) {
 					DebugHolder.message(c.getDate() + " enough tops and bottoms");
-					return getRange(minList, maxList, candles.get(actualIndex), candles,
+					return getRange(minList, maxList, priceEmbargo.get(actualIndex), priceEmbargo,
 							min, max, extremumsReversed, c.getDate());
 				} else	if (!minList.isEmpty()) {
 					double potentialRangeHeight = c.getMax() - min;
@@ -215,7 +202,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 						} else {
 							if (currentRangeHeight == null || potentialRangeHeight >= 1.5*currentRangeHeight ) {
 								DebugHolder.message(c.getDate() + " new max out of bounds");
-								return getRange(minList, maxList, candles.get(actualIndex), candles,
+								return getRange(minList, maxList, priceEmbargo.get(actualIndex), priceEmbargo,
 										min, max, extremumsReversed, c.getDate());
 							} else {
 								DebugHolder.message(c.getDate() + " is valid max");
@@ -223,7 +210,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 						}
 					} else {
 						DebugHolder.message(c.getDate() + " new max out of bounds");
-						return getRange(minList, maxList, candles.get(actualIndex), candles,
+						return getRange(minList, maxList, priceEmbargo.get(actualIndex), priceEmbargo,
 								min, max, extremumsReversed, c.getDate());
 					}
 				}
@@ -264,10 +251,10 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		return null;
 	}
 
-	private boolean isConditionOnRangeValid(Range range, List<Extremum> extremumsSwing, List<Candle> candles) {
+	private boolean isConditionOnRangeValid(Range range, List<Extremum> extremumsSwing, PriceEmbargo priceEmbargo) {
 		DebugHolder.info();
 		double median = range.getMin() + range.getHeight()*0.5d;
-		Optional<Extremum> maxbeforeOpt = getFirstExtremumBefore(candles.get(range.getIndexStart()), extremumsSwing,
+		Optional<Extremum> maxbeforeOpt = getFirstExtremumBefore(priceEmbargo.get(range.getIndexStart()), extremumsSwing,
 				ExtremumType.MAX, false);
 		if (maxbeforeOpt.isEmpty()) {
 			DebugHolder.eliminated("No max before range");
@@ -275,7 +262,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		}
 		int startIndexCountCandlesBefore = range.getIndexStart();
 		for (int i = range.getIndexStart(); i < range.getIndexEnd(); i++) {
-			if (candles.get(i).getLow() <= median ) {
+			if (priceEmbargo.get(i).getLow() <= median ) {
 				startIndexCountCandlesBefore = i;
 				break;
 			}
@@ -286,7 +273,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 				DebugHolder.eliminated("Not enought candles before range");
 				return false;
 			}
-			if (candles.get(i).getLow() < median) {
+			if (priceEmbargo.get(i).getLow() < median) {
 				DebugHolder.eliminated("Candles before range are too low");
 				return false;
 			}
@@ -313,16 +300,16 @@ public class RangeFinderStrategy extends AbstractStrategy {
 			DebugHolder.eliminated("Range too wide");
 			return false;
 		}
-		if (!isRepartitionBalanced(range, candles)) {
+		if (!isRepartitionBalanced(range, priceEmbargo)) {
 			DebugHolder.eliminated("Candles repartition is not valid");
 			return false;
 		}
 		return true;
 	}
 
-	private boolean isRepartitionBalanced(Range range, List<Candle> candles) {
+	private boolean isRepartitionBalanced(Range range, PriceEmbargo priceEmbargo) {
 		Integer startIndex = range.getIndexStart();
-		Candle candleStart = candles.get(startIndex);
+		Candle candleStart = priceEmbargo.get(startIndex);
 		Integer endIndex = range.getIndexEnd();
 		int indexMiddle = (startIndex + endIndex) / 2;
 		Double min = range.getMinWithLow();
@@ -334,7 +321,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		Map<Integer, AtomicInteger> map = Map.of(0, new AtomicInteger(0), 1, new AtomicInteger(0), 2,
 				new AtomicInteger(0), 3, new AtomicInteger(0));
 		for (int i = startIndex; i <= endIndex; i++) {
-			Candle c = candles.get(i);
+			Candle c = priceEmbargo.get(i);
 			if (i < indexMiddle && c.getHigh() >= highBand) {
 				map.get(0).incrementAndGet();
 			}
@@ -361,15 +348,15 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		}
 		return !isInvalid;
 	}
-	private Range getRange(List<Candle> minList, List<Candle> maxList, Candle currentCandle, List<Candle> candles,
+	private Range getRange(List<Candle> minList, List<Candle> maxList, Candle currentCandle, PriceEmbargo priceEmbargo,
 			double min, double max, List<Extremum> extremumsReversed, LocalDateTime dateDecisionRangeValid) {
 //		minList.sort(Comparator.comparing(Candle::getIndex));
 //		maxList.sort(Comparator.comparing(Candle::getIndex));
 		while (isPrevalidated(minList, maxList, currentCandle)) {
 			DebugHolder.info();
-			Range range = buildRange(candles, currentCandle.getIndex(), min, max, minList, maxList, dateDecisionRangeValid);
+			Range range = buildRange(priceEmbargo, currentCandle.getIndex(), min, max, minList, maxList, dateDecisionRangeValid);
 			if (range != null) {
-				if (isConditionOnRangeValid(range, extremumsReversed, candles)) {
+				if (isConditionOnRangeValid(range, extremumsReversed, priceEmbargo)) {
 					return range;
 				} else {
 					Candle maxRemoved = maxList.removeLast();
@@ -390,10 +377,10 @@ public class RangeFinderStrategy extends AbstractStrategy {
 				.sorted(Comparator.comparingInt(Candle::getIndex).reversed()).findFirst().get();
 	}
 
-	public double getAverageATR(List<Candle> candles, Integer startIndex, int endIndex) {
+	public double getAverageATR(PriceEmbargo priceEmbargo, Integer startIndex, int endIndex) {
 		double average = 0;
 		for (int i = Math.max(0, startIndex); i <= endIndex; i++) {
-			average += candles.get(i).getAtr();
+			average += priceEmbargo.get(i).getAtr();
 		}
 		return average/(endIndex - startIndex + 1);
 	}
@@ -405,10 +392,10 @@ public class RangeFinderStrategy extends AbstractStrategy {
 				.sorted(Comparator.comparingInt(Candle::getIndex)).findFirst().get();
 	}
 
-	public Range buildRange(List<Candle> candles, int endIndex, double min, double max,
+	public Range buildRange(PriceEmbargo priceEmbargo, int endIndex, double min, double max,
 			List<Candle> minList, List<Candle> maxList, LocalDateTime dateDecisionRangeValid) {
 		DebugHolder.info();
-		Candle endCandle = candles.get(endIndex);
+		Candle endCandle = priceEmbargo.get(endIndex);
 		double height = max - min;
 		double bottomBand = min + height*0.2;
 		Optional<Candle> firstMinNearBottom = minList.stream()
@@ -419,14 +406,14 @@ public class RangeFinderStrategy extends AbstractStrategy {
 			return null;
 		}
 		Integer startIndex = firstMinNearBottom.get().getIndex();
-		max = getMaxWithHigh(candles, startIndex + 1, endIndex);
+		max = getMaxWithHigh(priceEmbargo, startIndex + 1, endIndex);
 
 		//		Candle firstCandle = getFirstExtremum(minList, maxList);
 
 		//		Integer firstIndex = firstCandle.getIndex();
 		//		int startIndex = -1;
 		for (int i = 1; i < startIndex; i++) {
-			Candle cTmp = candles.get(startIndex - i);
+			Candle cTmp = priceEmbargo.get(startIndex - i);
 			if (cTmp.getMin() < min) {
 				DebugHolder.eliminated("Range comes from bottom");
 				return null;
@@ -438,7 +425,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		}
 		try {
 			
-		double median = MedianCalculator.median(candles.subList(startIndex, endIndex));
+		double median = MedianCalculator.median(priceEmbargo.getPastCandles().subList(startIndex, endIndex));
 		if (endCandle.getClose() >= median) {
 			DebugHolder.eliminated("Last candle should be below median");
 			return null;
@@ -446,21 +433,6 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		} catch (Exception e) {
 			getClass();
 		}
-		
-		
-		//		for (int i = startIndex; i < endIndex; i++) {
-		//			if (candles.get(i).getMin() < median) {
-		//				startIndex = i;
-		//				break;
-		//			}
-		//		}
-		//Rebuild min & max
-		//		for (int i = startIndex; i < endIndex; i++) {
-		//			if (candles.get(i).getMin() < median && candles.get(i).getMax() <= max) {
-		//				startIndex = i;
-		//				break;
-		//			}
-		//		}
 
 		if (startIndex < 0) {
 			return null;
@@ -472,11 +444,11 @@ public class RangeFinderStrategy extends AbstractStrategy {
 			return null;
 		}
 		Candle lastExtremum = getLastExtremum(minList, maxList);
-		min = getMinWithLow(candles, startIndex, lastExtremum.getIndex());
-		max = getMaxWithHigh(candles, startIndex, lastExtremum.getIndex());
+		min = getMinWithLow(priceEmbargo, startIndex, lastExtremum.getIndex());
+		max = getMaxWithHigh(priceEmbargo, startIndex, lastExtremum.getIndex());
 		
 		DebugHolder.stopHere();
-		int nbCandlesUnderMin =  countCandlesUnderMin(candles, min, startIndex, endIndex);
+		int nbCandlesUnderMin =  countCandlesUnderMin(priceEmbargo, min, startIndex, endIndex);
 		if (nbCandlesUnderMin > 1) {
 			// Why ? if price goes many times under min but is not a min yet
 			DebugHolder.eliminated("Too many candles under min");
@@ -484,15 +456,15 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		}
 		return Range.builder()
 				.indexEnd(endIndex)
-				.dateStart(candles.get(startIndex).getDate())
-				.dateEnd(candles.get(endIndex).getDate())
+				.dateStart(priceEmbargo.get(startIndex).getDate())
+				.dateEnd(priceEmbargo.get(endIndex).getDate())
 				.indexStart(startIndex)
 				.indexRangeValidated(endIndex)
 				.min(min)
 				.sellingClimaxIndex(firstMinNearBottom.get().getIndex())
 				.height(max - min)
-				.minWithLow(getMinWithLow(candles, startIndex, endIndex))
-				.maxWithHigh(getMaxWithHigh(candles, startIndex, endIndex))
+				.minWithLow(getMinWithLow(priceEmbargo, startIndex, endIndex))
+				.maxWithHigh(getMaxWithHigh(priceEmbargo, startIndex, endIndex))
 				.width(endIndex - startIndex)
 				.dateDecisionRangeValid(dateDecisionRangeValid)
 				.minList(minList)
@@ -501,28 +473,28 @@ public class RangeFinderStrategy extends AbstractStrategy {
 				.build();
 	}
 
-	private int countCandlesUnderMin(List<Candle> candles, double min, Integer startIndex, int endIndex) {
+	private int countCandlesUnderMin(PriceEmbargo priceEmbargo, double min, Integer startIndex, int endIndex) {
 		int count = 0;
 		for (int i = startIndex; i <= endIndex; i++) {
-			if (candles.get(i).getMin() < min) {
+			if (priceEmbargo.get(i).getMin() < min) {
 				count++;
 			}
 		}
 		return count;
 	}
 
-	private Double getMaxWithHigh(List<Candle> candles, int startIndex, int endIndex) {
+	private Double getMaxWithHigh(PriceEmbargo priceEmbargo, int startIndex, int endIndex) {
 		Double max = Double.MIN_VALUE;
 		for (int i = startIndex; i < endIndex; i++) {
-			max = Math.max(candles.get(i).getHigh(), max);
+			max = Math.max(priceEmbargo.get(i).getHigh(), max);
 		}
 		return max;
 	}
 
-	Double getMinWithLow(List<Candle> candles, int startIndex, int endIndex){
+	Double getMinWithLow(PriceEmbargo priceEmbargo, int startIndex, int endIndex){
 		Double min = Double.MAX_VALUE;
 		for (int i = startIndex; i < endIndex; i++) {
-			min = Math.min(candles.get(i).getLow(), min);
+			min = Math.min(priceEmbargo.get(i).getLow(), min);
 		}
 		return min;
 	}

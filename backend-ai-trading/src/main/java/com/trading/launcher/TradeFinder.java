@@ -141,7 +141,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				"SPRING_LABEL", timeRange, market, startDate, endDate);
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, timeRange,
 				startDate.minusDays(50), endDate.plusDays(7));
-		PriceEmbargo priceEmbargo = new PriceEmbargo(candles, List.of(), true);
+		PriceEmbargo priceEmbargo = new PriceEmbargo(candles, true);
 
 		
 //		RsiCalculator.computeRSI(candles, 14);
@@ -158,7 +158,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				continue;
 			}
 			RangeFinderStrategy rangeFinder = new RangeFinderStrategy();
-			Range range = rangeFinder.getLargestRangeFast(priceEmbargo.getAllCandles(), c, extremumsSwing);
+			Range range = rangeFinder.getLargestRangeFast(priceEmbargo, c, extremumsSwing);
 			if (range == null) {
 				continue;
 			}

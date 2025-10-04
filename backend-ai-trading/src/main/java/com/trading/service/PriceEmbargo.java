@@ -6,16 +6,17 @@ import java.util.List;
 import com.trading.entity.Candle;
 import com.trading.indicator.AtrCalculator;
 
-import lombok.NonNull;
-
 public class PriceEmbargo {
 
-	@NonNull
 	List<Candle> forwardCandles;
 	List<Candle> pastCandles = new ArrayList<>();
 	AtrCalculator atrCalculator = new AtrCalculator(20);
 	
-	public PriceEmbargo(List<Candle> forwardCandles, List<Candle> pastCandles, boolean isSetIndex) {
+	public PriceEmbargo(List<Candle> forwardCandles, boolean isSetIndex) {
+		this(List.of(),forwardCandles, isSetIndex);
+	}
+	
+	public PriceEmbargo(List<Candle> pastCandles, List<Candle> forwardCandles, boolean isSetIndex) {
 		this.forwardCandles = new ArrayList<>(forwardCandles);
 		this.pastCandles = new ArrayList<>(pastCandles);
 		for (int i = 0; i < pastCandles.size(); i++) {
@@ -53,17 +54,15 @@ public class PriceEmbargo {
 	}
 	
 	public PriceEmbargo clone() {
-		return new PriceEmbargo(forwardCandles, pastCandles, false);
+		return new PriceEmbargo(pastCandles, forwardCandles,false);
 	}
 
 	public Candle get(int i) {
 		return pastCandles.get(i);
 	}
 	
-	public List<Candle> getAllCandles() {
-		List<Candle> all = new ArrayList<>(pastCandles);
-		all.addAll(forwardCandles);
-		return all;
+	public List<Candle> getPastCandles() {
+		return pastCandles;
 	}
 	
 }
