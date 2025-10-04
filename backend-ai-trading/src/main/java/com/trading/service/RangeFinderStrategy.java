@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.trading.backtest.BackTestParams;
 import com.trading.dto.Range;
 import com.trading.entity.Candle;
 import com.trading.enums.ExtremumType;
@@ -15,20 +16,25 @@ import com.trading.indicator.MedianCalculator;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.strategy.AbstractStrategy;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class RangeFinderStrategy extends AbstractStrategy {
 
-	public static final Double MAX_RANGE_ATR_RATIO_LOW = 5d;
-	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 6d;
-	public static final Double MIN_RANGE_ATR_RATIO = 1d;
-	public static final double BOTTOM_BAND_RATIO = 0.3d;
-	public static final double TOP_BAND_RATIO = 0.5d;
-	public static final double BREAK_DOWN_ATR_RATIO = 1;
-	public static final double BREAK_UP_ATR_RATIO = 0.5;
-	public static final double NB_BOTTOMS_REQUIRED = 2;
-	public static final int MIN_RANGE_WIDTH = 25;
-	public static final Integer NB_CANDLES_BEFORE = 30;
-	public static final int MAX_RANGE_WIDTH = 100;
-	private static final Double RSI_LIMIT = 50d;
+	private final BackTestParams params;
+//	public static final Double MAX_RANGE_ATR_RATIO_LOW = 5d;
+//	public static final Double MAX_RANGE_ATR_RATIO_HIGH = 6d;
+//	public static final Double MIN_RANGE_ATR_RATIO = 1d;
+//	public static final double BOTTOM_BAND_RATIO = 0.3d;
+//	public static final double TOP_BAND_RATIO = 0.5d;
+//	public static final double BREAK_DOWN_ATR_RATIO = 1;
+//	public static final double BREAK_UP_ATR_RATIO = 0.5;
+//	public static final double NB_BOTTOMS_REQUIRED = 2;
+//	public static final int MIN_RANGE_WIDTH = 25;
+//	public static final Integer NB_CANDLES_BEFORE = 30;
+//	public static final int MAX_RANGE_WIDTH = 100;
+//	private static final Double RSI_LIMIT = 50d;
+
 
 	private boolean isPrevalidated(List<Candle> minList, List<Candle> maxList, Candle currentCandle) {
 		if (minList.size() < 2 || maxList.size() < 2) {
@@ -42,17 +48,17 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		double max = sortedTopsList.get(0).getMax();
 		double min = sortedBottomsList.get(0).getMin();
 		double rangeHeight = max - min;
-		if (rangeHeight < maxCandle.getAtr() * MIN_RANGE_ATR_RATIO) {
+		if (rangeHeight < maxCandle.getAtr() * params.getMinRangeAtrRatio()) {
 			DebugHolder.eliminated("Range height is too high");
 			return false;
 		}
 
 		// tops validation
-		double topBandLimit = max - rangeHeight*TOP_BAND_RATIO;
+		double topBandLimit = max - rangeHeight*params.getTopBandRatio();
 		long nbTopsInsideBand = maxList.stream()
 				.filter(c -> c.getMax() > topBandLimit)
 				.count(); 
-		boolean topsAreOk = nbTopsInsideBand >= NB_BOTTOMS_REQUIRED;
+		boolean topsAreOk = nbTopsInsideBand >= params.getNbBottomsRequired();
 		if (!topsAreOk) {
 			DebugHolder.eliminated("Tops are not valid");
 			return false;
@@ -79,7 +85,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		//		}
 
 		// Bottoms validation
-		double bottomBandLimit = min + BOTTOM_BAND_RATIO * rangeHeight;
+		double bottomBandLimit = min + params.getBottomBandRatio() * rangeHeight;
 		List<Candle> bottomsInsideBand = sortedBottomsList.stream()
 				.filter(c -> c.getLow() <= bottomBandLimit)
 				.toList();
@@ -92,7 +98,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 			return false;
 		}
 
-		boolean bottomsAreOk = bottomsInsideBand.size() >= NB_BOTTOMS_REQUIRED;
+		boolean bottomsAreOk = bottomsInsideBand.size() >= params.getNbBottomsRequired();
 		if (!bottomsAreOk) {
 			DebugHolder.eliminated("Bottoms  are not valid");
 			return false;
@@ -161,8 +167,8 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		Double currentRangeHeight = null;
 		int actualIndex = currentCandle.getIndex();
 		double averageATR = getAverageATR(priceEmbargo, actualIndex - 50, actualIndex);
-		double maxRangeHeightLow = averageATR*MAX_RANGE_ATR_RATIO_LOW;
-		double maxRangeHeightHigh = averageATR*MAX_RANGE_ATR_RATIO_HIGH;
+		double maxRangeHeightLow = averageATR*params.getMaxRangeAtrRatioLow();
+		double maxRangeHeightHigh = averageATR*params.getMaxRangeAtrRatioHigh();
 		
 		if (extremumsSwing.isEmpty()) {
 			return null;
@@ -268,7 +274,7 @@ public class RangeFinderStrategy extends AbstractStrategy {
 			}
 		}
 		
-		for (int i = startIndexCountCandlesBefore - NB_CANDLES_BEFORE; i < maxbeforeOpt.get().getIndex(); i++) {
+		for (int i = startIndexCountCandlesBefore - params.getNbCandlesBefore(); i < maxbeforeOpt.get().getIndex(); i++) {
 			if (i < 0) {
 				DebugHolder.eliminated("Not enought candles before range");
 				return false;
@@ -292,11 +298,11 @@ public class RangeFinderStrategy extends AbstractStrategy {
 		
 		DebugHolder.stopHere();
 		int width = range.getIndexEnd() - range.getIndexStart();
-		if (width < MIN_RANGE_WIDTH) {
+		if (width < params.getMinRangeWidth()) {
 			DebugHolder.eliminated("Range too narrow");
 			return false;
 		}
-		if (width > MAX_RANGE_WIDTH) {
+		if (width > params.getMaxRangeWidth()) {
 			DebugHolder.eliminated("Range too wide");
 			return false;
 		}

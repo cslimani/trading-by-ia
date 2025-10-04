@@ -25,6 +25,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.google.common.util.concurrent.AtomicDouble;
+import com.trading.backtest.BackTestParams;
+import com.trading.backtest.BackTestParamsBuilder;
 import com.trading.dto.DatePoint;
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.HotSpotData;
@@ -116,7 +118,20 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				final LocalDateTime startDateFinal = startDate;
 				executor.submit(() -> {
 					try {
-						process(market, startDateFinal, startDateFinal.plusMonths(1));
+						List<BackTestParams> paramsList = BackTestParamsBuilder.builder()
+					            .addDouble("maxRangeAtrRatioLow", 5.0, 5.0, 0)
+					            .addDouble("maxRangeAtrRatioHigh", 6.0, 6.0, 0)
+					            .addDouble("minRangeAtrRatio", 1.0, 1.0, 0)
+					            .addDouble("bottomBandRatio", 0.3, 0.3, 0)
+					            .addDouble("topBandRatio", 0.5, 0.5, 0)
+					            .addDouble("breakDownAtrRatio", 1.0, 1.0, 0)
+					            .addDouble("breakUpAtrRatio", 0.5, 0.5, 0)
+					            .addInteger("nbBottomsRequired", 2, 2, 0)
+					            .addInteger("minRangeWidth", 25, 25, 0)
+					            .addInteger("nbCandlesBefore", 30, 30, 0)
+					            .addInteger("maxRangeWidth", 100, 100, 0)
+					            .build();
+						process(market, startDateFinal, startDateFinal.plusMonths(1), paramsList.get(0));
 					} catch (Exception e) {
 						log.error("Error processing {}", startDateFinal, e);
 					}
@@ -135,7 +150,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		System.out.println("Total risk ratio " + totalRiskRatio);
 	}
 
-	private void process(String market, LocalDateTime startDate, LocalDateTime endDate) throws IOException {
+	private void process(String market, LocalDateTime startDate, LocalDateTime endDate, BackTestParams params) throws IOException {
 		//		System.out.println("Process from " + startDate + " to " + endDate);
 		List<HotSpot> hotSpotsToFind = hotSpotRepository.findByCodeAndTimeRangeAndMarketAndDateEndBetween(
 				"SPRING_LABEL", timeRange, market, startDate, endDate);
@@ -157,13 +172,14 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate)) {
 				continue;
 			}
-			RangeFinderStrategy rangeFinder = new RangeFinderStrategy();
+			
+			RangeFinderStrategy rangeFinder = new RangeFinderStrategy(params);
 			Range range = rangeFinder.getLargestRangeFast(priceEmbargo, c, extremumsSwing);
 			if (range == null) {
 				continue;
 			}
 			PriceEmbargo clonedEmbargo = priceEmbargo.clone();
-			boolean isSpringBeforeLimit = isSpringBeforeLimit(range, clonedEmbargo, market);
+			boolean isSpringBeforeLimit = isSpringBeforeLimit(range, clonedEmbargo, market, params);
 			if (!isSpringBeforeLimit) {
 				continue;
 			}
@@ -274,14 +290,14 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		return false;
 	}
 
-	private boolean isSpringBeforeLimit(Range range, PriceEmbargo priceEmbargo, String market) {
+	private boolean isSpringBeforeLimit(Range range, PriceEmbargo priceEmbargo, String market, BackTestParams params) {
 		Candle c = priceEmbargo.current();
 		while(true) {
 			if (c.getHigh() > range.getMax() + range.getHeight()) {
 				DebugHolder.eliminated("Range is going to high");
 				return false;
 			}
-			if (c.getIndex() - range.getIndexStart() > RangeFinderStrategy.MAX_RANGE_WIDTH) {
+			if (c.getIndex() - range.getIndexStart() > params.getMaxRangeWidth()) {
 				DebugHolder.eliminated("Range not reaching bottom before limit");
 				return false;
 			}
