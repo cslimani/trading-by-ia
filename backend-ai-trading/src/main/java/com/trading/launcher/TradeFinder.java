@@ -11,15 +11,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -27,6 +25,7 @@ import org.springframework.stereotype.Component;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.trading.backtest.BackTestParams;
 import com.trading.backtest.BackTestParamsBuilder;
+import com.trading.backtest.BacktestResult;
 import com.trading.dto.DatePoint;
 import com.trading.dto.HorizontalLine;
 import com.trading.dto.HotSpotData;
@@ -36,12 +35,10 @@ import com.trading.entity.HotSpot;
 import com.trading.enums.EnumTimeRange;
 import com.trading.indicator.extremum.Extremum;
 import com.trading.indicator.extremum.SimpleMinMaxAnalyzer;
-import com.trading.indicator.extremum.SwingExtremaFinder;
 import com.trading.service.AbstractService;
 import com.trading.service.DebugHolder;
 import com.trading.service.PriceEmbargo;
 import com.trading.service.RangeFinderStrategy;
-import com.trading.service.old.FeatureWriterSpring;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -53,20 +50,8 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 
 
 	private static final String HOTSPOT_CODE = "RANGE_AUTO";
-	private static final double MIN_MAX_ATR_RATIO = 2.5d;
-	private static final Double RATIO_RANGE_MAX_SPRING_DEPTH = 0.5;
-	AtomicDouble totalRiskRatio = new AtomicDouble(0d);
-	
-	Map<Integer, String> mapReason = new ConcurrentHashMap<>();
-	
-	@Autowired
-	FeatureWriterSpring featureWriter;
-	SwingExtremaFinder analyzer = new SwingExtremaFinder();
-		EnumTimeRange timeRange = EnumTimeRange.M5;
-//					EnumTimeRange timeRange = EnumTimeRange.M10;
-//	EnumTimeRange timeRange = EnumTimeRange.M15;
-//			EnumTimeRange timeRange = EnumTimeRange.M30;
-//		EnumTimeRange timeRange = EnumTimeRange.H1;
+
+
 	Random random = new Random();
 	ExecutorService executor = Executors.newFixedThreadPool(15);
 	Map<String, Double> mapATR = new HashMap<String, Double>();
@@ -75,6 +60,15 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
+		//		EnumTimeRange timeRange = EnumTimeRange.M10;
+		//EnumTimeRange timeRange = EnumTimeRange.M15;
+		//EnumTimeRange timeRange = EnumTimeRange.M30;
+		//EnumTimeRange timeRange = EnumTimeRange.H1;
+		EnumTimeRange timeRange = EnumTimeRange.M5;
+		processMultipleMarkets(timeRange);
+	}
+
+	public void processMultipleMarkets(EnumTimeRange timeRange) throws Exception {
 		System.out.println("Accumulation Break starting");
 		backupHotSpots();
 		//		hotSpotRepository.deleteByCode(HOTSPOT_CODE);
@@ -111,6 +105,8 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 						// entry("WTI", LocalDateTime.of(2015, Month.JANUARY, 1, 0, 0)),
 						// entry("CHINA", LocalDateTime.of(2020, Month.JANUARY, 1, 0, 0))
 						);
+		List<BacktestResult> results = new CopyOnWriteArrayList<>();
+		
 		marketDateMap.forEach((market, startDate) -> {
 			LocalDateTime endDate = null;
 			endDate = LocalDateTime.of(2023, Month.DECEMBER, 31, 23, 59);
@@ -119,19 +115,21 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				executor.submit(() -> {
 					try {
 						List<BackTestParams> paramsList = BackTestParamsBuilder.builder()
-					            .addDouble("maxRangeAtrRatioLow", 5.0, 5.0, 0)
-					            .addDouble("maxRangeAtrRatioHigh", 6.0, 6.0, 0)
-					            .addDouble("minRangeAtrRatio", 1.0, 1.0, 0)
-					            .addDouble("bottomBandRatio", 0.3, 0.3, 0)
-					            .addDouble("topBandRatio", 0.5, 0.5, 0)
-					            .addDouble("breakDownAtrRatio", 1.0, 1.0, 0)
-					            .addDouble("breakUpAtrRatio", 0.5, 0.5, 0)
-					            .addInteger("nbBottomsRequired", 2, 2, 0)
-					            .addInteger("minRangeWidth", 25, 25, 0)
-					            .addInteger("nbCandlesBefore", 30, 30, 0)
-					            .addInteger("maxRangeWidth", 100, 100, 0)
-					            .build();
-						process(market, startDateFinal, startDateFinal.plusMonths(1), paramsList.get(0));
+								.addDouble("maxRangeAtrRatioLow", 5.0, 5.0, 0)
+								.addDouble("maxRangeAtrRatioHigh", 6.0, 6.0, 0)
+								.addDouble("minRangeAtrRatio", 1.0, 1.0, 0)
+								.addDouble("bottomBandRatio", 0.3, 0.3, 0)
+								.addDouble("topBandRatio", 0.5, 0.5, 0)
+								.addDouble("breakDownAtrRatio", 1.0, 1.0, 0)
+								.addDouble("breakUpAtrRatio", 0.5, 0.5, 0)
+								.addDouble("minMaxAnalyserAtrRatio", 2.5, 2.5, 0)
+								.addDouble("ratioRangeMaxSpringDepth", 0.5, 0.5, 0)
+								.addInteger("nbBottomsRequired", 2, 2, 0)
+								.addInteger("minRangeWidth", 25, 25, 0)
+								.addInteger("nbCandlesBefore", 30, 30, 0)
+								.addInteger("maxRangeWidth", 100, 100, 0)
+								.build();
+						results.addAll(process(market, startDateFinal, startDateFinal.plusMonths(1), paramsList.get(0), timeRange));
 					} catch (Exception e) {
 						log.error("Error processing {}", startDateFinal, e);
 					}
@@ -147,32 +145,33 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 
 		long endProcess = System.currentTimeMillis();
 		System.out.println("Total time processing " + (endProcess - startProcess) / 1000 + " sec");
-		System.out.println("Total risk ratio " + totalRiskRatio);
+		System.out.println("Total risk ratio " + results.stream().mapToDouble(r -> r.getRiskRatio()).sum());
 	}
 
-	private void process(String market, LocalDateTime startDate, LocalDateTime endDate, BackTestParams params) throws IOException {
+	private List<BacktestResult> process(String market, LocalDateTime startDate, LocalDateTime endDate, BackTestParams params, EnumTimeRange timeRange) throws IOException {
 		//		System.out.println("Process from " + startDate + " to " + endDate);
-		List<HotSpot> hotSpotsToFind = hotSpotRepository.findByCodeAndTimeRangeAndMarketAndDateEndBetween(
-				"SPRING_LABEL", timeRange, market, startDate, endDate);
+//		List<HotSpot> hotSpotsToFind = hotSpotRepository.findByCodeAndTimeRangeAndMarketAndDateEndBetween(
+//				"SPRING_LABEL", timeRange, market, startDate, endDate);
+		List<BacktestResult> results = new ArrayList<>();
 		List<Candle> candles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(market, timeRange,
 				startDate.minusDays(50), endDate.plusDays(7));
 		PriceEmbargo priceEmbargo = new PriceEmbargo(candles, true);
 
-		
-//		RsiCalculator.computeRSI(candles, 14);
+
+		//		RsiCalculator.computeRSI(candles, 14);
 		List<Range> rangeList = new ArrayList<Range>();
-		
-		
-		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(MIN_MAX_ATR_RATIO, 7);
+
+
+		SimpleMinMaxAnalyzer minMaxAnalyzer = new SimpleMinMaxAnalyzer(params.getMinMaxAnalyserAtrRatio(), 7);
 		while (priceEmbargo.hasNext()) {
 			Candle c = priceEmbargo.goForward();
 			DebugHolder.activate(c);
-			
+
 			List<Extremum> extremumsSwing = minMaxAnalyzer.process(c);
 			if (c.getDate().isBefore(startDate) || c.getDate().isAfter(endDate)) {
 				continue;
 			}
-			
+
 			RangeFinderStrategy rangeFinder = new RangeFinderStrategy(params);
 			Range range = rangeFinder.getLargestRangeFast(priceEmbargo, c, extremumsSwing);
 			if (range == null) {
@@ -189,31 +188,36 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				DebugHolder.eliminated("Range already exists and starts at " + existingRange.get().getDateStart());
 				continue;
 			}
-//			increaseCount("RANGE");
+			//			increaseCount("RANGE");
 			DebugHolder.accepted(range);
 			rangeList.add(range);
+			
+			BacktestResult result = new BacktestResult();
+			
 			
 			List<HorizontalLine> lines = List.of(buildLine(range.getDateStart(), range.getMin(), "#FFFFFF"),
 					buildLine(range.getDateStart(), range.getMin() + range.getHeight()/2, "#FFFFFF"));
 			HotSpotData data = HotSpotData.builder().lines(lines).build();
-			if (isGoingDown(range, clonedEmbargo.clone())) {
+			if (isGoingDown(range, clonedEmbargo.clone(), params)) {
 				increaseCount("GOING DOWN");
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "DOWN_RANGE", data);
-//				System.out.println("GOING DOWN " + range.getDateEnd());
+				//				System.out.println("GOING DOWN " + range.getDateEnd());
 			} 
 			else if (isWinner(range, clonedEmbargo.clone())) {
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "WIN_RANGE", data);
 				increaseCount("WIN");
-				totalRiskRatio.addAndGet(range.getRiskRatio());
-//				System.out.println("WIN " + range.getDateEnd());
+				results.add(result);
+				result.setRiskRatio(range.getRiskRatio());
+				//				System.out.println("WIN " + range.getDateEnd());
 			} else {
 				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart(), range.getDateEnd()), market, timeRange, "LOST_RANGE", data);
 				increaseCount("LOST");
-				totalRiskRatio.addAndGet(range.getRiskRatio());
-//				System.out.println("LOST " + range.getDateEnd());
+				results.add(result);
+				result.setRiskRatio(range.getRiskRatio());
+				//				System.out.println("LOST " + range.getDateEnd());
 			}
 		}
-
+		return results;
 		//			if (!hotSpotsToFind.stream().anyMatch(hs -> hs.getDateStart().equals(range.getDateStart()))) {
 		//				System.out.println("Following range should not be found at " + range.getDateStart().format(formatter));
 		//				saveHotSpot(range.getDateStart(), range.getDateEnd(), List.of(range.getDateStart()), market, timeRange, "RANGE_TO_AVOID", null);
@@ -231,14 +235,14 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 				.findFirst();
 	}
 
-	private boolean isGoingDown(Range range, PriceEmbargo priceEmbargo) {
+	private boolean isGoingDown(Range range, PriceEmbargo priceEmbargo, BackTestParams params) {
 		Candle breakRangeCandle = priceEmbargo.current();
 		if (breakRangeCandle.getClose() > range.getMin()) {
 			return false;
 		}
 		for (int i = 0; i < 5; i++) {
 			Candle c = priceEmbargo.goForward();
-			if (c.getMin() < range.getMin() - range.getHeight()*RATIO_RANGE_MAX_SPRING_DEPTH) {
+			if (c.getMin() < range.getMin() - range.getHeight()*params.getRatioRangeMaxSpringDepth()) {
 				return true;
 			}
 			if (c.getMax() > range.getMin()) {
@@ -278,7 +282,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 			double tp = min + range.getHeight()/2;
 			if (c.getMax() >= tp) {
 				double rr = (tp - min) / (min - sl);
-//				System.out.println(rr);
+				//				System.out.println(rr);
 				range.setRiskRatio(rr);
 				return true;
 			}
@@ -314,7 +318,7 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		throw new RuntimeException("Range is going exceeding the current period, it starts at " + range.getDateStart().format(formatter));
 	}
 
-	private void stopIfNotEmpty(List<HotSpot> hotSpotsToFind) {
+	private void stopIfNotEmpty(List<HotSpot> hotSpotsToFind, EnumTimeRange timeRange) {
 		if (!hotSpotsToFind.isEmpty()) {
 			HotSpot hs = hotSpotsToFind.get(0);
 			saveHotSpot(hs.getDateStart(), hs.getDateEnd(), List.of(hs.getDateStart()), hs.getMarket(), timeRange, "RANGE_TO_FIX", null);
@@ -333,25 +337,25 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 		}
 	}
 
-//	private Double getDayBeforeAverageATR(List<Candle> candles, Candle c) {
-//		LocalDateTime firstDayOfWeek = c.getDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).withHour(0)
-//				.withMinute(0).withSecond(0).withNano(0);
-//		String key = firstDayOfWeek + c.getMarket();
-//		if (mapATR.containsKey(key)) {
-//			return mapATR.get(key);
-//		}
-//		List<Candle> lastWeekCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(c.getMarket(),
-//				c.getTimeRange(), firstDayOfWeek.minusWeeks(1), firstDayOfWeek);
-//		if (lastWeekCandles.isEmpty()) {
-//			mapATR.put(key, c.atr);
-//			return c.atr;
-//		}
-//		double atr = rangeFinder.getAverageATR(candles, 0, lastWeekCandles.size() - 1);
-//		mapATR.put(key, atr);
-//		return atr;
-//	}
+	//	private Double getDayBeforeAverageATR(List<Candle> candles, Candle c) {
+	//		LocalDateTime firstDayOfWeek = c.getDate().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).withHour(0)
+	//				.withMinute(0).withSecond(0).withNano(0);
+	//		String key = firstDayOfWeek + c.getMarket();
+	//		if (mapATR.containsKey(key)) {
+	//			return mapATR.get(key);
+	//		}
+	//		List<Candle> lastWeekCandles = candleRepository.findByMarketAndTimeRangeAndDateBetweenOrderByDate(c.getMarket(),
+	//				c.getTimeRange(), firstDayOfWeek.minusWeeks(1), firstDayOfWeek);
+	//		if (lastWeekCandles.isEmpty()) {
+	//			mapATR.put(key, c.atr);
+	//			return c.atr;
+	//		}
+	//		double atr = rangeFinder.getAverageATR(candles, 0, lastWeekCandles.size() - 1);
+	//		mapATR.put(key, atr);
+	//		return atr;
+	//	}
 
-	private void saveHotSpotRange(Range range, String market) {
+	private void saveHotSpotRange(Range range, String market, EnumTimeRange timeRange) {
 		List<HorizontalLine> lines = List.of(buildLine(range.getDateStart(), range.getMinWithLow(), "#FFFFFF"));
 		List<LocalDateTime> keyDates = new ArrayList<>();
 		keyDates.addAll(List.of(range.getDateStart(), range.getDateEnd()));
@@ -370,21 +374,9 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	}
 
 
-	private void checkHotSpotNotFound(List<Candle> candles, List<HotSpot> hotSpotsToFind) {
-		for (HotSpot hotSpot : hotSpotsToFind) {
-			Optional<Candle> endHotSpot = getIndexByDate(hotSpot.getDateEnd(), candles);
-			if (endHotSpot.isPresent()) {
-				for (Entry<Integer, String> entry : mapReason.entrySet()) {
-					if (Math.abs(entry.getKey() - endHotSpot.get().getIndex()) < 20) {
-						// System.out.println(hotSpot.getDateEnd() + " " + entry.getValue());
-						break;
-					}
-				}
-			}
-		}
-	}
+	
 
-	private void checkHotSpotFound(Range newRange, List<Candle> candles, List<HotSpot> hotSpotsToFind) {
+	private void checkHotSpotFound(Range newRange, List<Candle> candles, List<HotSpot> hotSpotsToFind, EnumTimeRange timeRange) {
 		for (Iterator<HotSpot> iterator = hotSpotsToFind.iterator(); iterator.hasNext();) {
 			HotSpot hotSpot = (HotSpot) iterator.next();
 			// System.out.println(hotSpot.getDateEnd());
@@ -491,6 +483,18 @@ public class TradeFinder extends AbstractService implements CommandLineRunner {
 	//		return null;
 	//	}
 
-
+//	private void checkHotSpotNotFound(List<Candle> candles, List<HotSpot> hotSpotsToFind) {
+//		for (HotSpot hotSpot : hotSpotsToFind) {
+//			Optional<Candle> endHotSpot = getIndexByDate(hotSpot.getDateEnd(), candles);
+//			if (endHotSpot.isPresent()) {
+//				for (Entry<Integer, String> entry : mapReason.entrySet()) {
+//					if (Math.abs(entry.getKey() - endHotSpot.get().getIndex()) < 20) {
+//						// System.out.println(hotSpot.getDateEnd() + " " + entry.getValue());
+//						break;
+//					}
+//				}
+//			}
+//		}
+//	}
 
 }

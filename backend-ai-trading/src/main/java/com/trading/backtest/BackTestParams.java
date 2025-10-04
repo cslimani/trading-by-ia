@@ -17,5 +17,7 @@ public class BackTestParams {
 	public Integer minRangeWidth;
 	public Integer nbCandlesBefore;
 	public Integer maxRangeWidth;
+	public Double minMaxAnalyserAtrRatio;
+	public Double ratioRangeMaxSpringDepth;
 
 }
